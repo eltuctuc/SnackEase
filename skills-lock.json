@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "requirements-analysis": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "computedHash": "7f84e4803f4f94264c8019c2343e83ef78e8ea6c66eabca21305c817a704ef33"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9c87c315aed143ee3b34bec8117100f5035e0df09e6b23e1ecc772cff434c9ad"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "computedHash": "e688fcd4c5693e14ebd00d48e982dbd2be060fbea89f5f60531e79c704a1bc28"
+    },
+    "vercel-deployment": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "388f52fe41c1d5b17d3c599e6c15c4758e871968ffdc2a03dc3aa681e8c8df0c"
+    },
+    "vue-best-practices": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "eef7ee82688c9541f91b3f1050e79a5c978ddcc2c776a4bf31a11ba37c7901e8"
+    },
+    "vue-testing-best-practices": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "d76f8dd6fd395384da11de98487ff1ef0673fba1935219d0154d095489bfac6c"
+    },
+    "vueuse-functions": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "325e49fd2a009bc2ae6dd974cc0c4a7413a342019c9f0e207e0491d2badb2fc5"
+    }
+  }
+}
