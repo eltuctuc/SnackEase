@@ -1,4 +1,4 @@
-# FEAT-0: Splashscreen
+# FEAT-0: Splashscreen mit Preloading
 
 ## Status: 🔵 Planned
 
@@ -7,58 +7,153 @@
 
 ## 1. Overview
 
-**Beschreibung:** Begrüßungsbildschirm beim Start der App mit Logo und Ladeanimation.
+**Beschreibung:** Begrüßungsbildschirm beim Start der App mit Logo und Ladeanimation. Lädt alle Programmdaten (Styles, Komponenten, Layouts) vor, damit die App danach flüssig läuft.
 
-**Ziel:** Professioneller erster Eindruck beim App-Start.
+**Ziel:** 
+- Professioneller erster Eindruck beim App-Start
+- Alle Programmdaten vorladen für flüssige Nutzung
+- Ähnlich wie bei Computerspielen: längere Ladezeit beim Start, dafür keine Wartezeiten danach
 
 ## 2. User Stories
 
 | ID | Story | Priorität |
 |----|-------|-----------|
-| US-1 | Als Nutzer möchte ich beim Öffnen der App einen Begrüßungsbildschirm sehen | Should-Have |
-| US-2 | Als Nutzer möchte ich, dass der Splashscreen automatisch zum Login weiterleitet | Should-Have |
+| US-1 | Als Nutzer möchte ich beim Öffnen der App einen Begrüßungsbildschirm sehen | Must-Have |
+| US-2 | Als Nutzer möchte ich, dass alle Programmdaten vorgeladen werden | Must-Have |
+| US-3 | Als Nutzer möchte ich nach dem Login eine flüssige App-Nutzung erleben | Must-Have |
+| US-4 | Als Nutzer möchte ich, dass der Splashscreen automatisch zum Login weiterleitet | Must-Have |
 
-## 3. Funktionale Anforderungen
+## 3. Was wird beim Splashscreen geladen (Programmdaten)
+
+### Zu ladende Ressourcen:
+| Ressource | Beschreibung |
+|-----------|--------------|
+| Styles | Alle Tailwind CSS, Theme-Variablen |
+| Komponenten | Vue-Komponenten für alle Screens |
+| Layouts | App-Layout, Header, Footer |
+| Assets | Icons, Bilder, Fonts |
+| Router | Alle Routen vorregistrieren |
+
+### Was NICHT beim Splashscreen geladen wird:
+- ❌ User-Daten (Guthaben, Käufe)
+- ❌ Leaderboard-Daten
+- ❌ Sensible Daten
+
+**Diese werden nach dem Login geladen** (Lazy Loading).
+
+## 4. Funktionale Anforderungen
 
 | ID | Anforderung | Priorität |
 |----|-------------|-----------|
 | REQ-1 | SnackEase Logo auf Splashscreen | Must-Have |
-| REQ-2 | Ladeanimation (2-3 Sekunden) | Must-Have |
-| REQ-3 | Automatische Weiterleitung zum Login nach Ladezeit | Must-Have |
+| REQ-2 | Ladeanimation während des Preloadings | Must-Have |
+| REQ-3 | Alle Programmdaten vorladen | Must-Have |
 | REQ-4 | "Dein Weg zu Gesundheit und Genuss" Slogan | Should-Have |
+| REQ-5 | Fortschrittsanzeige (Progress Bar oder Prozent) | Should-Have |
+| REQ-6 | Automatische Weiterleitung zum Login nach Ladezeit | Must-Have |
 
-## 4. Timing
+## 5. Timing
 
 | Phase | Dauer |
 |-------|-------|
-| Splashscreen anzeigen | 2-3 Sekunden |
-| Automatischer Übergang | Nach Ladezeit |
-
-## 5. Acceptance Criteria
-
-- [ ] SnackEase Logo wird angezeigt
-- [ ] Ladeanimation ist sichtbar
-- [ ] Nach 2-3 Sekunden automatischer Übergang zum Login
-- [ ] Slogan "Dein Weg zu Gesundheit und Genuss" sichtbar
+| Splashscreen + Preloading | 2-5 Sekunden (je nach Verbindungsgeschwindigkeit) |
+| Weiterleitung | Nach Abschluss des Preloadings |
 
 ## 6. Flow
 
 ```
 App Start
     ↓
-Splashscreen (2-3s)
+Splashscreen + Preloading (Styles, Komponenten, Assets)
+    ↓
+[Progress Bar zeigt Fortschritt]
+    ↓
+Alle Programmdaten geladen
     ↓
 Weiterleitung zu Login
+    ↓
+[NACH LOGIN: User-Daten laden]
 ```
 
-## 7. Technische Hinweise
+## 7. Acceptance Criteria
 
-- Vue Router Guard für automatische Weiterleitung
-- Timeout-Funktion für Ladezeit
+- [ ] SnackEase Logo wird angezeigt
+- [ ] Ladeanimation / Progress Bar ist sichtbar
+- [ ] Alle Programmdaten werden vor dem Login geladen
+- [ ] Nach Abschluss: automatischer Übergang zum Login
+- [ ] Slogan "Dein Weg zu Gesundheit und Genuss" sichtbar
+- [ ] User-Daten werden NICHT vor dem Login geladen
 
 ## 8. Edge Cases
 
 | ID | Scenario | Erwartetes Verhalten |
 |----|---------|---------------------|
-| EC-1 | Langsames Netzwerk | Splashscreen bleibt bis Daten geladen |
-| EC-2 | Bereits eingeloggter User | Direkt zum Dashboard |
+| EC-1 | Langsames Netzwerk | Splashscreen bleibt bis alle Programmdaten geladen |
+| EC-2 | Bereits eingeloggter User | Direkt zum Dashboard (trotzdem Preloading) |
+| EC-3 | Preloading fehlgeschlagen | Fehlermeldung + Retry-Option |
+| EC-4 | Browser-Cache aktiv | Schnellerer Durchlauf möglich |
+
+---
+
+## Tech-Design (Solution Architect)
+
+### Component-Struktur
+
+```
+App
+├── SplashscreenView
+│   ├── Logo (SnackEase)
+│   ├── Slogan
+│   └── ProgressBar (Ladefortschritt)
+│
+└── (Alle anderen Komponenten werden vorgeladen)
+    ├── LoginView
+    ├── HomeView
+    ├── AdminView
+    ├── ProductCard
+    ├── UserSwitcher
+    └── ...
+```
+
+### Daten-Model (Programmdaten)
+
+**Was wird gespeichert/vorgeladen:**
+- CSS / Tailwind Styles
+- Vue Komponenten (alle Views)
+- Icons (via Icon-Library)
+- Fonts (Mulish)
+- Router-Konfiguration
+
+**Wo:** Browser Cache / Memory (keine Datenbank)
+
+### Tech-Entscheidungen
+
+**Warum Preloading beim Splashscreen?**
+→ Ähnlich wie bei Computerspielen: Einmal längere Ladezeit beim Start, dafür danach flüssige Navigation ohne Wartezeiten.
+
+**Was wird NICHT vorgeladen (Lazy Loading nach Login):**
+- User-spezifische Daten (Guthaben, Käufe)
+- Leaderboard (wird bei Anzeige aktualisiert)
+- Produktdetails (werden bei Bedarf geladen)
+
+**Vorteile:**
+- Schnelle Navigation zwischen Screens nach dem Login
+- Keine Ladezeiten bei Klick auf andere Bereiche
+- Professionelles "App-Feeling"
+
+### Dependencies
+
+Benötigte Packages:
+- Keine neuen Packages nötig
+- Nutzt Vite's built-in Code Splitting
+- Vue's async components für Lazy Loading
+
+### Implementierungs-Hinweis
+
+**Frontend Developer:** Nutze Vite's `preloadModules` oder lade alle Router-Views mit `defineAsyncComponent` vor.
+
+---
+
+## User Review
+
+> "Passt das Design? Gibt es Fragen?"
