@@ -168,7 +168,7 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
-| FEAT-0 | Splashscreen | Begrüßungsbildschirm beim Start | ✅ Tech Spec erstellt |
+| FEAT-0 | Splashscreen | Begrüßungsbildschirm beim Start | 🟢 UX Complete |
 
 ### Release 1: Authentication (Login/Logout)
 

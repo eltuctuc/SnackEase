@@ -1,6 +1,6 @@
 # FEAT-0: Splashscreen mit Preloading
 
-## Status: 🔵 Planned
+## Status: 🟢 UX Complete
 
 ## Abhängigkeiten
 - Keine direkten Abhängigkeiten (erstes Feature beim App-Start)
@@ -157,3 +157,95 @@ Benötigte Packages:
 ## User Review
 
 > "Passt das Design? Gibt es Fragen?"
+
+---
+
+## UX Design
+
+### Personas-Abdeckung
+
+| Persona | Nutzen | Erfüllt? |
+|---------|--------|----------|
+| Nina (Neuanfang) | Einfacher Start ohne Verwirrung | ✅ |
+| Maxine (Snackliebhaber) | Schneller Zugang zur App | ✅ |
+| Lucas (Gesundheitsfan) | Keine Wartezeit beim Wechseln | ✅ |
+| Alex (Gelegenheitskäufer) | Unkomplizierter App-Start | ✅ |
+| Tom (Schnellkäufer) | Minimaler Aufwand | ✅ |
+
+**Alle Personas profitieren** vom Preloading-Konzept.
+
+### User Flow
+
+```
+App wird geöffnet
+        ↓
+Splashscreen erscheint (Logo + Slogan)
+        ↓
+Ladebalken/Progress Bar zeigt Fortschritt
+        ↓
+[Bei langsamer Verbindung: Kurze Ladezeit akzeptabel]
+        ↓
+Alle Programmdaten geladen
+        ↓
+Automatisch zu Login weiterleiten
+```
+
+### Alternative Flows
+
+| Scenario | Verhalten |
+|----------|-----------|
+| Bereits eingeloggter User | Preloading trotzdem, dann direkt zum Dashboard |
+| Preloading fehlgeschlagen | Fehlermeldung mit "Erneut versuchen" Button |
+
+### Visual Design
+
+**Layout:**
+```
+┌─────────────────────────────────┐
+│                                 │
+│         [SnackEase Logo]       │
+│                                 │
+│   "Dein Weg zu Gesundheit      │
+│        und Genuss"             │
+│                                 │
+│    ████████████░░░░░░░  60%    │
+│      (Progress Bar)             │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Farben:**
+- Hintergrund: `--background` (helles Off-White #F4F6F9)
+- Logo/Text: `--primary` (Dark Forest Green #1B4D40)
+- Progress Bar: `--accent` (Teal #3AACA7)
+
+**Animation:**
+- Progress Bar: Sanfte Animation von 0% auf 100%
+- Logo: Subtiler Fade-In beim Start
+- Übergang zum Login: Sanfter Fade
+
+### Accessibility (WCAG 2.1)
+
+| Anforderung | Status | Hinweis |
+|-------------|--------|----------|
+| Farbkontrast > 4.5:1 | ✅ | Primary auf Background |
+| Screen Reader | ✅ | Alt-Text für Logo, aria-label für Progress |
+| Tastatur-Navigation | N/A | Keine Interaktion nötig |
+| Focus States | ✅ | Visueller Focus beim Transition |
+| Keine Zeitlimits | ✅ | User kann warten bis geladen |
+| Fortschritt sichtbar | ✅ | Progress Bar zeigt Status |
+
+**Hinweis:** Splashscreen ist visuell einfach - Barrierefreiheit ist unproblematisch.
+
+### Usability Empfehlungen
+
+1. **Progress Bar sollte immer sichtbar sein** - gibt User Feedback
+2. **Mindestens 2 Sekunden anzeigen** - zu schnelles Verschwinden wirkt unhöflich
+3. **Bei Fehlern: Klare Fehlermeldung** mit "Erneut versuchen" Button
+4. **Slogan nicht zu klein** - fir Corporate Identity wichtig
+
+### Branding
+
+- **Logo:** SnackEase Logo (siehe resources/high-fidelity/splashscreen.png)
+- **Slogan:** "Dein Weg zu Gesundheit und Genuss"
+- **Farben:** Brand-Farben laut Design-System
