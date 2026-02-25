@@ -164,6 +164,12 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## 7. Feature-Priorisierung
 
+### Release 0: App-Start
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| FEAT-0 | Splashscreen | Begrüßungsbildschirm beim Start | ✅ Tech Spec erstellt |
+
 ### Release 1: Authentication (Login/Logout)
 
 | ID | Feature | Beschreibung | Status |

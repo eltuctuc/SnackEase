@@ -3,7 +3,7 @@
 ## Status: 🔵 Planned
 
 ## Abhängigkeiten
-- Keine direkten Abhängigkeiten
+- Benötigt: FEAT-0 (Splashscreen) - erster Screen beim App-Start
 
 ## 1. Overview
 
