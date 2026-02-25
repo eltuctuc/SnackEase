@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 29% 97%;
+    --foreground: 211 33% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 211 33% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 33% 18%;
+    --primary: 165 47% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 212 20% 92%;
+    --secondary-foreground: 211 33% 18%;
+    --muted: 214 17% 93%;
+    --muted-foreground: 213 15% 50%;
+    --accent: 177 49% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 14% 88%;
+    --input: 213 14% 88%;
+    --ring: 177 49% 45%;
+    --brand-pink: 348 48% 80%;
+    --brand-gold: 38 40% 54%;
+    --brand-blue-gray: 212 16% 78%;
+    --surface-tint: 212 35% 91%;
+    --radius: 0.875rem;
+  }
+
+  .dark {
+    --background: 165 33% 9%;
+    --foreground: 160 23% 90%;
+    --card: 165 28% 13%;
+    --card-foreground: 160 23% 90%;
+    --popover: 165 28% 13%;
+    --popover-foreground: 160 23% 90%;
+    --primary: 177 52% 57%;
+    --primary-foreground: 165 33% 9%;
+    --secondary: 160 28% 18%;
+    --secondary-foreground: 160 20% 82%;
+    --muted: 162 27% 14%;
+    --muted-foreground: 171 18% 55%;
+    --accent: 176 50% 49%;
+    --accent-foreground: 165 33% 9%;
+    --destructive: 0 63% 30%;
+    --destructive-foreground: 0 93% 82%;
+    --border: 160 28% 18%;
+    --input: 160 28% 18%;
+    --ring: 177 52% 57%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
