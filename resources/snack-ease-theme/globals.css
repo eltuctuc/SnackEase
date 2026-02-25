@@ -1,0 +1,149 @@
+/* ============================================================
+   Snack Ease — shadcn-vue Theme  (Tailwind CSS v3)
+   ============================================================
+   Moodboard Palette
+   ─────────────────────────────────────────────────────────
+   Primary   Dark Forest Green  #1B4D40   hsl(165 47% 20%)
+   Accent    Teal               #3AACA7   hsl(177 49% 45%)
+   Blue-Gray Light Steel        #BFC8D2   hsl(212 16% 78%)
+   Pink      Rose/Mauve         #E5B5BF   hsl(348 48% 80%)
+   Gold      Tan/Gold           #B8955A   hsl( 38 40% 54%)
+   ─────────────────────────────────────────────────────────
+   Typography: Mulish (Google Fonts)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Light Mode ──────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Page background – very light cool off-white */
+    --background:             216 29% 97%;   /* #F4F6F9 */
+    --foreground:             211 33% 18%;   /* #1E2D3D  dark navy */
+
+    /* Cards & popovers – pure white */
+    --card:                   0 0% 100%;     /* #FFFFFF */
+    --card-foreground:        211 33% 18%;
+
+    --popover:                0 0% 100%;
+    --popover-foreground:     211 33% 18%;
+
+    /* Primary – dark forest green (brand identity) */
+    --primary:                165 47% 20%;   /* #1B4D40 */
+    --primary-foreground:     0 0% 100%;     /* white text on green */
+
+    /* Secondary – light blue-gray (chips, tags, inactive tabs) */
+    --secondary:              212 20% 92%;   /* #E2E8EE */
+    --secondary-foreground:   211 33% 18%;
+
+    /* Muted – very light gray (placeholder areas, disabled) */
+    --muted:                  214 17% 93%;   /* #EBECF0 */
+    --muted-foreground:       213 15% 50%;   /* #6B7C8F */
+
+    /* Accent – teal (highlights, active badges, progress) */
+    --accent:                 177 49% 45%;   /* #3AACA7 */
+    --accent-foreground:      0 0% 100%;
+
+    /* Destructive */
+    --destructive:            0 84% 60%;     /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & inputs */
+    --border:                 213 14% 88%;   /* #DDE2E8 */
+    --input:                  213 14% 88%;
+    --ring:                   177 49% 45%;   /* teal focus ring */
+
+    /* ── Brand extras (use via Tailwind: bg-brand-pink etc.) */
+    --brand-pink:             348 48% 80%;   /* #E5B5BF  rose/mauve */
+    --brand-gold:              38 40% 54%;   /* #B8955A  tan/gold   */
+    --brand-blue-gray:        212 16% 78%;   /* #BFC8D2  steel blue */
+
+    /* ── Image-placeholder / card header tint */
+    --surface-tint:           212 35% 91%;   /* #D9E5F0  light blue */
+
+    /* ── Border radius
+         Pill buttons (rounded-pill) are handled via tailwind.config
+         Base radius drives cards, inputs, badges                    */
+    --radius:                 0.875rem;      /* 14 px */
+  }
+
+  /* ── Dark Mode ─────────────────────────────────────────── */
+  .dark {
+    /* Deep dark green-tinted background */
+    --background:             165 33%  9%;   /* #0D201C */
+    --foreground:             160 23% 90%;   /* #DDE9E5 near-white */
+
+    --card:                   165 28% 13%;   /* #162922 */
+    --card-foreground:        160 23% 90%;
+
+    --popover:                165 28% 13%;
+    --popover-foreground:     160 23% 90%;
+
+    /* Primary – lighter teal-green for dark bg contrast */
+    --primary:                177 52% 57%;   /* #5CC8C1 */
+    --primary-foreground:     165 33%  9%;   /* dark text on light primary */
+
+    /* Secondary */
+    --secondary:              160 28% 18%;   /* #1C3530 */
+    --secondary-foreground:   160 20% 82%;   /* #BDD1CC */
+
+    /* Muted */
+    --muted:                  162 27% 14%;   /* #172D28 */
+    --muted-foreground:       171 18% 55%;   /* #7A9E97 */
+
+    /* Accent – bright teal */
+    --accent:                 176 50% 49%;   /* #44B5AE */
+    --accent-foreground:      165 33%  9%;
+
+    /* Destructive */
+    --destructive:              0 63% 30%;   /* #7F1D1D */
+    --destructive-foreground:   0 93% 82%;   /* #FCA5A5 */
+
+    --border:                 160 28% 18%;
+    --input:                  160 28% 18%;
+    --ring:                   177 52% 57%;
+
+    /* Brand extras (adjusted for dark) */
+    --brand-pink:             348 35% 65%;   /* #D98E9C */
+    --brand-gold:              38 35% 50%;   /* #B0864D */
+    --brand-blue-gray:        212 14% 40%;   /* #586878 */
+
+    --surface-tint:           165 28% 17%;   /* dark card-header tint */
+  }
+}
+
+/* ── Base styles ─────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Headings – bold, tight tracking (Mulish-style) */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-foreground;
+  }
+
+  /* Uppercase labels (e.g. "EMAIL", "GESAMT") */
+  .label-caps {
+    @apply text-xs font-semibold uppercase tracking-widest text-muted-foreground;
+  }
+
+  /* Pill / CTA buttons – override via .btn-pill on shadcn <Button> */
+  .btn-pill {
+    @apply rounded-pill px-8;
+  }
+}

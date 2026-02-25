@@ -8,7 +8,9 @@
 **Scope:** Full-Stack (Frontend + Backend)
 
 **Dokumentation:**
-- [PRD.md](docs/PRD.md) - Product Requirements Document
+- [docs/PRD.md](docs/PRD.md) - Product Requirements Document
+- [docs/](docs/) - Personas, Requirements, User Flows, Feature-Docs
+- [resources/](resources/) - Design-Assets, Wireframes, Prozess-Vorlagen
 
 ---
 
@@ -148,10 +150,18 @@ SnackEase/
 │       └── qa-engineer.md
 ├── .agents/
 │   └── skills/                      # Installierte Skills
-├── ressources/
-│   ├── personas/
-│   ├── requirements/
-│   └── ...
+├── docs/
+│   ├── PRD.md                       # Product Requirements Document
+│   ├── personas/                    # Persona-Details
+│   ├── requirements/                # Funktionale Anforderungen
+│   ├── user-flows/                  # Dokumentierte User Flows
+│   └── FEAT-X-feature-name.md       # Feature-Dokumentation (QA)
+├── resources/
+│   ├── processes/                    # Vorlagen & Hilfsmittel für Feature-Erstellung
+│   ├── wireframes/                  # Wireframe-Entwürfe
+│   ├── high-fidelity/               # High-Fidelity-Designs
+│   ├── snack-ease-theme/            # Design-System (Tailwind, CSS)
+│   └── *.png                        # Moodboard, Screenflow
 ├── features/
 │   ├── FEAT-1-user-authentication.md
 │   ├── FEAT-1-user-flow.md
@@ -159,9 +169,6 @@ SnackEase/
 │   └── ...
 ├── bugs/
 │   └── FEAT-1-bugs.md              # QA Bug-Reports
-├── docs/
-│   ├── PRD.md
-│   └── FEAT-1-feature-name.md      # Feature-Dokumentation (QA)
 └── src/                             # Frontend Code
 ```
 
@@ -196,3 +203,6 @@ SnackEase/
 
 - **2026-02-24:** Projektdefinition erstellt mit 7-Phasen Workflow
 - **2026-02-24:** Agenten definiert und Bugs-Ordner angelegt
+- **2026-02-25:** Ordner umbenannt: `ressources/` → `resources/` (englisch)
+- **2026-02-25:** Ordner umbenannt: `abläufe/` → `processes/` (englisch)
+- **2026-02-25:** Verzeichnis-Struktur in Projektdefinition dokumentiert
