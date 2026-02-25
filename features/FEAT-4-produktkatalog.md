@@ -1,5 +1,10 @@
 # FEAT-4: Produktkatalog
 
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Keine direkten Abhängigkeiten (kann unabhängig entwickelt werden)
+
 ## 1. Overview
 
 **Beschreibung:** Anzeige aller verfügbaren Snacks und Getränke mit Kategorien, Suche und Produktdetails.
@@ -80,3 +85,14 @@ products:
 - Produkte werden zur Demo seeded
 - Suche über PostgreSQL ILIKE
 - Kategorien als Enum oder Referenz-Tabelle
+
+## 9. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Keine Produkte gefunden | "Keine Produkte gefunden" Nachricht anzeigen |
+| EC-2 | Produktbild fehlt | Placeholder-Bild anzeigen |
+| EC-3 | Sehr langer Produktname | Text mit "..." kürzen, Tooltip für Volltext |
+| EC-4 | Alle Kategorien abgewählt | Alle Produkte anzeigen |
+| EC-5 | Produkt nicht vorrätig | "Nicht vorrätig" Label, Kauf-Button deaktivieren |
+| EC-6 | Suche mit Sonderzeichen | Diese ignorieren oder maskieren |

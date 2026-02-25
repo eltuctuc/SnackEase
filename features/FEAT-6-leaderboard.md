@@ -1,5 +1,10 @@
 # FEAT-6: Leaderboard
 
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Benötigt: FEAT-5 (One-Touch Kauf) - für Kaufdaten und Bonuspunkte
+
 ## 1. Overview
 
 **Beschreibung:** Rangliste der Mitarbeiter mit Bonuspunkten für gesunde Einkäufe.
@@ -77,3 +82,14 @@ computed daily/weekly/monthly:
 - Separate Rankings für Käufe und Bonuspunkte
 - Supabase Realtime für Live-Updates (optional)
 - Index auf `total_purchases` und `health_points`
+
+## 9. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Keine Käufe vorhanden | Leere Liste mit "Noch keine Daten" Nachricht |
+| EC-2 | Zwei Nutzer mit gleichen Punkten | Alphabetisch sortieren oder gleichen Rang |
+| EC-3 | Nutzer wird gelöscht | Aus Leaderboard entfernen |
+| EC-4 | Sehr viele Nutzer (>1000) | Pagination oder "Mehr laden" |
+| EC-5 | Tab-Wechsel während Update | Aktuellen Tab beibehalten |
+| EC-6 | Eigener Rang nicht in Top 10 | "Dein Rang: X" unten anzeigen |

@@ -1,6 +1,9 @@
 # FEAT-1: User Switcher (Demo-Modus)
 
-## 1. Overview
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Keine direkten Abhängigkeiten
 
 **Beschreibung:** Ermöglicht das Umschalten zwischen verschiedenen Demo-Nutzern, um die App-Funktionalität zu demonstrieren.
 
@@ -52,3 +55,11 @@
 - Nutzer-Daten werden in Supabase als `demo_users` Tabelle gespeichert
 - Session Storage für aktuellen Nutzer (`current_demo_user_id`)
 - Keine echte Authentifizierung erforderlich
+
+## 8. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Session Storage ist deaktiviert | Fallback auf lokalen Storage oder Standard-Nutzer |
+| EC-2 | Ungültige User-ID im Storage | Zurücksetzen auf Standard-Nutzer |
+| EC-3 | Alle Demo-Nutzer gelöscht | Mindestens einen Default-Nutzer behalten |

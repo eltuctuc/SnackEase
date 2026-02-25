@@ -1,5 +1,10 @@
 # FEAT-2: Demo-Guthaben-System
 
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Benötigt: FEAT-1 (User Switcher) - um Guthaben pro Nutzer zu speichern
+
 ## 1. Overview
 
 **Beschreibung:** Simuliertes Guthaben-System für die Demo. Guthaben wird nicht wirklich aufgeladen, nur die UI zeigt den Guthabenstand und Simulation des Aufladens.
@@ -63,3 +68,13 @@
 - Guthaben wird bei jedem Kauf/Aufladen aktualisiert
 - Kein echter Payment-Provider
 - Transaktionshistorie für spätere Funktionen vorbereiten
+
+## 9. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Nutzer hat 0€ Guthaben | "Aufladen"-Button wird prominent angezeigt |
+| EC-2 | Guthaben wird aufgeladen während Kauf läuft | Transaktionen sperren während Aufladung |
+| EC-3 | Mehrfaches Klicken auf "Aufladen" | Button während Ladezeit deaktivieren |
+| EC-4 | Guthaben geht nach Kauf auf 0 | Kauf erfolgreich, Guthaben = 0 |
+| EC-5 | Guthaben würde negativ werden | Kauf blockieren, Fehlermeldung anzeigen |

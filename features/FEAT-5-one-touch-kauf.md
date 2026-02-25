@@ -1,5 +1,12 @@
 # FEAT-5: One-Touch Kauf
 
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Benötigt: FEAT-1 (User Switcher) - für Benutzer-Identifikation
+- Benötigt: FEAT-2 (Demo-Guthaben) - für Guthaben-Prüfung
+- Benötigt: FEAT-4 (Produktkatalog) - für Produktinformationen
+
 ## 1. Overview
 
 **Beschreibung:** Ermöglicht den Kauf eines Produkts mit nur einem Klick/Tap.
@@ -83,3 +90,14 @@
   4. Punkte berechnen und zu Leaderboard hinzufügen
 - Row Level Security für Transaktionen
 - Transaktion in einer Function bündeln
+
+## 9. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Guthaben nicht ausreichend | Kauf blockieren, "Nicht genug Guthaben" Fehler |
+| EC-2 | Produkt wird während Kauf ausverkauft | "Produkt nicht mehr verfügbar" Nachricht |
+| EC-3 | Doppelter Kauf-Klick | Button während Verarbeitung deaktivieren |
+| EC-4 | Netzwerkfehler während Kauf | Transaktion rollt zurück, Fehlermeldung |
+| EC-5 | Kauf mit 0,00€ Produkt | Erlaubt, keine Guthaben-Abzug |
+| EC-6 | Leaderboard-Update schlägt fehl | Kauf trotzdem erfolgreich, asynchrones Update |

@@ -1,5 +1,11 @@
 # FEAT-3: Admin-Basis (Demo-Modus)
 
+## Status: 🔵 Planned
+
+## Abhängigkeiten
+- Benötigt: FEAT-1 (User Switcher) - für Admin-Rolle
+- Benötigt: FEAT-2 (Demo-Guthaben) - für Reset-Funktion
+
 ## 1. Overview
 
 **Beschreibung:** Basis-Admin-Funktionen für die Demo: System-Reset und Demo-Nutzer anlegen.
@@ -84,3 +90,13 @@ Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächli
 - Admin-Bereich in separater Route `/admin`
 - Reset über SQL-Function in Supabase
 - Authentifizierung via Supabase Auth (固定 admin credentials)
+
+## 9. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Admin-Login mit falschem Passwort | Fehlermeldung, max. 5 Versuche |
+| EC-2 | Reset während aktiver Kauf | Reset nach Abschluss aller Käufe |
+| EC-3 | Neuer Nutzer mit bereits existierendem Namen | Fehlermeldung "Name bereits vergeben" |
+| EC-4 | Standort "Online" hinzufügen | Nur Nürnberg/Berlin erlaubt |
+| EC-5 | Admin löscht sich selbst | Mindestens ein Admin-Account muss existieren |
