@@ -1,48 +1,60 @@
-# FEAT-1: User Switcher (Demo-Modus)
+# FEAT-3: User Switcher (Login Flow)
 
 ## Status: 🔵 Planned
 
 ## Abhängigkeiten
-- Keine direkten Abhängigkeiten
+- Benötigt: FEAT-1 (Admin Authentication)
+- Benötigt: FEAT-2 (Demo User Authentication)
 
-**Beschreibung:** Ermöglicht das Umschalten zwischen verschiedenen Demo-Nutzern, um die App-Funktionalität zu demonstrieren.
+## 1. Overview
 
-**Ziel:** Keine echte Registrierung - schneller Wechsel zwischen vordefinierten Demo-Profilen.
+**Beschreibung:** Ermöglicht das Umschalten zwischen Demo-Nutzern nach Abmeldung. Der User Switcher ist NICHT in der App sichtbar, sondern Teil des Login-Flows.
+
+**Ziel:** Realistischer User-Wechsel durch Ausloggen und als anderer User wieder Einloggen.
 
 ## 2. User Stories
 
 | ID | Story | Priorität |
 |----|-------|-----------|
-| US-1 | Als Demo-Admin möchte ich zwischen Nutzern wechseln, um verschiedene Szenarien zu testen | Must-Have |
-| US-2 | Als Demo-Admin möchte ich sehen welcher Nutzer aktuell aktiv ist | Must-Have |
-| US-3 | Als Demo-Admin möchte ich schnell zwischen Nutzern mit unterschiedlichen Guthaben-Ständen wechseln | Should-Have |
+| US-1 | Als eingeloggter Nutzer möchte ich mich abmelden können | Must-Have |
+| US-2 | Als abgemeldeter Nutzer möchte ich einen anderen Demo-Nutzer auswählen | Must-Have |
+| US-3 | Als abgemeldeter Nutzer möchte ich mich als Admin anmelden | Must-Have |
 
 ## 3. Funktionale Anforderungen
 
 | ID | Anforderung | Priorität |
 |----|-------------|-----------|
-| REQ-1 | Dropdown oder Modal zum Auswählen des aktiven Demo-Nutzers | Must-Have |
-| REQ-2 | Anzeige des aktuellen Nutzers (Name, Avatar, Standort) | Must-Have |
-| REQ-3 | Persistenz des gewählten Nutzers im Session Storage | Must-Have |
-| REQ-4 | Mindestens 5 vordefinierte Demo-Nutzer mit unterschiedlichen Profilen | Must-Have |
+| REQ-1 | Logout führt zur Login-Seite mit User-Auswahl | Must-Have |
+| REQ-2 | User-Auswahl auf Login-Seite (Dropdown oder Karten) | Must-Have |
+| REQ-3 | Nach User-Auswahl: Passwort-Eingabe | Must-Have |
+| REQ-4 | Separate Login-Seiten für Admin und Demo-User ODER kombinierte Seite | Must-Have |
 
-## 4. Demo-Nutzer Profile
+## 4. Login-Flow
 
-| Name | Standort | Startguthaben | Rolle |
-|------|----------|---------------|-------|
-| Nina Neuanfang | Nürnberg | 25€ | Junior-Anwältin, Neuling |
-| Maxine Snackliebhaber | Berlin | 15€ | Rechtsanwältin, Vielkäuferin |
-| Lucas Gesundheitsfan | Nürnberg | 30€ | Paralegal, Vegetarisch |
-| Alex Gelegenheitskäufer | Berlin | 20€ | Büro-Manager, Casual |
-| Tom Schnellkäufer | Nürnberg | 10€ | Rechtsanwalt, Minimalist |
+```
+1. User auf Login-Seite
+       ↓
+2. Auswahl: Admin ODER Demo-User
+       ↓
+   [Admin] → admin@demo.de + Passwort
+       ↓
+   [Demo-User] → Andere @demo.de Email + Passwort
+       ↓
+3. Passwort eingeben
+       ↓
+4. [Wenn korrekt] → Weiterleitung zur App
+       ↓
+5. [Logout] → Zurück zu Schritt 1
+```
 
 ## 5. Acceptance Criteria
 
-- [ ] User Switcher ist in der App sichtbar (z.B. in Header oder Profilbereich)
-- [ ] Alle 5 Demo-Nutzer sind auswählbar
-- [ ] Nach Auswahl wechselt die App zum gewählten Nutzerkontext
-- [ ] Guthaben, Kaufhistorie und Leaderboard-Rang beziehen sich auf den gewählten Nutzer
-- [ ] Beim Neuladen der Seite bleibt der gewählte Nutzer erhalten (Session Storage)
+- [ ] User kann sich abmelden (Logout)
+- [ ] Nach Logout: Zurück zur Login-Seite
+- [ ] Login-Seite ermöglicht User-Auswahl
+- [ ] User kann sich als anderer Demo-User anmelden
+- [ ] User kann sich als Admin anmelden
+- [ ] Guthaben, Käufe sind user-spezifisch
 
 ## 6. UI/UX Vorgaben
 

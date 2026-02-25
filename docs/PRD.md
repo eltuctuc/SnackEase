@@ -67,9 +67,10 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 > - Zahlungsanbieter für Aufladung? → **Simuliert (Demo)**
 
 > **Demo-Modus Besonderheiten:**
-> - Keine echte Registrierung - User Switcher zum Umschalten zwischen Demo-Nutzern
+> - Keine echte Registrierung - User Switch via Login/Logout Flow
 > - Kein echtes Payment - Guthaben-Aufladung wird nur simuliert
 > - Admin kann System-Reset durchführen und Demo-Nutzer anlegen
+> - Login via Email (@demo.de) und Passwort (demo123)
 
 ### 3.3 Produktkatalog
 
@@ -163,46 +164,54 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## 7. Feature-Priorisierung
 
-### Release 1: MVP (Demo-Modus)
+### Release 1: Authentication (Login/Logout)
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
-| DEMO-1 | User Switcher | Zwischen Demo-Nutzern umschalten | ✅ Tech Spec erstellt |
-| DEMO-2 | Demo-Guthaben | 25€ Startguthaben, Simulation Aufladen | ✅ Tech Spec erstellt |
-| DEMO-3 | Admin-Basis | System-Reset, Demo-Nutzer anlegen | ✅ Tech Spec erstellt |
+| FEAT-1 | Admin Authentication | Login/Logout für Admin (admin@demo.de) | ✅ Tech Spec erstellt |
+| FEAT-2 | Demo User Authentication | Login/Logout für Demo-Nutzer (@demo.de) | ✅ Tech Spec erstellt |
+| FEAT-3 | User Switch Flow | Via Login/Logout zwischen Usern wechseln | ✅ Tech Spec erstellt |
 
-### Release 2: Kernfunktionen
+### Release 2: Guthaben-System
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
-| PROD-01 | Produktübersicht | Alle verfügbaren Snacks/Getränke anzeigen | ✅ Tech Spec erstellt |
-| PROD-02 | Kategorien | Obst, Proteinriegel, Shakes, Schokoriegel, Nüsse | ✅ Tech Spec erstellt |
-| PROD-03 | Produktsuche | Nach Namen suchen | ✅ Tech Spec erstellt |
-| PROD-05 | Produktdetails | Logo, Name, Nährwerte, Inhaltsstoffe | ✅ Tech Spec erstellt |
-| BUY-01 | One-Touch Kauf | Mit einem Tap kaufen | ✅ Tech Spec erstellt |
-| BUY-03 | Kaufbestätigung | Erfolgreiche Transaktion anzeigen | ✅ Tech Spec erstellt |
-| BUY-05 | Kontaktlose Abwicklung | Kein Scan/Checkout nötig | ✅ Tech Spec erstellt |
-| LEADER-01 | Rangliste | Mitarbeiter vergleichen | ✅ Tech Spec erstellt |
-| LEADER-02 | Bonuspunkte | Gesunde Artikel = Extrapunkte | ✅ Tech Spec erstellt |
-| LEADER-03 | Kategorie "Meistens" | Wer hat am meisten konsumiert? | ✅ Tech Spec erstellt |
-| LEADER-04 | Kategorie "Gesündeste" | Wer isst am gesündesten? | ✅ Tech Spec erstellt |
+| CREDIT-01 | Monatliches Guthaben | 25€ pro Monat (simuliert) | ⏳ Offen |
+| CREDIT-02 | Guthaben anzeigen | Aktuelles Guthaben auf Startseite | ⏳ Offen |
+| CREDIT-03 | Guthaben aufladen | Simulation Aufladen (10/25/50€) | ⏳ Offen |
+| CREDIT-04 | Guthabenverlauf | Transaktionshistorie | ⏳ Offen |
 
-### Release 3: Erweiterungen
+### Release 3: Kernfunktionen
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| PROD-01 | Produktübersicht | Alle verfügbaren Snacks/Getränke anzeigen | ⏳ Offen |
+| PROD-02 | Kategorien | Obst, Proteinriegel, Shakes, Schokoriegel, Nüsse | ⏳ Offen |
+| PROD-03 | Produktsuche | Nach Namen suchen | ⏳ Offen |
+| PROD-05 | Produktdetails | Logo, Name, Nährwerte, Inhaltsstoffe | ⏳ Offen |
+| BUY-01 | One-Touch Kauf | Mit einem Tap kaufen | ⏳ Offen |
+| BUY-03 | Kaufbestätigung | Erfolgreiche Transaktion anzeigen | ⏳ Offen |
+| BUY-05 | Kontaktlose Abwicklung | Kein Scan/Checkout nötig | ⏳ Offen |
+| LEADER-01 | Rangliste | Mitarbeiter vergleichen | ⏳ Offen |
+| LEADER-02 | Bonuspunkte | Gesunde Artikel = Extrapunkte | ⏳ Offen |
+| LEADER-03 | Kategorie "Meistens" | Wer hat am meisten konsumiert? | ⏳ Offen |
+| LEADER-04 | Kategorie "Gesündeste" | Wer isst am gesündesten? | ⏳ Offen |
+
+### Release 4: Erweiterungen
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
 | PROD-04 | Filter | Vegan, Glutenfrei, Allergene | ⏳ Offen |
-| PROD-06 | Favoriten | Produkte als Favorit speicheren | ⏳ Offen |
+| PROD-06 | Favoriten | Produkte als Favorit speichern | ⏳ Offen |
 | BUY-02 | Warenkorb | Mehrere Produkte auf einmal | ⏳ Offen |
 | BUY-04 | Kaufhistorie | Alle getätigten Käufe anzeigen | ⏳ Offen |
 | STAT-01 | Guthaben-Übersicht | Aktueller Kontostand | ⏳ Offen |
 | STAT-02 | Ausgaben-Statistik | Bereits ausgegebene Beträge | ⏳ Offen |
 | STAT-04 | Nährwert-Zusammenfassung | Zucker, Fett, Kalorien, Eiweiß | ⏳ Offen |
-| CREDIT-04 | Guthabenverlauf | Transaktionshistorie | ⏳ Offen |
 | ADMIN-01 | Produktverwaltung | CRUD für Produkte | ⏳ Offen |
 | ADMIN-02 | Nutzerverwaltung | CRUD für Nutzer | ⏳ Offen |
 
-### Release 4: Future
+### Release 5: Future
 
 | ID | Feature | Beschreibung |
 |----|---------|--------------|
