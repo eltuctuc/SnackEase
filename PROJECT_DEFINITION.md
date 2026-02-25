@@ -144,33 +144,107 @@
 SnackEase/
 ├── .claude/
 │   └── agents/
-│       ├── requirements-engineer.md
-│       ├── ux-expert.md
-│       ├── solution-architect.md
-│       └── qa-engineer.md
 ├── .agents/
-│   └── skills/                      # Installierte Skills
+│   └── skills/
 ├── docs/
-│   ├── PRD.md                       # Product Requirements Document
-│   ├── personas/                    # Persona-Details
-│   ├── requirements/                # Funktionale Anforderungen
-│   ├── user-flows/                  # Dokumentierte User Flows
-│   └── FEAT-X-feature-name.md       # Feature-Dokumentation (QA)
+│   ├── PRD.md
+│   ├── personas/
+│   ├── requirements/
+│   ├── user-flows/
+│   └── FEAT-X-feature-name.md
 ├── resources/
-│   ├── processes/                    # Vorlagen & Hilfsmittel für Feature-Erstellung
-│   ├── wireframes/                  # Wireframe-Entwürfe
-│   ├── high-fidelity/               # High-Fidelity-Designs
-│   ├── snack-ease-theme/            # Design-System (Tailwind, CSS)
-│   └── *.png                        # Moodboard, Screenflow
+│   ├── processes/
+│   ├── wireframes/
+│   ├── high-fidelity/
+│   └── snack-ease-theme/
 ├── features/
-│   ├── FEAT-1-user-authentication.md
-│   ├── FEAT-1-user-flow.md
-│   ├── FEAT-1-wireframes.md
-│   └── ...
 ├── bugs/
-│   └── FEAT-1-bugs.md              # QA Bug-Reports
-└── src/                             # Frontend Code
+└── src/                              # Vue.js Frontend
+    ├── components/                    # Vue-Komponenten
+    ├── views/                         # Seiten (Home, Admin)
+    ├── stores/                       # Pinia State Management
+    ├── lib/                          # Supabase Client, Typen
+    ├── router/                       # Vue Router
+    └── assets/                       # CSS, Bilder
 ```
+
+---
+
+## Technisches Setup
+
+### Architektur: Frontend-lastig mit minimierter Backend-Kommunikation
+
+**Prinzip:** Daten werden einmal geladen und im Frontend gecached. Nur für Persistierung (Speichern) wird Supabase verwendet.
+
+### Verwendete Technologien
+
+| Komponente | Technologie | Version |
+|------------|-------------|---------|
+| Frontend Framework | Vue.js | 3.4+ |
+| Build Tool | Vite | 5.x |
+| State Management | Pinia | 2.x |
+| Routing | Vue Router | 4.x |
+| Backend | Supabase | 2.x |
+| Styling | Tailwind CSS | 3.x |
+| Deployment | Vercel | - |
+
+### NPM Dependencies
+
+```json
+{
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.0",
+    "pinia": "^2.1.0",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "typescript": "~5.3.0",
+    "vite": "^5.0.0",
+    "vue-tsc": "^2.0.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0",
+    "tailwindcss-animate": "^1.0.0"
+  }
+}
+```
+
+### State Management (Pinia)
+
+- **userStore:** Verwaltet aktuellen Nutzer, User-Switching, Guthaben
+- **Daten werden bei Start geladen** und gecached
+- **Session Storage** für Persistenz des gewählten Nutzers
+
+### Backend-Kommunikation (Supabase)
+
+Minimale API-Calls:
+1. Beim Start: Alle Daten laden (Users, Products, Purchases)
+2. Bei Aktion: Nur bei Änderungen (Kauf, Reset, Update)
+
+**Keine WebSockets** - keine Echtzeit-Synchronisierung nötig für Demo.
+
+### Admin-System mit Differenziertem Reset
+
+Der Admin kann wählen, welche Daten zurückgesetzt werden:
+- [ ] Nur Guthaben
+- [ ] Nur Käufe/Historie
+- [ ] Nur Leaderboard
+- [ ] Alles
+
+### Setup-Schritte
+
+1. `npm install` ausführen
+2. `.env.example` nach `.env` kopieren und Supabase-URL/Key eintragen
+3. `npm run dev` für lokalen Entwicklungsserver
+4. Supabase-Datenbank mit Tabellen: `users`, `products`, `purchases`
+
+### Design-System
+
+- Tailwind CSS mit Custom Theme aus `resources/snack-ease-theme/`
+- CSS Variables für Farben (Light/Dark Mode)
+- Mulish Font via Google Fonts
 
 ---
 
@@ -206,3 +280,6 @@ SnackEase/
 - **2026-02-25:** Ordner umbenannt: `ressources/` → `resources/` (englisch)
 - **2026-02-25:** Ordner umbenannt: `abläufe/` → `processes/` (englisch)
 - **2026-02-25:** Verzeichnis-Struktur in Projektdefinition dokumentiert
+- **2026-02-25:** Technisches Setup: Vue.js + Pinia + Supabase + Vite
+- **2026-02-25:** FEAT-3 aktualisiert: Differenziertes Reset-System
+- **2026-02-25:** Frontend-lastige Architektur dokumentiert (minimale Backend-Calls)

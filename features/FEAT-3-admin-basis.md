@@ -16,18 +16,21 @@
 
 | ID | Story | Priorität |
 |----|-------|-----------|
-| US-1 | Als Admin möchte ich alle Demo-Daten zurücksetzen können | Must-Have |
-| US-2 | Als Admin möchte ich neue Demo-Nutzer anlegen können | Must-Have |
-| US-3 | Als Admin möchte ich Guthaben aller Nutzer zurücksetzen können | Should-Have |
+| US-1 | Als Admin möchte ich wählen können, welche Daten zurückgesetzt werden sollen | Must-Have |
+| US-2 | Als Admin möchte ich alle Demo-Daten zurücksetzen können | Must-Have |
+| US-3 | Als Admin möchte ich neue Demo-Nutzer anlegen können | Must-Have |
+| US-4 | Als Admin möchte ich nur Guthaben zurücksetzen ohne Käufe zu löschen | Should-Have |
+| US-5 | Als Admin möchte ich nur Käufe/Historie löschen ohne Guthaben | Should-Have |
 
 ## 3. Funktionale Anforderungen
 
 | ID | Anforderung | Priorität |
 |----|-------------|-----------|
 | REQ-1 | Admin-Bereich nur für dedizierten Admin-Nutzer zugänglich | Must-Have |
-| REQ-2 | System-Reset: Alle Käufe, Transaktionen zurücksetzen, Guthaben auf Startwert | Must-Have |
+| REQ-2 | Differenziertes Reset: Auswahl welche Daten zurückgesetzt werden | Must-Have |
 | REQ-3 | Neuen Demo-Nutzer anlegen (Name, Standort, Startguthaben) | Must-Have |
 | REQ-4 | Bestätigungsdialog vor Reset | Must-Have |
+| REQ-5 | Reset-Optionen als Checkboxen im Modal | Must-Have |
 
 ## 4. Admin-Zugang
 
@@ -40,20 +43,28 @@ Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächli
 
 ## 5. Funktionen
 
-### 5.1 System-Reset
+### 5.1 Differenziertes System-Reset
 
-**Funktion:** Setzt alle Demo-Daten zurück auf Startzustand.
+**Reset-Optionen (als Checkboxen):**
+| Option | Beschreibung | Standard |
+|--------|--------------|----------|
+| ☐ Nur Guthaben | Alle Guthaben auf 25€ zurücksetzen, Käufe bleiben | - |
+| ☐ Nur Käufe/Historie | Alle Käufe löschen, Guthaben bleibt | - |
+| ☐ Nur Leaderboard | Ranglisten auf 0 setzen | - |
+| ☐ Alles zurücksetzen | Guthaben + Käufe + Leaderboard | ✅ (checked) |
 
-**Zurücksetzen:**
-- Alle Käufe löschen
-- Transaktionshistorie löschen
-- Guthaben aller Nutzer auf初始-Wert zurücksetzen (25€)
-- Leaderboard zurücksetzen
-
-**Nicht zurücksetzen:**
+**Nie zurücksetzen:**
 - Produktkatalog
 - Admin-Account
-- Demo-Nutzer (außer wenn gewünscht)
+- Demo-Nutzer (Profile)
+
+**Reset-Bestätigungsflow:**
+1. Admin klickt "System-Reset"
+2. Modal öffnet sich mit Checkbox-Optionen
+3. Admin wählt was zurückgesetzt werden soll
+4. Admin muss "RESET" eintippen zur Bestätigung
+5. Reset wird durchgeführt
+6. Erfolgsmeldung
 
 ### 5.2 Demo-Nutzer anlegen
 
@@ -73,10 +84,12 @@ Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächli
 
 - [ ] Admin-Login mit admin/admin123 funktioniert
 - [ ] Admin-Bereich nur für eingeloggten Admin sichtbar
-- [ ] System-Reset zeigt Bestätigungsdialog
-- [ ] Nach Reset sind alle Werte auf Startzustand
+- [ ] Reset-Modal zeigt Checkbox-Optionen (Guthaben, Käufe, Leaderboard, Alles)
+- [ ] Admin kann einzelne oder mehrere Optionen auswählen
+- [ ] Bestätigungsdialog mit "RESET" Eingabe
+- [ ] Nur ausgewählte Daten werden zurückgesetzt
+- [ ] Produktkatalog bleibt unverändert
 - [ ] Neuer Demo-Nutzer kann angelegt werden
-- [ ] Guthaben-Reset funktioniert
 
 ## 7. UI/UX Vorgaben
 
@@ -100,3 +113,5 @@ Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächli
 | EC-3 | Neuer Nutzer mit bereits existierendem Namen | Fehlermeldung "Name bereits vergeben" |
 | EC-4 | Standort "Online" hinzufügen | Nur Nürnberg/Berlin erlaubt |
 | EC-5 | Admin löscht sich selbst | Mindestens ein Admin-Account muss existieren |
+| EC-6 | Keine Checkbox ausgewählt | Reset-Button deaktiviert |
+| EC-7 | Reset während Daten geladen werden | Warten bis Laden abgeschlossen |
