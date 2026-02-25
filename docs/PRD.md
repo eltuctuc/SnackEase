@@ -62,9 +62,14 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | CREDIT-04 | Guthabenverlauf | Transaktionshistorie | Should-Have |
 
 > **Offene Punkte:**
-> - Wann wird monatliches Guthaben gutgeschrieben? (1. des Monats?)
-> - Verfällt Restguthaben oder wird übertragen?
-> - Zahlungsanbieter für Aufladung?
+> - Wann wird monatliches Guthaben gutgeschrieben? → **Am 1. des Monats**
+> - Verfällt Restguthaben oder wird übertragen? → **Wird übertragen**
+> - Zahlungsanbieter für Aufladung? → **Simuliert (Demo)**
+
+> **Demo-Modus Besonderheiten:**
+> - Keine echte Registrierung - User Switcher zum Umschalten zwischen Demo-Nutzern
+> - Kein echtes Payment - Guthaben-Aufladung wird nur simuliert
+> - Admin kann System-Reset durchführen und Demo-Nutzer anlegen
 
 ### 3.3 Produktkatalog
 
@@ -149,61 +154,69 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## 6. Offene Punkte / ToDo
 
-- [ ] Guthaben-Logik (Zeitpunkt, Verfall)
-- [ ] Zahlungsanbieter für Aufladung
-- [ ] Standort-spezifische Bestände (Nürnberg/Berlin)
-- [ ] Admin-Funktionen (Produktverwaltung)
-- [ ] Offline-Fähigkeit
-- [ ] SSO-Integration (Microsoft/Google)
+- [x] Guthaben-Logik (Zeitpunkt: 1. des Monats, Übertrag: ja)
+- [x] Zahlungsanbieter für Aufladung (Simuliert für Demo)
+- [x] Leaderboard (Global sichtbar)
+- [ ] SSO-Integration (Microsoft/Google) - Future
 
 ---
 
 ## 7. Feature-Priorisierung
 
-### MVP (Phase 1)
+### Release 1: MVP (Demo-Modus)
 
-- [x] Registrierung & Anmeldung
-- [x] Guthaben anzeigen & aufladen
-- [x] Produktkatalog durchsuchen
-- [x] One-Touch Kauf
-- [x] Kaufhistorie
-- [x] Leaderboard
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| DEMO-1 | User Switcher | Zwischen Demo-Nutzern umschalten | ✅ Tech Spec erstellt |
+| DEMO-2 | Demo-Guthaben | 25€ Startguthaben, Simulation Aufladen | ✅ Tech Spec erstellt |
+| DEMO-3 | Admin-Basis | System-Reset, Demo-Nutzer anlegen | ✅ Tech Spec erstellt |
 
-### Should-Have (Phase 2)
+### Release 2: Kernfunktionen
 
-- [ ] Filter (vegan, glutenfrei)
-- [ ] Favoriten
-- [ ] Nährwert-Zusammenfassung
-- [ ] Warenkorb
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| PROD-01 | Produktübersicht | Alle verfügbaren Snacks/Getränke anzeigen | ✅ Tech Spec erstellt |
+| PROD-02 | Kategorien | Obst, Proteinriegel, Shakes, Schokoriegel, Nüsse | ✅ Tech Spec erstellt |
+| PROD-03 | Produktsuche | Nach Namen suchen | ✅ Tech Spec erstellt |
+| PROD-05 | Produktdetails | Logo, Name, Nährwerte, Inhaltsstoffe | ✅ Tech Spec erstellt |
+| BUY-01 | One-Touch Kauf | Mit einem Tap kaufen | ✅ Tech Spec erstellt |
+| BUY-03 | Kaufbestätigung | Erfolgreiche Transaktion anzeigen | ✅ Tech Spec erstellt |
+| BUY-05 | Kontaktlose Abwicklung | Kein Scan/Checkout nötig | ✅ Tech Spec erstellt |
+| LEADER-01 | Rangliste | Mitarbeiter vergleichen | ✅ Tech Spec erstellt |
+| LEADER-02 | Bonuspunkte | Gesunde Artikel = Extrapunkte | ✅ Tech Spec erstellt |
+| LEADER-03 | Kategorie "Meistens" | Wer hat am meisten konsumiert? | ✅ Tech Spec erstellt |
+| LEADER-04 | Kategorie "Gesündeste" | Wer isst am gesündesten? | ✅ Tech Spec erstellt |
 
-### Could-Have (Future)
+### Release 3: Erweiterungen
 
-- [ ] Ziele setzen
-- [ ] Gruppenbestellungen
-- [ ] Feedback-System
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| PROD-04 | Filter | Vegan, Glutenfrei, Allergene | ⏳ Offen |
+| PROD-06 | Favoriten | Produkte als Favorit speicheren | ⏳ Offen |
+| BUY-02 | Warenkorb | Mehrere Produkte auf einmal | ⏳ Offen |
+| BUY-04 | Kaufhistorie | Alle getätigten Käufe anzeigen | ⏳ Offen |
+| STAT-01 | Guthaben-Übersicht | Aktueller Kontostand | ⏳ Offen |
+| STAT-02 | Ausgaben-Statistik | Bereits ausgegebene Beträge | ⏳ Offen |
+| STAT-04 | Nährwert-Zusammenfassung | Zucker, Fett, Kalorien, Eiweiß | ⏳ Offen |
+| CREDIT-04 | Guthabenverlauf | Transaktionshistorie | ⏳ Offen |
+| ADMIN-01 | Produktverwaltung | CRUD für Produkte | ⏳ Offen |
+| ADMIN-02 | Nutzerverwaltung | CRUD für Nutzer | ⏳ Offen |
+
+### Release 4: Future
+
+| ID | Feature | Beschreibung |
+|----|---------|--------------|
+| AUTH-04 | Passwort vergessen | Password-Reset-Funktion |
+| STAT-05 | Ziele setzen | Schwellwerte für Produktarten |
+| SUP-01 | Kundensupport | Kontakt über App |
+| SUP-02 | Feedback | Verbesserungsvorschläge |
+| - | Gruppenbestellungen | Team-Bestellungen |
 
 ---
 
-## 7. Features (in Entwicklung)
+## 8. Features (in Entwicklung)
 
 > **Hinweis:** Die detaillierten Feature-Specs werden während der Entwicklung erstellt und sind in `features/FEAT-X.md` dokumentiert.
-
-### MVP Features (in Bearbeitung)
-
-| Feature-ID | Feature | Phase | Status |
-|------------|---------|-------|--------|
-| FEAT-1 | User Authentication | Requirements | ⏳ Offen |
-| FEAT-2 | Guthaben-System | Requirements | ⏳ Offen |
-| FEAT-3 | Produktkatalog | Requirements | ⏳ Offen |
-| FEAT-4 | One-Touch Kauf | Requirements | ⏳ Offen |
-| FEAT-5 | Leaderboard | Requirements | ⏳ Offen |
-
-### Weitere Features (geplant)
-
-- FEAT-6: Kaufhistorie
-- FEAT-7: Statistiken
-- FEAT-8: Profilverwaltung
-- ...
 
 **Jedes Feature durchläuft:**
 1. Requirements Engineer
@@ -218,7 +231,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 1.0
+- **Version:** 2.0
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
-- **Letzte Änderung:** 2026-02-24
+- **Letzte Änderung:** 2026-02-25
+- **Änderungen:** Demo-Modus integriert, User Switcher, simulierte Payments, Release 1-4 definiert
