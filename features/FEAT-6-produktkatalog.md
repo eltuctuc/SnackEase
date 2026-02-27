@@ -42,25 +42,27 @@
 | Nüsse | Orange | 🥜 |
 | Getränke | Cyan | 🧃 |
 
-## 5. Produkt-Datenmodell
+## 5. Produkt-Datenmodell (Neon/Drizzle)
 
-```
-products:
-- id: UUID
-- name: string
-- description: text
-- category: enum
-- price: decimal
-- image_url: string
-- calories: number
-- protein: number
-- sugar: number
-- fat: number
-- allergens: string[]
-- is_vegan: boolean
-- is_gluten_free: boolean
-- stock: number (vorrätig > 0)
-- created_at: timestamp
+```typescript
+// server/db/schema.ts
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category').notNull(), // 'obst' | 'proteinriegel' | 'shakes' | 'schokoriegel' | 'nuesse' | 'getraenke'
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text('image_url'),
+  calories: integer('calories'),
+  protein: integer('protein'),
+  sugar: integer('sugar'),
+  fat: integer('fat'),
+  allergens: text('allergens').array(),
+  isVegan: boolean('is_vegan').default(false),
+  isGlutenFree: boolean('is_gluten_free').default(false),
+  stock: integer('stock').default(10),
+  createdAt: timestamp('created_at').defaultNow(),
+});
 ```
 
 ## 6. Acceptance Criteria
@@ -81,7 +83,23 @@ products:
 
 ## 8. Technische Hinweise
 
-- Supabase Tabelle `products`
-- Produkte werden zur Demo seeded
-- Suche über PostgreSQL ILIKE
-- Kategorien als Enum oder Referenz-Tabelle
+- **Neon Database** mit Drizzle ORM
+- **Tabelle:** `products` (neu erstellen)
+- **Seed-Daten:** 15-20 Produkte für Demo
+- **Suche:** PostgreSQL ILIKE
+- **Kategorien:** Enum oder Text-Feld
+
+## 9. API Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/products` | GET | Alle Produkte (mit Filter) |
+| `/api/products/:id` | GET | Einzelnes Produkt |
+
+## 10. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Keine Produkte gefunden | "Keine Produkte verfügbar" Nachricht |
+| EC-2 | Produkt nicht vorrätig | Deaktiviert, nicht kaufbar |
+| EC-3 | Sehr langer Produktname | Textabschneiden mit "..." |

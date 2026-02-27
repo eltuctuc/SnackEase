@@ -7,35 +7,33 @@
 
 ## 1. Overview
 
-**Beschreibung:** Basis-Admin-Funktionen für die Demo: System-Reset und Demo-Nutzer anlegen.
+**Beschreibung:** Basis-Admin-Funktionen für die Demo: System-Reset und Demo-Nutzer-Verwaltung.
 
-**Ziel:** Ermöglicht dem Demo-Admin das Verwalten des Demo-Systems ohne komplexe Authentifizierung.
+**Ziel:** Ermöglicht dem Admin das Verwalten des Demo-Systems.
 
 ## 2. User Stories
 
 | ID | Story | Priorität |
 |----|-------|-----------|
 | US-1 | Als Admin möchte ich alle Demo-Daten zurücksetzen können | Must-Have |
-| US-2 | Als Admin möchte ich neue Demo-Nutzer anlegen können | Must-Have |
+| US-2 | Als Admin möchte ich neue Demo-Nutzer anlegen können | Should-Have |
 | US-3 | Als Admin möchte ich Guthaben aller Nutzer zurücksetzen können | Should-Have |
 
 ## 3. Funktionale Anforderungen
 
 | ID | Anforderung | Priorität |
 |----|-------------|-----------|
-| REQ-1 | Admin-Bereich nur für dedizierten Admin-Nutzer zugänglich | Must-Have |
-| REQ-2 | System-Reset: Alle Käufe, Transaktionen zurücksetzen, Guthaben auf Startwert | Must-Have |
-| REQ-3 | Neuen Demo-Nutzer anlegen (Name, Standort, Startguthaben) | Must-Have |
-| REQ-4 | Bestätigungsdialog vor Reset | Must-Have |
+| REQ-1 | Admin-Bereich nur für admin@demo.de zugänglich | Must-Have |
+| REQ-2 | System-Reset: Alle Käufe, Transaktionen zurücksetzen | Must-Have |
+| REQ-3 | Bestätigungsdialog vor Reset | Must-Have |
+| REQ-4 | Admin-Bereich erreichbar über /admin Route | Must-Have |
 
 ## 4. Admin-Zugang
 
-**Demo-Admin Account:**
-- Username: `admin`
-- Passwort: `admin123` (hardcoded für Demo)
+**Bestehender Admin Account (aus FEAT-1):**
+- Email: `admin@demo.de`
+- Passwort: `admin123`
 - Rolle: `admin`
-
-Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächlich administrative Aktionen durchführen.
 
 ## 5. Funktionen
 
@@ -46,46 +44,71 @@ Der Admin-Zugang unterscheidet sich vom User Switcher - hier kann man tatsächli
 **Zurücksetzen:**
 - Alle Käufe löschen
 - Transaktionshistorie löschen
-- Guthaben aller Nutzer auf初始-Wert zurücksetzen (25€)
+- Guthaben aller Nutzer auf Startwert zurücksetzen
 - Leaderboard zurücksetzen
 
 **Nicht zurücksetzen:**
 - Produktkatalog
 - Admin-Account
-- Demo-Nutzer (außer wenn gewünscht)
+- Demo-Nutzer-Accounts (nur Guthaben)
 
-### 5.2 Demo-Nutzer anlegen
+### 5.2 Guthaben-Reset (Optional)
+
+**Funktion:** Setzt Guthaben aller Nutzer auf Standard zurück, ohne Käufe zu löschen.
+
+### 5.3 Demo-Nutzer anlegen (Optional)
 
 **Felder:**
 | Feld | Typ | Pflicht | Standard |
 |------|-----|---------|----------|
 | Name | Text | Ja | - |
 | Standort | Select (Nürnberg/Berlin) | Ja | Nürnberg |
-| Startguthaben | Number (0-100) | Nein | 25€ |
-| Rolle | Select (Mitarbeiter/Admin) | Nein | Mitarbeiter |
-
-### 5.3 Guthaben-Reset
-
-**Funktion:** Setzt Guthaben aller Nutzer auf Standard (25€) zurück, ohne Käufe zu löschen.
+| Startguthaben | Number | Nein | 25€ |
 
 ## 6. Acceptance Criteria
 
-- [ ] Admin-Login mit admin/admin123 funktioniert
+- [ ] Admin-Login mit admin@demo.de / admin123 funktioniert
 - [ ] Admin-Bereich nur für eingeloggten Admin sichtbar
+- [ ] /admin Route schützt durch Middleware
 - [ ] System-Reset zeigt Bestätigungsdialog
 - [ ] Nach Reset sind alle Werte auf Startzustand
-- [ ] Neuer Demo-Nutzer kann angelegt werden
-- [ ] Guthaben-Reset funktioniert
+- [ ] Erfolgreiche Reset-Bestätigung
 
 ## 7. UI/UX Vorgaben
 
-- Admin-Bereich über eigenes Icon/Menü im Header erreichbar
+- Admin-Bereich über eigenes Icon/Menü im Header (nur für Admin sichtbar)
 - Reset-Funktion mit prominentem "Gefahr"-Hinweis (rot)
 - Bestätigungsmodal mit Eingabefeld zur Bestätigung ("RESET" eintippen)
 
 ## 8. Technische Hinweise
 
-- Tabelle `users` mit Feld `role` (admin/mitarbeiter)
-- Admin-Bereich in separater Route `/admin`
-- Reset über SQL-Function in Supabase
-- Authentifizierung via Supabase Auth (固定 admin credentials)
+- **Neon Database** mit Drizzle ORM
+- **Authentifizierung:** Cookie-basiert (bestehend aus FEAT-1)
+- **Admin-Route:** `/admin` mit Middleware-Schutz
+- **Reset:** SQL-Transaktion oder DB-Funktion
+
+### Middleware-Schutz (bestehend)
+```typescript
+// src/middleware/auth.global.ts - muss erweitert werden
+if (to.path.startsWith('/admin')) {
+  if (!authCookie.value) {
+    return navigateTo('/login')
+  }
+  // Admin-Rolle prüfen
+}
+```
+
+## 9. API Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/admin/reset` | POST | System-Reset durchführen |
+| `/api/admin/credits/reset` | POST | Nur Guthaben zurücksetzen |
+
+## 10. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Nicht-Admin versucht /admin | Redirect zu /dashboard |
+| EC-2 | Reset während aktiver Sitzung | Session bleibt, nur Daten zurückgesetzt |
+| EC-3 | DB-Fehler beim Reset | Rollback, Fehlermeldung |

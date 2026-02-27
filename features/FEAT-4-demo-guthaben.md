@@ -33,7 +33,17 @@
 | REQ-5 | Monatliche Gutschrift (simuliert) - 25€ am 1. des Monats | Must-Have |
 | REQ-6 | Nicht verbrauchtes Guthaben wird übertragen | Must-Have |
 
-## 4. Auflade-Optionen
+## 4. Startguthaben pro Persona
+
+| Persona | Startguthaben |
+|---------|---------------|
+| Nina Neuanfang | 25€ |
+| Maxine Snackliebhaber | 15€ |
+| Lucas Gesundheitsfan | 30€ |
+| Alex Gelegenheitskäufer | 20€ |
+| Tom Schnellkäufer | 10€ |
+
+## 5. Auflade-Optionen
 
 | Betrag | Beschreibung |
 |--------|--------------|
@@ -41,32 +51,85 @@
 | 25€ | Standard (entspricht Monatspauschale) |
 | 50€ | Große Aufladung |
 
-## 5. Simulation Logik
+## 6. Simulation Logik
 
-1. **Startguthaben:** Jeder Demo-Nutzer erhält initial 25€
-2. **Monatliche Gutschrift:** Am 1. des Monats werden 25€ gutgeschrieben (Demo: Button zum Simulieren)
-3. **Aufladen:** Button zeigt Ladebalken/-spinner, nach 2-3 Sekunden ist Guthaben verfügbar
+1. **Startguthaben:** Jeder Demo-Nutzer erhält initial Guthaben lt. Tabelle oben
+2. **Monatliche Gutschrift:** Button "Monatspauschale erhalten" (simuliert 1. des Monats)
+3. **Aufladen:** Button zeigt Ladebalken, nach 2-3 Sekunden ist Guthaben verfügbar
 4. **Übertrag:** Restguthaben bleibt erhalten (kein Verfall)
 
-## 6. Acceptance Criteria
+## 7. Acceptance Criteria
 
 - [ ] Guthaben wird auf Startseite angezeigt
 - [ ] Aufladen-Button öffnet Modal mit Betrag-Auswahl
 - [ ] Nach Klick auf Aufladen: Ladeanimation 2-3 Sekunden
 - [ ] Nach Ladezeit: Guthaben erhöht sich um gewählten Betrag
 - [ ] Guthaben-Abzug bei Kauf wird korrekt berechnet
-- [ ] Negatives Guthaben verhindert Kauf (genug Guthaben erforderlich)
+- [ ] Negatives Guthaben verhindert Kauf
 
-## 7. UI/UX Vorgaben
+## 8. UI/UX Vorgaben
 
-- Guthaben prominent auf Startseite (z.B. oberer Bereich oder Header)
+- Guthaben prominent auf Startseite (Header oder oberer Bereich)
 - Farbcodierung: Grün bei >20€, Gelb bei 10-20€, Rot bei <10€
 - Aufladen-Button deutlich sichtbar
 - Ladeanimation während Aufladung (Spinner oder Fortschrittsbalken)
 
-## 8. Technische Hinweise
+## 9. Technische Hinweise
 
-- Tabelle `user_credits` in Supabase
-- Guthaben wird bei jedem Kauf/Aufladen aktualisiert
-- Kein echter Payment-Provider
-- Transaktionshistorie für spätere Funktionen vorbereiten
+- **Neon Database** mit Drizzle ORM
+- **Neue Tabelle:** `user_credits` (oder Feld in `users`)
+- **Schema:**
+  ```typescript
+  // Option A: Separate Tabelle
+  userCredits = pgTable('user_credits', {
+    userId: integer('user_id').references(() => users.id),
+    balance: decimal('balance', { precision: 10, scale: 2 }).default('0'),
+    lastRechargedAt: timestamp('last_recharged_at'),
+  });
+  
+  // Option B: Feld in users-Tabelle
+  // balance: decimal('balance', { precision: 10, scale: 2 }).default('0')
+  ```
+- **Kein echter Payment-Provider** - nur Simulation
+- **Transaktionen:** In Neon DB speichern für Historie
+
+## 10. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Nicht genug Guthaben | Kauf verweigern, Fehlermeldung |
+| EC-2 | Guthaben = 0 | "Guthaben aufladen" Button prominent |
+| EC-3 | Mehrfaches Klicken auf Aufladen | Debounce, nur ein Request |
+| EC-4 | DB-Fehler beim Aufladen | Rollback, Fehlermeldung |
+
+---
+
+## 11. API Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/credits/balance` | GET | Aktuelles Guthaben holen |
+| `/api/credits/recharge` | POST | Guthaben aufladen |
+
+## 12. Datenmodell (Neon/Drizzle)
+
+```typescript
+// server/db/schema.ts - Erweiterung
+export const userCredits = pgTable('user_credits', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  balance: decimal('balance', { precision: 10, scale: 2 }).notNull().default('0'),
+  lastRechargedAt: timestamp('last_recharged_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const creditTransactions = pgTable('credit_transactions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  type: text('type').notNull(), // 'recharge' | 'purchase'
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+```

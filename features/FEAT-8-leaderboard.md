@@ -25,60 +25,90 @@
 | ID | Anforderung | Priorität |
 |----|-------------|-----------|
 | REQ-1 | Rangliste aller Nutzer (global sichtbar) | Must-Have |
-| REQ-2 | Tab-Umschaltung: "Meistens" vs "Gesündeste" | Must-Have |
-| REQ-3 | Anzeige: Rang, Name, Punkte, Standort | Must-Have |
+| REQ-2 | Tab-Umschaltung: "Meistgekauft" vs "Gesündeste" | Must-Have |
+| REQ-3 | Anzeige: Rang, Name, Punkte/Käufe, Standort | Must-Have |
 | REQ-4 | Eigener Rang ist hervorgehoben | Must-Have |
-| REQ-5 | Bonuspunkte für gesunde Produkte | Must-Have |
+| REQ-5 | Bonuspunkte für gesunde Produkte | Should-Have |
 
 ## 4. Leaderboard-Kategorien
 
-### 4.1 "Meistens" (Kaufvolumen)
+### 4.1 "Meistgekauft"
 - Sortiert nach Anzahl der Käufe
 - Zeigt: Rang, Name, gekaufte Artikel, Standort
 
-### 4.2 "Gesündeste" (Bonuspunkte)
+### 4.2 "Gesündeste" (Optional)
 - Sortiert nach Bonuspunkten
 - Zeigt: Rang, Name, Punkte, Standort
 - Bonus für: Obst (+3), Nüsse/Protein/Shakes (+2), Schoko/Getränke (+1)
 
-## 5. Datenmodell
+## 5. Datenmodell (Neon/Drizzle)
 
-```
-leaderboard_entries:
-- user_id: UUID
-- total_purchases: number
-- health_points: number
-- last_updated: timestamp
+### Leaderboard-Berechnung
+Das Leaderboard wird aus den `purchases` und `user_credits` Tabellen berechnet (keine separate Tabelle nötig):
 
-computed daily/weekly/monthly:
-- current_rank_purchases
-- current_rank_health
+```sql
+-- Meistgekauft
+SELECT 
+  u.id,
+  u.name,
+  u.location,
+  COUNT(p.id) as total_purchases
+FROM users u
+LEFT JOIN purchases p ON u.id = p.user_id
+WHERE u.role = 'mitarbeiter'
+GROUP BY u.id, u.name, u.location
+ORDER BY total_purchases DESC;
+
+-- Bonuspunkte (optional)
+SELECT 
+  u.id,
+  u.name,
+  u.location,
+  COALESCE(SUM(p.bonus_points), 0) as health_points
+FROM users u
+LEFT JOIN purchases p ON u.id = p.user_id
+WHERE u.role = 'mitarbeiter'
+GROUP BY u.id, u.name, u.location
+ORDER BY health_points DESC;
 ```
 
 ## 6. Acceptance Criteria
 
-- [ ] Leaderboard zeigt alle Nutzer (global)
-- [ ] Tab "Meistens" zeigt Rang nach Kaufanzahl
-- [ ] Tab "Gesündeste" zeigt Rang nach Bonuspunkten
+- [ ] Leaderboard zeigt alle Demo-Nutzer (global)
+- [ ] Tab "Meistgekauft" zeigt Rang nach Kaufanzahl
+- [ ] Tab "Gesündeste" zeigt Rang nach Bonuspunkten (optional)
 - [ ] Aktueller Nutzer ist visuell hervorgehoben
 - [ ] Rang wird nach jedem Kauf aktualisiert
-- [ ] Punkte werden bei Kauf automatisch berechnet
 
 ## 7. UI/UX Vorgaben
 
-- Tabs oben: "Meistens" | "Gesündeste"
+- Tabs oben: "Meistgekauft" | "Gesündeste"
 - Liste mit:
-  - Rang (1., 2., 3. mit Medaille/Trophy Icon)
+  - Rang (1., 2., 3. mit Trophy Icon)
   - Avatar/Initialen
   - Name
-  - Punkte/Artikel
+  - Käufe/Punkte
   - Standort
-- Eigener Eintrag farblich hervoben (z.B. blauer Hintergrund)
+- Eigener Eintrag farblich hervoben (blauer Hintergrund)
 - Top 3 besonders hervorgehoben (Gold, Silber, Bronze)
 
 ## 8. Technische Hinweise
 
-- Leaderboard-Daten werden bei jedem Kauf aktualisiert
-- Separate Rankings für Käufe und Bonuspunkte
-- Supabase Realtime für Live-Updates (optional)
-- Index auf `total_purchases` und `health_points`
+- **Neon Database** mit Drizzle ORM
+- **Berechnung:** Query-basiert (keine separate Tabelle)
+- **Indizes:** Für Performance auf user_id, created_at
+- **Realtime:** Optional (nicht MVP)
+
+## 9. API Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/leaderboard` | GET | Rangliste (beide Kategorien) |
+
+## 10. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Keine Käufe | Leere Liste mit Hinweis |
+| EC-2 | Gleiche Punktzahl | Alphabetisch sortieren |
+| EC-3 | Nutzer gelöscht | Aus Leaderboard entfernen |

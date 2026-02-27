@@ -20,7 +20,7 @@
 | US-1 | Als Nutzer möchte ich ein Produkt mit einem Klick kaufen | Must-Have |
 | US-2 | Als Nutzer möchte ich eine Bestätigung nach dem Kauf sehen | Must-Have |
 | US-3 | Als Nutzer möchte ich wissen, ob genug Guthaben vorhanden ist | Must-Have |
-| US-4 | Als Nutzer möchte ich eine Kaufbestätigung (digital) erhalten | Must-Have |
+| US-4 | Als Nutzer möchte ich Bonuspunkte für gesunde Produkte sammeln | Should-Have |
 
 ## 3. Funktionale Anforderungen
 
@@ -32,27 +32,25 @@
 | REQ-4 | Erfolgsbestätigung (Animation/Toast) | Must-Have |
 | REQ-5 | Automatischer Guthaben-Abzug | Must-Have |
 | REQ-6 | Kontaktlose Abwicklung (kein Scan/Checkout) | Must-Have |
-| REQ-7 | Bonuspunkte für gesunde Produkte | Must-Have |
+| REQ-7 | Bonuspunkte für gesunde Produkte | Should-Have |
 
 ## 4. Kaufprozess
 
 ```
 1. Nutzer klickt "Kaufen" auf Produkt
        ↓
-2. System prüft Guthaben
+2. System prüft Guthaben (API-Call)
        ↓
    [Wenn nicht genug] → Fehlermeldung → Abbruch
        ↓
-3. [Wenn genug] → Guthaben abziehen
+3. [Wenn genug] → Guthaben abziehen + Kauf speichern
        ↓
-4. Kauf in Historie speichern
+4. Erfolgsbestätigung anzeigen
        ↓
-5. Erfolgsbestätigung anzeigen
-       ↓
-6. Leaderboard aktualisieren
+5. Leaderboard aktualisieren (Bonus-Punkte)
 ```
 
-## 5. Bonuspunkte-Logik
+## 5. Bonuspunkte-Logik (Optional)
 
 | Produkttyp | Punkte |
 |------------|--------|
@@ -71,7 +69,6 @@
 - [ ] Nach Kauf: Bestätigungsanimation/-toast
 - [ ] Guthaben wird sofort aktualisiert
 - [ ] Kauf wird in Historie gespeichert
-- [ ] Leaderboard-Punkte werden aktualisiert
 
 ## 7. UI/UX Vorgaben
 
@@ -79,14 +76,43 @@
 - Bei Klick: Kurze Ladeanimation (0.5s)
 - Erfolgsbestätigung: Check-Animation + "Gekauft!" Text
 - Aktuelles Guthaben immer sichtbar
-- Farbiger Button (z.B. grün oder Markenfarbe)
+- Farbiger Button (grün oder Markenfarbe)
 
 ## 8. Technische Hinweise
 
-- Supabase Function für Transaktion (atomar):
+- **Neon Database** mit Drizzle ORM
+- **Atomare Transaktion:** 
   1. Guthaben prüfen
   2. Guthaben abziehen
   3. Kauf speichern
-  4. Punkte berechnen und zu Leaderboard hinzufügen
-- Row Level Security für Transaktionen
-- Transaktion in einer Function bündeln
+  4. Punkte berechnen (optional)
+- **Tabelle:** `purchases` (neu)
+
+### Datenmodell
+
+```typescript
+// server/db/schema.ts
+export const purchases = pgTable('purchases', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  bonusPoints: integer('bonus_points').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+```
+
+## 9. API Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/purchases` | POST | Kauf tätigen |
+
+## 10. Edge Cases
+
+| ID | Scenario | Erwartetes Verhalten |
+|----|---------|---------------------|
+| EC-1 | Nicht genug Guthaben | Fehlermeldung, Kauf abgebrochen |
+| EC-2 | Produkt nicht mehr vorrätig | "Nicht mehr verfügbar" |
+| EC-3 | Doppelter Klick | Debounce, nur ein Kauf |
+| EC-4 | DB-Fehler | Rollback, Guthaben nicht abgezogen |

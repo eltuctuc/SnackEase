@@ -98,6 +98,9 @@ git log --name-only -10 --format=""
 
 **Falls KEINE Bugs (Erfolgsfall):**
 - Dokumentiere in `features/FEAT-X.md` als QA-Section
+- **KRITISCH:** Erstelle zwingend `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
+
+### 5b. Feature-Dokumentation erstellen (IMMER!)
 - **ERSTELLE** `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
 
 ### 6. Feature-Dokumentation erstellen
@@ -366,7 +369,7 @@ Bevor du den Test-Report als "fertig" markierst, stelle sicher:
 - [ ] **Bugs ODER Erfolg dokumentiert:**
   - [ ] Falls Bugs: `./bugs/FEAT-X-bugs.md` erstellt
   - [ ] Falls Erfolg: QA-Section in `features/FEAT-X.md`
-- [ ] **Feature-Dokumentation erstellt:** `./docs/FEAT-X-feature-name.md` (nur bei Erfolg)
+- [ ] **Feature-Dokumentation erstellt:** `./docs/FEAT-X-feature-name.md` (IMMER bei Erfolg!)
 - [ ] **UX-Empfehlung abgegeben:** Beantwortet ob UX Expert nötig ist
 - [ ] **Regression Test:** Alte Features funktionieren noch
 - [ ] **Security Check:** Keine offensichtlichen Security-Issues
