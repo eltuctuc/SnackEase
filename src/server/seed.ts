@@ -3,7 +3,6 @@ import { users } from '~/server/db/schema';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
-  const passwordHashAdmin = await bcrypt.hash('admin123', 10);
   const passwordHashDemo = await bcrypt.hash('demo123', 10);
 
   await db.insert(users).values([
@@ -11,7 +10,7 @@ async function seed() {
       email: 'admin@demo.de',
       name: 'Admin',
       role: 'admin',
-      passwordHash: passwordHashAdmin,
+      passwordHash: passwordHashDemo,
     },
     {
       email: 'demo@demo.de',

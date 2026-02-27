@@ -18,28 +18,24 @@ const password = ref('demo123')
 const error = ref('')
 const isLoading = ref(false)
 const selectedPersona = ref<string | null>(null)
-const showAdminLogin = ref(false)
 
 const personas = [
-  { email: 'nina@demo.de', name: 'Nina Neuanfang', location: 'Nürnberg', initial: 'N' },
-  { email: 'maxine@demo.de', name: 'Maxine Snackliebhaber', location: 'Berlin', initial: 'M' },
-  { email: 'lucas@demo.de', name: 'Lucas Gesundheitsfan', location: 'Nürnberg', initial: 'L' },
-  { email: 'alex@demo.de', name: 'Alex Gelegenheitskäufer', location: 'Berlin', initial: 'A' },
-  { email: 'tom@demo.de', name: 'Tom Schnellkäufer', location: 'Nürnberg', initial: 'T' },
+  { email: 'nina@demo.de', name: 'Nina Neuanfang', location: 'Nürnberg', initial: 'N', guthaben: '25€' },
+  { email: 'maxine@demo.de', name: 'Maxine Snackliebhaber', location: 'Berlin', initial: 'M', guthaben: '15€' },
+  { email: 'lucas@demo.de', name: 'Lucas Gesundheitsfan', location: 'Nürnberg', initial: 'L', guthaben: '30€' },
+  { email: 'alex@demo.de', name: 'Alex Gelegenheitskäufer', location: 'Berlin', initial: 'A', guthaben: '20€' },
+  { email: 'tom@demo.de', name: 'Tom Schnellkäufer', location: 'Nürnberg', initial: 'T', guthaben: '10€' },
+  { email: 'admin@demo.de', name: 'Admin', location: 'Nürnberg', initial: 'A', guthaben: '-', isAdmin: true },
 ]
 
 const selectPersona = (personaEmail: string) => {
   selectedPersona.value = personaEmail
   email.value = personaEmail
-  showAdminLogin.value = false
   password.value = 'demo123'
-}
-
-const showAdmin = () => {
-  showAdminLogin.value = true
-  selectedPersona.value = null
-  email.value = 'admin@demo.de'
-  password.value = 'admin123'
+  nextTick(() => {
+    const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement
+    passwordInput?.focus()
+  })
 }
 
 const handleLogin = async () => {
@@ -74,7 +70,7 @@ const handleLogin = async () => {
       <h1 class="text-4xl font-bold text-primary mb-2">SnackEase</h1>
       <p class="text-muted-foreground mb-8">Willkommen zurück!</p>
       
-      <div v-if="!showAdminLogin" class="mb-6">
+      <div class="mb-6">
         <p class="text-sm font-medium mb-3">Wähle dein Profil:</p>
         <div class="grid grid-cols-2 gap-3">
           <button
@@ -98,29 +94,13 @@ const handleLogin = async () => {
                 <div class="text-xs text-muted-foreground">{{ persona.location }}</div>
               </div>
             </div>
+            <div v-if="persona.guthaben !== '-'" class="mt-2 text-xs font-medium text-primary">
+              Guthaben: {{ persona.guthaben }}
+            </div>
+            <div v-else class="mt-2 text-xs text-muted-foreground">
+              Administrator
+            </div>
           </button>
-        </div>
-        
-        <button
-          @click="showAdmin"
-          class="w-full mt-4 py-3 min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Als Admin anmelden"
-        >
-          Oder als Admin anmelden
-        </button>
-      </div>
-      
-      <div v-else class="mb-6">
-        <button
-          @click="showAdminLogin = false; selectedPersona = null; email = ''"
-          class="mb-4 py-3 min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Zurück zur Persona-Auswahl"
-        >
-          ← Zurück zur Persona-Auswahl
-        </button>
-        <div class="p-4 bg-card rounded-lg border">
-          <p class="font-medium">Admin-Anmeldung</p>
-          <p class="text-sm text-muted-foreground">admin@demo.de</p>
         </div>
       </div>
       
@@ -132,14 +112,15 @@ const handleLogin = async () => {
             placeholder="Email"
             required
             aria-label="E-Mail-Adresse"
-            :readonly="!!selectedPersona || showAdminLogin"
+            :readonly="!!selectedPersona"
             class="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            :class="{ 'bg-muted': !!selectedPersona || showAdminLogin }"
+            :class="{ 'bg-muted': !!selectedPersona }"
           />
         </div>
         
         <div>
           <input
+            ref="passwordInput"
             v-model="password"
             type="password"
             placeholder="Passwort"
@@ -161,8 +142,7 @@ const handleLogin = async () => {
       </form>
       
       <p class="text-sm text-muted-foreground mt-4">
-        <span v-if="showAdminLogin">Admin: admin@demo.de / admin123</span>
-        <span v-else>Demo-Passwort: demo123</span>
+        Demo-Passwort: demo123
       </p>
     </div>
   </div>

@@ -1,6 +1,6 @@
 # FEAT-3: User Switcher (Login Flow)
 
-## Status: 🔵 Planned
+## Status: 🟡 In Progress
 
 ## Abhängigkeiten
 - Benötigt: FEAT-1 (Admin Authentication)
@@ -47,13 +47,13 @@
 
 ## 5. Acceptance Criteria
 
-- [ ] User kann sich abmelden (Logout)
-- [ ] Nach Logout: Zurück zur Login-Seite
-- [ ] Login-Seite zeigt 6 Persona-Karten (5 Personas + Admin)
-- [ ] Jede Persona-Karte zeigt: Name, Standort, Guthaben
-- [ ] User kann Persona auswählen und sich anmelden
-- [ ] Admin-Login funktioniert über Admin-Persona-Karte
-- [ ] Passwort für alle: demo123
+- [x] User kann sich abmelden (Logout)
+- [x] Nach Logout: Zurück zur Login-Seite
+- [x] Login-Seite zeigt 6 Persona-Karten (5 Personas + Admin)
+- [x] Jede Persona-Karte zeigt: Name, Standort, Guthaben
+- [x] User kann Persona auswählen und sich anmelden
+- [x] Admin-Login funktioniert über Admin-Persona-Karte
+- [x] Passwort für alle: demo123
 
 ## 6. UI/UX Vorgaben
 
@@ -234,3 +234,24 @@ Bestehende `/login.vue` erweitern:
 Bestehenden Store nutzen (bereits implementiert in FEAT-1):
 - `user.role` unterscheidet admin vs mitarbeiter
 - `user.guthaben` für Guthaben-Anzeige auf Karten
+
+---
+
+## Implementation Notes
+
+**Status:** 🟡 In Progress
+**Developer:** Developer Agent
+**Datum:** 2026-02-27
+
+### Geänderte/Neue Dateien
+- `src/pages/login.vue` – Erweitert: 6 Persona-Karten, Guthaben-Anzeige, Admin als Karte, Passwort-Auto-Fokus
+- `src/server/seed.ts` – Admin Passwort auf demo123 geändert
+
+### Wichtige Entscheidungen
+- Admin als 6. Persona-Karte (statt separater Button) – Konsistentes UI
+- Guthaben hardcoded im Frontend – Einfache Lösung für Demo, kann später via DB erweitert werden
+- Passwort auto-focus nach Auswahl – UX-Verbesserung für schnellen Login
+
+### Bekannte Einschränkungen
+- Guthaben wird im Frontend hardcodiert (25€, 15€, 30€, 20€, 10€, -)
+- Für FEAT-4 (Demo Guthaben) muss DB-Schema erweitert werden
