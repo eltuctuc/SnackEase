@@ -8,6 +8,13 @@
       "when": 1772139849412,
       "tag": "0000_daily_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772211272086,
+      "tag": "0001_dizzy_caretaker",
+      "breakpoints": true
     }
   ]
 }
