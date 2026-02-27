@@ -1,6 +1,6 @@
 # FEAT-1: Admin Authentication
 
-## Status: 🟢 QA Complete
+## Status: ✅ Implementiert
 
 ## Abhängigkeiten
 - Benötigt: FEAT-0 (Splashscreen + SSR-Auth) - erster Screen und Auth-System

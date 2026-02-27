@@ -6,7 +6,7 @@
 |--------|---------|--------|-----------|
 | FEAT-0 | Splashscreen mit Preloading | ✅ Implementiert | Ursprüngliches Splashscreen-Feature |
 | FEAT-0 | SSR-Auth mit Pinia + Cookie | ✅ Implementiert | Erweiterung zu FEAT-0 (Bug-Fix) |
-| FEAT-1 | Admin Authentication | 📋 Geplant | |
+| FEAT-1 | Admin Authentication | ✅ Implementiert | Neon + Drizzle + Pinia Cookie |
 | FEAT-2 | Demo User Authentication | 📋 Geplant | |
 | FEAT-3 | User Switcher | 📋 Geplant | |
 | FEAT-4 | Demo Guthaben | 📋 Geplant | |

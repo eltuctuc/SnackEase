@@ -55,6 +55,11 @@ Siehe `features/sequence.md` für die aktuelle empfohlene Reihenfolge.
 - Testen und dokumentieren
 - Keine separaten Bug-Files mehr (Bugs in Feature-Docs dokumentieren)
 
+### 6. Nach dem Merge
+- `features/index.md` aktualisieren (Feature als implementiert markieren)
+- `features/sequence.md` aktualisieren (Reihenfolge anpassen)
+- Feature-Status in FEAT-X.md auf "✅ Implementiert" setzen
+
 ---
 
 ## Bugs
