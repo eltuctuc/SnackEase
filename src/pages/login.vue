@@ -20,18 +20,18 @@ const isLoading = ref(false)
 const selectedPersona = ref<string | null>(null)
 
 const personas = [
-  { email: 'nina@demo.de', name: 'Nina Neuanfang', location: 'Nürnberg', initial: 'N', guthaben: '25€' },
-  { email: 'maxine@demo.de', name: 'Maxine Snackliebhaber', location: 'Berlin', initial: 'M', guthaben: '15€' },
-  { email: 'lucas@demo.de', name: 'Lucas Gesundheitsfan', location: 'Nürnberg', initial: 'L', guthaben: '30€' },
-  { email: 'alex@demo.de', name: 'Alex Gelegenheitskäufer', location: 'Berlin', initial: 'A', guthaben: '20€' },
-  { email: 'tom@demo.de', name: 'Tom Schnellkäufer', location: 'Nürnberg', initial: 'T', guthaben: '10€' },
-  { email: 'admin@demo.de', name: 'Admin', location: 'Nürnberg', initial: 'A', guthaben: '-', isAdmin: true },
+  { email: 'nina@demo.de', name: 'Nina Neuanfang', location: 'Nürnberg', initial: 'N' },
+  { email: 'maxine@demo.de', name: 'Maxine Snackliebhaber', location: 'Berlin', initial: 'M' },
+  { email: 'lucas@demo.de', name: 'Lucas Gesundheitsfan', location: 'Nürnberg', initial: 'L' },
+  { email: 'alex@demo.de', name: 'Alex Gelegenheitskäufer', location: 'Berlin', initial: 'A' },
+  { email: 'tom@demo.de', name: 'Tom Schnellkäufer', location: 'Nürnberg', initial: 'T' },
+  { email: 'admin@demo.de', name: 'Admin', location: 'Nürnberg', initial: 'A', isAdmin: true },
 ]
 
 const selectPersona = (personaEmail: string) => {
   selectedPersona.value = personaEmail
   email.value = personaEmail
-  password.value = 'demo123'
+  password.value = personaEmail === 'admin@demo.de' ? 'admin123' : 'demo123'
   nextTick(() => {
     const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement
     passwordInput?.focus()
@@ -94,12 +94,6 @@ const handleLogin = async () => {
                 <div class="text-xs text-muted-foreground">{{ persona.location }}</div>
               </div>
             </div>
-            <div v-if="persona.guthaben !== '-'" class="mt-2 text-xs font-medium text-primary">
-              Guthaben: {{ persona.guthaben }}
-            </div>
-            <div v-else class="mt-2 text-xs text-muted-foreground">
-              Administrator
-            </div>
           </button>
         </div>
       </div>
@@ -142,7 +136,8 @@ const handleLogin = async () => {
       </form>
       
       <p class="text-sm text-muted-foreground mt-4">
-        Demo-Passwort: demo123
+        <span v-if="selectedPersona === 'admin@demo.de'">Admin-Passwort: admin123</span>
+        <span v-else>Demo-Passwort: demo123</span>
       </p>
     </div>
   </div>
