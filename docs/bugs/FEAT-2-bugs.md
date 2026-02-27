@@ -9,8 +9,9 @@
 ## Zusammenfassung
 
 - **Bugs gefunden:** 1
-- **Severity:** Medium
-- **Priority:** Should Fix
+- **Bugs behoben:** 1
+- **Verbleibende Bugs:** 0
+- **Status:** ✅ Alle Bugs behoben
 
 ---
 
@@ -37,7 +38,7 @@
 | AC | Status | Notes |
 |----|--------|-------|
 | AC-1: Login-Formular mit Email und Passwort | ✅ | |
-| AC-2: Nur @demo.de Domains erlaubt | ❌ | Domain-Validierung fehlt |
+| AC-2: Nur @demo.de Domains erlaubt | ✅ | Domain-Validierung implementiert |
 | AC-3: Falsches Passwort zeigt Fehlermeldung | ✅ | "Ungültige Anmeldedaten" |
 | AC-4: Nach Login: Weiterleitung zur Startseite | ✅ | |
 | AC-5: Eingeloggter User wird im Header angezeigt | ✅ | |
@@ -51,7 +52,7 @@
 | EC | Status | Notes |
 |----|--------|-------|
 | EC-1: Falsches Passwort | ✅ | "Ungültige Anmeldedaten" |
-| EC-2: Andere Domain als @demo.de | ❌ | Keine spezifische Fehlermeldung |
+| EC-2: Andere Domain als @demo.de | ✅ | "Nur demo.de Emails erlaubt" |
 | EC-3: User nicht vorhanden | ✅ | "Ungültige Anmeldedaten" |
 | EC-4: Session abgelaufen | ✅ | User wird ausgeloggt |
 | EC-5: Admin als mitarbeiter | ✅ | Funktioniert |
@@ -63,7 +64,7 @@
 - ✅ Input Validation funktioniert
 - ✅ Auth-Checks korrekt (Rolle wird geprüft)
 - ✅ Rate Limiting aktiv
-- ⚠️ Domain-Validierung fehlt (Medium Issue)
+- ✅ Domain-Validierung implementiert
 
 ---
 
@@ -77,4 +78,4 @@
 
 ## Recommendation
 
-BUG-1 sollte vor dem nächsten Sprint behoben werden, um die Domain-Einschränkung durchzusetzen.
+✅ **Alle Bugs behoben!** FEAT-2 ist bereit für Production.
