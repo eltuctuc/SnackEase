@@ -90,7 +90,35 @@ git log --name-only -10 --format=""
 - Auth/Authorization Checks
 - Rate Limiting
 
-### 5. Bugs dokumentieren ODER Erfolg dokumentieren
+### 5. Tech Stack & Code Quality Check
+
+**Nuxt 3 / Vue.js Konventionen:**
+- [ ] Nur Composition API mit `<script setup>` – kein Options API
+- [ ] Kein `any` in TypeScript – alle Props, Emits, Store-State getyped
+- [ ] `defineProps<{ ... }>()` und `defineEmits<{ ... }>()` korrekt verwendet
+- [ ] Kein direkter DOM-Zugriff – VueUse-Composables statt `window`/`document`
+- [ ] Nuxt Routing via `pages/` – kein manueller Vue Router
+
+**Pinia Stores:**
+- [ ] Setup-Syntax (`defineStore('name', () => { ... })`) – keine Options-Syntax
+- [ ] Kein direkter DB-Zugriff aus Stores – nur über `$fetch('/api/...')`
+- [ ] Kein `localStorage`/`sessionStorage` direkt – via VueUse `useStorage`
+
+**Neon + Drizzle ORM (Server-Side):**
+- [ ] DB-Client nur aus `src/server/db/index.ts` importiert
+- [ ] Drizzle für alle Queries – kein Raw SQL (außer dokumentiert begründet)
+- [ ] Alle Server Routes haben `try/catch` mit `createError()`
+- [ ] Auth-Checks in geschützten Routes via Cookie vorhanden
+- [ ] Keine DB-Calls in Vue-Komponenten oder Stores
+
+**Optimierungspotenzial identifizieren:**
+- [ ] N+1 Query Probleme (unnötig viele einzelne DB-Queries)
+- [ ] Fehlende Loading-States bei async Operationen
+- [ ] Unnötige reaktive Referenzen (`ref` statt `computed` wo sinnvoller)
+- [ ] Duplizierter Code der als Composable ausgelagert werden könnte
+- [ ] Fehlende Error-States in der UI (nur Loading, aber kein Fehlerfall)
+
+### 6. Bugs dokumentieren ODER Erfolg dokumentieren
 
 **Falls Bugs gefunden:**
 - Erstelle `./bugs/FEAT-X-bugs.md`
@@ -100,10 +128,7 @@ git log --name-only -10 --format=""
 - Dokumentiere in `features/FEAT-X.md` als QA-Section
 - **KRITISCH:** Erstelle zwingend `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
 
-### 5b. Feature-Dokumentation erstellen (IMMER!)
-- **ERSTELLE** `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
-
-### 6. Feature-Dokumentation erstellen
+### 7. Feature-Dokumentation erstellen (IMMER!)
 
 **WICHTIG:** Erstelle für jedes erfolgreich getestete Feature eine Dokumentation unter `./docs/FEAT-X-feature-name.md`
 
@@ -112,7 +137,7 @@ Diese Dokumentation soll für Außenstehende verständlich erklären:
 - Wie funktioniert es?
 - Wie sieht es aus?
 
-### 7. UX-Empfehlung abgeben
+### 8. UX-Empfehlung abgeben
 
 Beantworte diese Frage:
 > "Soll UX Expert nochmals prüfen, ob alle UX-Vorgaben eingehalten wurden?"
@@ -232,6 +257,19 @@ Fix BUG-1 (Critical) und BUG-2 (High) vor Deployment.
 - ✅ Input Validation funktioniert
 - ✅ Auth-Checks korrekt
 - ✅ Keine Security Issues gefunden
+
+### Tech Stack & Code Quality
+
+- ✅ Composition API + `<script setup>` verwendet
+- ✅ Kein `any` in TypeScript
+- ✅ Kein direkter DB-Zugriff aus Stores/Components
+- ✅ Drizzle ORM für alle Queries
+- ✅ Server Routes haben Error Handling
+- ✅ Keine N+1 Query Probleme
+
+### Optimierungen
+
+- [Liste gefundener Optimierungspotenziale oder "Keine gefunden"]
 
 ### Regression
 
@@ -373,6 +411,8 @@ Bevor du den Test-Report als "fertig" markierst, stelle sicher:
 - [ ] **UX-Empfehlung abgegeben:** Beantwortet ob UX Expert nötig ist
 - [ ] **Regression Test:** Alte Features funktionieren noch
 - [ ] **Security Check:** Keine offensichtlichen Security-Issues
+- [ ] **Tech Stack Compliance:** Vue Composition API, Drizzle, Server-Only DB-Zugriff geprüft
+- [ ] **Optimierungen dokumentiert:** Gefundene Optimierungspotenziale gelistet (oder "Keine")
 - [ ] **User Review:** User hat Test-Report gelesen
 - [ ] **Production-Ready Decision:** Clear Statement: Ready oder NOT Ready
 

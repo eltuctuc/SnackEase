@@ -87,12 +87,13 @@
 
 ## Phase 4: DEVELOPMENT
 
-**Agent:** General Agent / Developer
+**Agent:** `.claude/agents/developer.md`
 
 **Aufgaben:**
-- Backend umsetzen (Supabase)
-- Frontend umsetzen (Vue.js)
-- Feature als "In Progress" markieren
+- Backend umsetzen (Neon + Drizzle ORM, Nuxt Server API Routes)
+- Frontend umsetzen (Nuxt 3 / Vue.js)
+- Feature als "In Progress" → "Implemented" markieren
+- Implementation Notes in `features/FEAT-X.md` dokumentieren
 
 ---
 
@@ -159,33 +160,36 @@ SnackEase/
 │   └── snack-ease-theme/
 ├── features/
 ├── bugs/
-└── src/                              # Vue.js Frontend
+└── src/                              # Nuxt 3 App
     ├── components/                    # Vue-Komponenten
-    ├── views/                         # Seiten (Home, Admin)
-    ├── stores/                       # Pinia State Management
-    ├── lib/                          # Supabase Client, Typen
-    ├── router/                       # Vue Router
-    └── assets/                       # CSS, Bilder
+    ├── pages/                         # Nuxt Seiten (automatisches Routing)
+    ├── stores/                        # Pinia State Management
+    ├── middleware/                    # Nuxt Middleware (z.B. auth.global.ts)
+    ├── server/
+    │   ├── api/                       # Nuxt Server API Routes
+    │   └── db/                        # Neon Client + Drizzle Schema
+    └── assets/                        # CSS, Bilder
 ```
 
 ---
 
 ## Technisches Setup
 
-### Architektur: Frontend-lastig mit minimierter Backend-Kommunikation
+### Architektur: Nuxt 3 Full-Stack mit Server API Routes
 
-**Prinzip:** Daten werden einmal geladen und im Frontend gecached. Nur für Persistierung (Speichern) wird Supabase verwendet.
+**Prinzip:** Daten werden über Nuxt Server API Routes abgefragt. Die DB-Kommunikation findet ausschließlich serverseitig statt (kein direkter DB-Zugriff vom Browser). Nur bei Änderungen werden API-Calls gemacht.
 
 ### Verwendete Technologien
 
 | Komponente | Technologie | Version |
 |------------|-------------|---------|
-| Frontend Framework | Vue.js | 3.4+ |
-| Build Tool | Vite | 5.x |
-| State Management | Pinia | 2.x |
-| Routing | Vue Router | 4.x |
-| Backend | Supabase | 2.x |
-| Styling | Tailwind CSS | 3.x |
+| Framework | Nuxt 3 | 3.9+ |
+| Frontend | Vue.js (Composition API) | 3.4+ |
+| State Management | Pinia + @pinia/nuxt | 2.x |
+| Datenbank | Neon (PostgreSQL, serverless) | - |
+| ORM | Drizzle ORM | 0.29.x |
+| Auth | Custom (bcryptjs + HttpOnly Cookie) | - |
+| Styling | Tailwind CSS (@nuxtjs/tailwindcss) | 3.x |
 | Deployment | Vercel | - |
 
 ### NPM Dependencies
@@ -193,20 +197,20 @@ SnackEase/
 ```json
 {
   "dependencies": {
+    "nuxt": "^3.9.0",
     "vue": "^3.4.0",
-    "vue-router": "^4.2.0",
-    "pinia": "^2.1.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "pinia": "^2.1.7",
+    "@pinia/nuxt": "^0.5.1",
+    "@neondatabase/serverless": "^0.9.0",
+    "drizzle-orm": "^0.29.0",
+    "bcryptjs": "^3.0.3"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "typescript": "~5.3.0",
-    "vite": "^5.0.0",
-    "vue-tsc": "^2.0.0",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0",
-    "tailwindcss-animate": "^1.0.0"
+    "@nuxtjs/tailwindcss": "^6.10.0",
+    "drizzle-kit": "^0.21.0",
+    "typescript": "^5.3.0",
+    "vue-tsc": "^1.8.0",
+    "tailwindcss-animate": "^1.0.7"
   }
 }
 ```
@@ -217,11 +221,14 @@ SnackEase/
 - **Daten werden bei Start geladen** und gecached
 - **Session Storage** für Persistenz des gewählten Nutzers
 
-### Backend-Kommunikation (Supabase)
+### Backend-Kommunikation (Neon + Drizzle ORM)
 
-Minimale API-Calls:
-1. Beim Start: Alle Daten laden (Users, Products, Purchases)
-2. Bei Aktion: Nur bei Änderungen (Kauf, Reset, Update)
+Nuxt Server API Routes kommunizieren serverseitig mit Neon:
+1. Auth-Calls: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
+2. Bei Aktionen: Nur bei Datenänderungen (Kauf, Reset, Update)
+
+**DB-Schema:** `src/server/db/schema.ts` (Drizzle ORM)
+**DB-Client:** `src/server/db/index.ts` (Neon serverless + Drizzle)
 
 **Keine WebSockets** - keine Echtzeit-Synchronisierung nötig für Demo.
 
@@ -236,9 +243,9 @@ Der Admin kann wählen, welche Daten zurückgesetzt werden:
 ### Setup-Schritte
 
 1. `npm install` ausführen
-2. `.env.example` nach `.env` kopieren und Supabase-URL/Key eintragen
+2. `.env.example` nach `.env` kopieren und `DATABASE_URL` (Neon Connection String) eintragen
 3. `npm run dev` für lokalen Entwicklungsserver
-4. Supabase-Datenbank mit Tabellen: `users`, `products`, `purchases`
+4. Neon-Datenbank mit Tabellen: `users`, `snacks` (via Drizzle Schema in `src/server/db/schema.ts`)
 
 ### Design-System
 
@@ -252,9 +259,11 @@ Der Admin kann wählen, welche Daten zurückgesetzt werden:
 
 | Komponente | Technologie |
 |------------|-------------|
-| Frontend | Vue.js (Composition API) |
-| Backend | Supabase (PostgreSQL + Edge Functions) |
-| Auth | E-Mail/Passwort (Supabase Auth) |
+| Framework | Nuxt 3 (Full-Stack) |
+| Frontend | Vue.js (Composition API + `<script setup>`) |
+| Backend | Neon (PostgreSQL, serverless) + Drizzle ORM |
+| Server API | Nuxt Server Routes (`src/server/api/`) |
+| Auth | Custom (bcryptjs + HttpOnly Cookie) |
 | Deployment | Vercel |
 
 ---
@@ -283,3 +292,6 @@ Der Admin kann wählen, welche Daten zurückgesetzt werden:
 - **2026-02-25:** Technisches Setup: Vue.js + Pinia + Supabase + Vite
 - **2026-02-25:** FEAT-3 aktualisiert: Differenziertes Reset-System
 - **2026-02-25:** Frontend-lastige Architektur dokumentiert (minimale Backend-Calls)
+- **2026-02-27:** Developer Agent erstellt (`.claude/agents/developer.md`) für Phase 4
+- **2026-02-27:** Solution Architect Handoff-Befehle korrigiert (frontend-dev.md → developer.md)
+- **2026-02-27:** Tech-Stack korrigiert: Supabase → Neon + Drizzle ORM, Vue.js → Nuxt 3

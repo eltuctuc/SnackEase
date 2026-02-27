@@ -49,17 +49,19 @@
 
 - [ ] User kann sich abmelden (Logout)
 - [ ] Nach Logout: Zurück zur Login-Seite
-- [ ] Login-Seite zeigt Persona-Auswahl (5 Personas + Admin)
-- [ ] User kann sich als anderer Demo-User anmelden
-- [ ] User kann sich als Admin anmelden
-- [ ] Guthaben, Käufe sind user-spezifisch (bei FEAT-4/7)
+- [ ] Login-Seite zeigt 6 Persona-Karten (5 Personas + Admin)
+- [ ] Jede Persona-Karte zeigt: Name, Standort, Guthaben
+- [ ] User kann Persona auswählen und sich anmelden
+- [ ] Admin-Login funktioniert über Admin-Persona-Karte
+- [ ] Passwort für alle: demo123
 
 ## 6. UI/UX Vorgaben
 
-- Login-Seite mit Persona-Karten (Bild/Icon, Name, Standort)
+- Login-Seite mit Persona-Karten (6 Karten: 5 Personas + Admin)
+- Guthaben auf jeder Persona-Karte anzeigen
 - Aktuell ausgewählter User hervorgehoben
-- "Als Admin anmelden" als separate Option
 - Password-Feld für alle (einheitlich: demo123)
+- Kein separater Admin-Button - Admin als normale Karte
 
 ## 7. Technische Hinweise
 
@@ -71,7 +73,7 @@
 
 ## 8. Persona-Auswahl UI
 
-### Option A: Kartenansicht
+### Option A: Kartenansicht (RECOMMENDED)
 ```
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
 │   Nina      │ │   Maxine    │ │   Lucas     │
@@ -79,15 +81,13 @@
 │   25€       │ │   15€       │ │   30€       │
 └─────────────┘ └─────────────┘ └─────────────┘
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│    Alex     │ │    Tom      │ │    Admin    │
-│   Berlin    │ │   Nürnberg  │ │  (anders)  │
+│    Alex     │ │    Tom      │ │    Admin     │
+│   Berlin    │ │   Nürnberg  │ │  Nürnberg   │
 │    20€      │ │    10€      │ │             │
 └─────────────┘ └─────────────┘ └─────────────┘
 ```
-
-### Option B: Dropdown + Login-Formular
-- Dropdown mit allen Personas
-- Nach Auswahl: Email + Passwort
+- Admin wird als normale Persona-Karte angezeigt
+- Guthaben wird auf jeder Karte angezeigt
 
 ## 9. Edge Cases
 
@@ -100,17 +100,137 @@
 
 ---
 
-## 10. Implementierungs-Details
+## 11. UX Design
 
-### 10.1 Login-Seite erweitern
+### Personas-Abdeckung
+
+| Persona | Nutzen | Status |
+|---------|--------|--------|
+| Nina (Neuanfang) | ✓ Guthaben sofort sichtbar | ✅ |
+| Maxine (Stammkunde) | ✓ Schneller User-Wechsel | ✅ |
+| Lucas (Gesundheitsfan) | ✓ Guthaben-Übersicht | ✅ |
+| Tom (Schnellkäufer) | ✓ One-Click Persona-Auswahl | ✅ |
+| Alex (Gelegenheitskäufer) | ✓ Einfache Karten-Oberfläche | ✅ |
+
+### User Flow
+
+```
+1. User ist eingeloggt
+2. User klickt "Abmelden" (Logout)
+3. System löscht Session-Cookie
+4. User sieht Login-Seite mit 6 Persona-Karten
+5. User wählt Persona-Karte (klick/tap)
+6. Persona ist markiert (hervorgehoben)
+7. Passwort-Feld ist fokussiert
+8. User gibt "demo123" ein
+9. User klickt "Anmelden"
+10. System validiert Credentials
+11. Bei Erfolg: Weiterleitung zur App
+```
+
+**Alternativer Flow (Admin):**
+- Admin-Karte auswählen → admin@demo.de + demo123 → Dashboard
+
+### Accessibility (WCAG 2.1 AA)
+
+- ✅ Farbkontrast > 4.5:1 (Cards: Text auf Hintergrund)
+- ✅ Tastatur-Navigation: Tab-Reihenfolge logisch
+- ✅ Screen Reader: Alt-Texte für Persona-Bilder, ARIA-Labels
+- ✅ Touch-Targets: Mindestens 44x44px
+- ✅ Fokus-Indikator: Hervorhebung bei Auswahl
+- ✅ Fehlermeldungen: Klar und verständlich
+
+### UX Empfehlungen
+
+1. **Persona-Karten:** Visuell unterscheidbar (verschiedene Avatare/Icons)
+2. **Guthaben-Anzeige:** Prominent, gut lesbar
+3. **Auswahl-Zustand:** Deutliche Hervorhebung (Border, Shadow, Farbe)
+4. **Passwort-Feld:** Auto-Fokus nach Persona-Auswahl
+5. **Ladezeit:** Persona-Daten aus DB (cached für Performance)
+6. **Feedback:** Lade-Spinner bei Login-Versuch
+
+---
+
+## Tech-Design (Solution Architect)
+
+### Bestehende Architektur
+
+**Bereits vorhanden:**
+- Login-Seite: `/src/pages/login.vue` (5 Personas + Admin-Button)
+- Auth APIs: `login.post.ts`, `me.get.ts`, `logout.post.ts`
+- Users-Tabelle: `id, email, name, role, location`
+- Auth Store: Pinia Store mit Cookie-basierter Session
+
+### Component-Struktur
+
+```
+Login-Seite (/login.vue)
+├── "SnackEase" Titel
+├── Persona-Auswahl (6 Karten - Grid)
+│   ├── Nina (Nürnberg, Guthaben)
+│   ├── Maxine (Berlin, Guthaben)
+│   ├── Lucas (Nürnberg, Guthaben)
+│   ├── Alex (Berlin, Guthaben)
+│   ├── Tom (Nürnberg, Guthaben)
+│   └── Admin (Nürnberg)
+├── Passwort-Eingabe (auto-fokus nach Auswahl)
+├── "Anmelden" Button
+└── Passwort-Hinweis (demo123)
+```
+
+**Änderungen:**
+- Admin-Button entfernen → Admin als 6. Persona-Karte
+- Guthaben auf jeder Persona-Karte anzeigen
+- Passwort-Feld: Auto-Fokus nach Persona-Auswahl
+
+### Daten-Model
+
+**Persona-Daten (aus DB):**
+- Email (für Login)
+- Name (Anzeige)
+- Standort (Anzeige)
+- Rolle (admin/mitarbeiter)
+- Guthaben (Anzeige)
+
+**Woher?** Aus `users` Tabelle in Neon
+- Keine neue Tabelle nötig
+- Erweiterung der bestehenden Persona-Abfrage
+
+### Tech-Entscheidungen
+
+**Warum Persona-Karten statt Dropdown?**
+→ Bessere UX: Alle Optionen auf einen Blick sichtbar
+→ Schnellere Auswahl: Ein Klick statt zwei
+→ Guthaben direkt sichtbar
+
+**Warum Admin als Karte?**
+→ Konsistenz: Einheitliches UI für alle User-Typen
+→ Keine separaten Flows nötig
+
+**Warum kein neues Backend?**
+→ Bestehende Auth-APIs reichen aus
+→ Persona-Daten bereits in users-Tabelle
+
+### Dependencies
+
+**Keine neuen Packages nötig:**
+- Bestehende Tailwind CSS Klassen reichen
+- Bestehende Pinia Store wiederverwenden
+
+---
+
+## Handoff an Developer
+
+### 12.1 Login-Seite erweitern
 
 Bestehende `/login.vue` erweitern:
-1. Persona-Auswahl oberhalb des Login-Formulars
-2. Bei Persona-Auswahl: Email vorab ausfüllen
-3. Admin-Option separat
+1. Persona-Auswahl (6 Karten) oberhalb des Login-Formulars
+2. Admin als 6. Persona-Karte (nicht separater Button)
+3. Bei Persona-Auswahl: Email vorab ausfüllen + Passwort-Feld fokussieren
+4. Guthaben auf jeder Karte anzeigen
 
-### 10.2 Auth Store
+### 12.2 Auth Store
 
 Bestehenden Store nutzen (bereits implementiert in FEAT-1):
 - `user.role` unterscheidet admin vs mitarbeiter
-- Header zeigt entsprechend an
+- `user.guthaben` für Guthaben-Anzeige auf Karten

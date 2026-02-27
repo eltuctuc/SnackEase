@@ -60,7 +60,7 @@ ls features/ | grep "FEAT-"
 
 # 2. Welche Components/APIs existieren schon?
 git ls-files src/components/
-git ls-files src/app/api/
+git ls-files src/server/api/
 
 # 3. Letzte Feature-Entwicklungen sehen
 git log --oneline --grep="FEAT-" -10

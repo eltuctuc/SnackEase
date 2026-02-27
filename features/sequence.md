@@ -25,12 +25,11 @@
 ## Offene Features (nach Reihenfolge)
 
 1. FEAT-3: User Switcher
-2. FEAT-3: User Switcher
-3. FEAT-4: Demo Guthaben
-4. FEAT-6: Produktkatalog
-5. FEAT-7: One-Touch-Kauf
-6. FEAT-8: Leaderboard
-7. FEAT-5: Admin Basis
+2. FEAT-4: Demo Guthaben
+3. FEAT-6: Produktkatalog
+4. FEAT-7: One-Touch-Kauf
+5. FEAT-8: Leaderboard
+6. FEAT-5: Admin Basis
 
 ## Hinweis zu Abweichungen
 
