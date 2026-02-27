@@ -56,42 +56,63 @@
 
 | Phase | Dauer |
 |-------|-------|
-| Splashscreen + Preloading | 2-5 Sekunden (je nach Verbindungsgeschwindigkeit) |
-| Weiterleitung | Nach Abschluss des Preloadings |
+| Splashscreen + Preloading | Mindestens 3 Sekunden, bis alle Programmdaten geladen sind |
+| Weiterleitung | Nach Abschluss des Preloadings (min. 3 Sekunden) |
+
+**Hinweis:** Ähnlich wie bei klassischen Videospielen: Einmalige Ladezeit beim Start, dafür danach flüssige Navigation ohne Wartezeiten.
 
 ## 6. Flow
 
 ```
 App Start
     ↓
-Splashscreen + Preloading (Styles, Komponenten, Assets)
+Splashscreen wird angezeigt (min. 3 Sekunden)
     ↓
-[Progress Bar zeigt Fortschritt]
+[Progress Bar zeigt Ladefortschritt]
     ↓
-Alle Programmdaten geladen
+Alle Programmdaten vom Server geladen
     ↓
-Weiterleitung zu Login
+[Wenn min. 3 Sekunden vergangen UND alle Daten geladen]
+    ↓
+[Prüfe Login-Status]
+    ↓
+[Eingeloggt] → Dashboard
+[Nicht eingeloggt] → Login
     ↓
 [NACH LOGIN: User-Daten laden]
 ```
 
+**Wichtig:** Keine sensiblen Daten (Guthaben, Käufe, Leaderboard) werden beim Splashscreen geladen. Diese werden erst nach erfolgreichem Login geladen.
+
 ## 7. Acceptance Criteria
 
 - [ ] SnackEase Logo wird angezeigt
-- [ ] Ladeanimation / Progress Bar ist sichtbar
-- [ ] Alle Programmdaten werden vor dem Login geladen
-- [ ] Nach Abschluss: automatischer Übergang zum Login
+- [ ] Ladebalken (Progress Bar) ist sichtbar und zeigt Ladefortschritt
+- [ ] Alle Programmdaten (Styles, Komponenten, Layouts, Assets, Router) werden vor dem Login geladen
+- [ ] Splashscreen bleibt mindestens 3 Sekunden sichtbar
+- [ ] Nach min. 3 Sekunden UND geladenen Daten: automatische Weiterleitung
+- [ ] Nicht eingeloggte User → Login-Seite
+- [ ] Eingeloggte User → Dashboard
 - [ ] Slogan "Dein Weg zu Gesundheit und Genuss" sichtbar
-- [ ] User-Daten werden NICHT vor dem Login geladen
+- [ ] KEINE sensiblen Daten werden beim Splashscreen geladen (Guthaben, Käufe, Leaderboard)
 
 ## 8. Edge Cases
 
 | ID | Scenario | Erwartetes Verhalten |
 |----|---------|---------------------|
-| EC-1 | Langsames Netzwerk | Splashscreen bleibt bis alle Programmdaten geladen |
-| EC-2 | Bereits eingeloggter User | Direkt zum Dashboard (trotzdem Preloading) |
-| EC-3 | Preloading fehlgeschlagen | Fehlermeldung + Retry-Option |
-| EC-4 | Browser-Cache aktiv | Schnellerer Durchlauf möglich |
+| EC-1 | Langsames Netzwerk | Splashscreen bleibt bis alle Programmdaten geladen (min. 3 Sekunden) |
+| EC-2 | Bereits eingeloggter User | Splashscreen (min. 3 Sekunden + Preloading), dann automatisch zum Dashboard |
+| EC-3 | Preloading fehlgeschlagen | Fehlermeldung + Retry-Option, Splashscreen bleibt sichtbar |
+| EC-4 | Browser-Cache aktiv | Schnellerer Durchlauf möglich, aber min. 3 Sekunden Splashscreen |
+| EC-5 | Sehr schnelles Laden (< 3 Sek.) | Trotzdem min. 3 Sekunden Splashscreen anzeigen |
+
+## 9. Qualitätssicherung
+
+### Testfälle für langsame Internetverbindung
+- [ ] Splashscreen bleibt bei 56kbps-Verbindung稳定 (min. 3 Sekunden)
+- [ ] Progress Bar zeigt korrekten Fortschritt bei langsamer Verbindung
+- [ ] Nach 3 Sekunden UND geladenen Daten erfolgt Weiterleitung
+- [ ] Keine sensiblen Daten werden vor dem Login geladen
 
 ---
 
@@ -101,19 +122,66 @@ Weiterleitung zu Login
 
 ```
 App
-├── SplashscreenView
+├── SplashscreenView (Startseite /)
 │   ├── Logo (SnackEase)
-│   ├── Slogan
-│   └── ProgressBar (Ladefortschritt)
+│   ├── Slogan ("Dein Weg zu Gesundheit und Genuss")
+│   └── ProgressBar (Ladefortschritt 0-100%)
 │
-└── (Alle anderen Komponenten werden vorgeladen)
-    ├── LoginView
-    ├── HomeView
-    ├── AdminView
-    ├── ProductCard
-    ├── UserSwitcher
-    └── ...
+├── LoginView (/login)
+│   └── Login-Formular
+│
+├── DashboardView (/dashboard)
+│   └── Geschützter Bereich (nur nach Login)
+│
+└── Middleware
+    └── auth.ts (prüft Login-Status)
 ```
+
+### Routing (Nuxt Pages)
+
+| Route | Seite | Zugriff |
+|-------|-------|---------|
+| `/` | Splashscreen | Alle |
+| `/login` | Login | Alle |
+| `/dashboard` | Dashboard | Nur eingeloggt |
+| `/*` | 404 | Alle |
+
+**Weiterleitung-Logik:**
+- Nach Splashscreen: `/login` oder `/dashboard` (abhängig von Login-Status)
+
+### Login-Status Prüfung (LocalStorage)
+
+**Wo gespeichert:** `localStorage.setItem('isLoggedIn', 'true/false')`
+
+**Prüfung:**
+1. Beim Splashscreen: `localStorage.getItem('isLoggedIn')`
+2. Wenn `'true'` → Weiterleitung zu `/dashboard`
+3. Wenn `'false'` oder `null` → Weiterleitung zu `/login`
+
+**Hinweis:** LocalStorage ist client-seitig. Nach dem Login wird der Wert gesetzt.
+
+### Preloading-Methode
+
+**Ansatz: Explizites Vorladen aller Komponenten**
+
+In der Splashscreen-Komponente werden alleViews am Ende importiert:
+```javascript
+// Diese Imports laden die Komponenten in den Browser-Cache
+import('/pages/login.vue')
+import('/pages/dashboard.vue')
+// ... alle anderenViews
+```
+
+**Alternativ (empfohlen für Nuxt):**
+- Nuxt lädt Pages automatisch, wenn sie im Router definiert sind
+- Zusätzlich: `NuxtLink` zu allen Seiten versteckt im Splashscreen (Bootstrap-Pattern)
+- Oder: `defineAsyncComponent` fürLazy Loading nach Preload
+
+**Messung des Ladefortschritts:**
+1. Starte mit Progress = 0%
+2. Lade alle Komponenten sequentiell oder parallel
+3. Nach jedem geladenen Mod erhöul: Progresshen
+4. Bei 100%: Splashscreen beenden
 
 ### Daten-Model (Programmdaten)
 
@@ -129,12 +197,13 @@ App
 ### Tech-Entscheidungen
 
 **Warum Preloading beim Splashscreen?**
-→ Ähnlich wie bei Computerspielen: Einmal längere Ladezeit beim Start, dafür danach flüssige Navigation ohne Wartezeiten.
+→ Ähnlich wie bei klassischen Videospielen: Einmalige Ladezeit beim Start (min. 3 Sekunden), dafür danach flüssige Navigation ohne Wartezeiten.
 
 **Was wird NICHT vorgeladen (Lazy Loading nach Login):**
 - User-spezifische Daten (Guthaben, Käufe)
 - Leaderboard (wird bei Anzeige aktualisiert)
 - Produktdetails (werden bei Bedarf geladen)
+- Alle anderen sensiblen Daten
 
 **Vorteile:**
 - Schnelle Navigation zwischen Screens nach dem Login
@@ -145,8 +214,9 @@ App
 
 Benötigte Packages:
 - Keine neuen Packages nötig
-- Nutzt Vite's built-in Code Splitting
-- Vue's async components für Lazy Loading
+- Nutzt Nuxt's eingebautes Routing (`pages/`)
+- Nutzt LocalStorage (Browser API)
+- Vue's `defineAsyncComponent` für Fortschritts-Tracking (optional)
 
 ### Implementierungs-Hinweis
 
@@ -240,9 +310,9 @@ Automatisch zu Login weiterleiten
 ### Usability Empfehlungen
 
 1. **Progress Bar sollte immer sichtbar sein** - gibt User Feedback
-2. **Mindestens 2 Sekunden anzeigen** - zu schnelles Verschwinden wirkt unhöflich
+2. **Mindestens 3 Sekunden anzeigen** - zu schnelles Verschwinden wirkt unhöflich
 3. **Bei Fehlern: Klare Fehlermeldung** mit "Erneut versuchen" Button
-4. **Slogan nicht zu klein** - fir Corporate Identity wichtig
+4. **Slogan nicht zu klein** - für Corporate Identity wichtig
 
 ### Branding
 
