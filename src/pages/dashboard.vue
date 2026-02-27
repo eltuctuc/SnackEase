@@ -1,12 +1,9 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: 'auth'
-})
-
 const router = useRouter()
+const authStore = useAuthStore()
 
 const logout = () => {
-  localStorage.removeItem('isLoggedIn')
+  authStore.logout()
   router.push('/login')
 }
 </script>

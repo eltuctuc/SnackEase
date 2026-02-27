@@ -1,8 +1,13 @@
 <script setup lang="ts">
 const router = useRouter()
+const authStore = useAuthStore()
 
 const login = () => {
-  localStorage.setItem('isLoggedIn', 'true')
+  authStore.login({
+    id: 1,
+    email: 'demo@snackease.de',
+    name: 'Demo User',
+  })
   router.push('/dashboard')
 }
 </script>

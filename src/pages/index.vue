@@ -28,9 +28,9 @@ const loadModules = async () => {
 }
 
 const checkLoginAndRedirect = () => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn')
+  const authCookie = useCookie('auth_token')
   
-  if (isLoggedIn === 'true') {
+  if (authCookie.value) {
     router.push('/dashboard')
   } else {
     router.push('/login')
