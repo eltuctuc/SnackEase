@@ -1,6 +1,6 @@
 # FEAT-3: User Switcher (Login Flow)
 
-## Status: 🟡 In Progress
+## Status: 🟢 Implemented
 
 ## Abhängigkeiten
 - Benötigt: FEAT-1 (Admin Authentication)
