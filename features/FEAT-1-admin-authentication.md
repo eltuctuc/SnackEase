@@ -1,6 +1,6 @@
 # FEAT-1: Admin Authentication
 
-## Status: 🟢 Tech-Design Complete
+## Status: 🟢 QA Complete
 
 ## Abhängigkeiten
 - Benötigt: FEAT-0 (Splashscreen + SSR-Auth) - erster Screen und Auth-System
@@ -274,4 +274,57 @@ export default defineNuxtRouteMiddleware((to) => {
 
 ---
 
-## Status: 🟢 Tech-Design Complete
+## 11. QA-Ergebnisse
+
+### 11.1 API Tests
+
+| Test | Erwartet | Ergebnis | Status |
+|------|----------|----------|--------|
+| POST /api/auth/login (admin@demo.de / admin123) | success: true, role: admin | ✅ success: true, role: "admin" | 🟢 PASS |
+| POST /api/auth/login (falsches Passwort) | error: "Ungültige Anmeldedaten" | ✅ error: "Ungültige Anmeldedaten" | 🟢 PASS |
+| POST /api/auth/login (demo@demo.de) | error: "Zugriff verweigert" | ✅ error: "Zugriff verweigert" | 🟢 PASS |
+| POST /api/auth/logout | success: true | ✅ success: true | 🟢 PASS |
+
+### 11.2 UI/UX Tests
+
+| Test | Ergebnis | Status |
+|------|----------|--------|
+| Login-Formular mit Email/Passwort | ✅ Vorhanden auf /login | 🟢 PASS |
+| Dashboard ohne Auth → /login Redirect | ✅ 302 Redirect | 🟢 PASS |
+| Admin-Hinweis auf Login-Seite | ✅ "admin@demo.de / admin123" | 🟢 PASS |
+
+### 11.3 Edge Cases
+
+| ID | Scenario | Ergebnis | Status |
+|----|---------|----------|--------|
+| EC-1 | Falsches Passwort | ✅ "Ungültige Anmeldedaten" | 🟢 PASS |
+| EC-2 | Demo-User (demo@demo.de) | ✅ "Zugriff verweigert" | 🟢 PASS |
+| EC-3 | Session abgelaufen | ⚠️ Nicht getestet (manuelle Verifikation erforderlich) | ⚠️ PENDING |
+| EC-4 | Rate Limiting | ⚠️ Nicht in Implementierung gefunden | ⚠️ NOT IMPLEMENTED |
+
+### 11.4 Security Audit
+
+| Maßnahme | Implementiert | Status |
+|----------|---------------|--------|
+| Passwort-Hashing (bcrypt) | ✅ In login.post.ts | 🟢 PASS |
+| Rate Limiting (max 5 Versuche) | ❌ Nicht implementiert | 🔴 FAIL |
+| HttpOnly Cookie | ⚠️ Cookie existiert, aber nicht HttpOnly | ⚠️ PARTIAL |
+| CSRF | ✅ Nuxt built-in | 🟢 PASS |
+
+### 11.5 Offene Punkte
+
+1. **Rate Limiting (EC-4):** Nicht implementiert - Sicherheitsrisiko
+2. **HttpOnly Cookie:** Session-Cookie ist nicht HttpOnly - Sicherheitsrisiko
+3. **Middleware-Schutz:** Nur /dashboard geschützt, Feature-Spec erwähnt /admin
+
+### 11.6 QA-Status
+
+**Gesamt: 🟡 PARTIAL PASS**
+
+- Acceptance Criteria: 7/7 ✅
+- Edge Cases: 2/4 ✅ (2 nicht testbar/nicht implementiert)
+- Security: 2/4 ⚠️
+
+---
+
+## Status: 🟢 QA Complete

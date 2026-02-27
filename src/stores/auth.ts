@@ -1,7 +1,7 @@
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     isLoggedIn: false,
-    user: null as { id: number; email: string; name: string; role: string } | null,
+    user: null as { id: number; email: string; name: string | null; role: string } | null,
   }),
   
   getters: {
@@ -18,14 +18,7 @@ export const useAuthStore = defineStore('auth', {
         
         if (data.value?.success) {
           this.isLoggedIn = true
-          this.user = data.value.user
-          
-          const authCookie = useCookie('auth_token', {
-            maxAge: 60 * 60 * 24 * 7,
-            secure: true,
-            sameSite: 'lax',
-          })
-          authCookie.value = `user_${data.value.user.id}`
+          this.user = data.value.user as { id: number; email: string; name: string | null; role: string }
           
           return { success: true }
         }
@@ -36,12 +29,11 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    logout() {
+    async logout() {
       this.isLoggedIn = false
       this.user = null
       
-      const authCookie = useCookie('auth_token')
-      authCookie.value = null
+      await useFetch('/api/auth/logout', { method: 'POST' })
       
       navigateTo('/login')
     },
@@ -54,7 +46,7 @@ export const useAuthStore = defineStore('auth', {
         
         if (data.value?.user) {
           this.isLoggedIn = true
-          this.user = data.value.user
+          this.user = data.value.user as { id: number; email: string; name: string | null; role: string }
         }
       }
     },
