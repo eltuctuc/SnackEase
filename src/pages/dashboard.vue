@@ -6,8 +6,12 @@ const logout = () => {
   authStore.logout()
 }
 
-onMounted(() => {
-  authStore.initFromCookie()
+onMounted(async () => {
+  await authStore.initFromCookie()
+  
+  if (!authStore.user) {
+    router.push('/login')
+  }
 })
 </script>
 
@@ -18,7 +22,11 @@ onMounted(() => {
         <div>
           <h1 class="text-3xl font-bold text-primary">Dashboard</h1>
           <p v-if="authStore.user" class="text-sm text-muted-foreground mt-1">
-            Angemeldet als {{ authStore.user.name }} ({{ authStore.user.role }})
+            Angemeldet als {{ authStore.user.name }} 
+            <span v-if="authStore.user.location">({{ authStore.user.location }})</span>
+            <span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
+              {{ authStore.user.role }}
+            </span>
           </p>
         </div>
         

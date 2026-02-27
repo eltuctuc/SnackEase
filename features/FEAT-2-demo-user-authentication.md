@@ -1,6 +1,6 @@
 # FEAT-2: Demo User Authentication
 
-## Status: 🔵 Planned
+## Status: ✅ Implementiert
 
 ## Abhängigkeiten
 - Benötigt: FEAT-1 (Admin Authentication) - Login-System existiert bereits
@@ -43,13 +43,13 @@
 
 ## 5. Acceptance Criteria
 
-- [ ] Login-Formular mit Email und Passwort
-- [ ] Nur @demo.de Domains erlaubt
-- [ ] Falsches Passwort zeigt Fehlermeldung
-- [ ] Nach Login: Weiterleitung zur Startseite
-- [ ] Eingeloggter User wird im Header angezeigt
-- [ ] Logout-Funktion vorhanden
-- [ ] Nach Abmeldung: Zurück zur Login-Seite
+- [x] Login-Formular mit Email und Passwort
+- [x] Nur @demo.de Domains erlaubt (VALIDIERUNG HINZUGEFÜGT)
+- [x] Falsches Passwort zeigt Fehlermeldung
+- [x] Nach Login: Weiterleitung zur Startseite
+- [x] Eingeloggter User wird im Header angezeigt
+- [x] Logout-Funktion vorhanden
+- [x] Nach Abmeldung: Zurück zur Login-Seite
 
 ## 6. UI/UX Vorgaben
 
@@ -198,46 +198,90 @@ Login-Seite → "Als Admin anmelden" → admin@demo.de + admin123 → /admin
 
 ---
 
-## 10. Implementierungs-Details
+## 11. Tech-Design (Solution Architect)
 
-### 10.1 Login.post.ts Erweiterung
+### 11.1 Bestehende Architektur
 
-Der bestehende `/api/auth/login` muss erweitert werden:
+**Vorhandene Komponenten:**
+- `/pages/login.vue` - Login-Seite (Admin-Login)
+- `/pages/dashboard.vue` - Geschützte Seite
+- `/server/api/auth/login.post.ts` - Login-Endpoint
+- `/server/api/auth/logout.post.ts` - Logout-Endpoint
+- `/server/api/auth/me.get.ts` - Aktueller User
+- `/stores/auth.ts` - Pinia Auth Store
+- `/server/db/schema.ts` - users Tabelle
 
-```typescript
-// Bestehende Admin-Logik (FEAT-1)
-if (user[0].role !== 'admin') {
-  return { success: false, error: 'Zugriff verweigert' };
-}
+### 11.2 Component-Struktur
 
-// NEU: Auch mitarbeiter erlauben
-if (user[0].role !== 'admin' && user[0].role !== 'mitarbeiter') {
-  return { success: false, error: 'Zugriff verweigert' };
-}
+```
+Login-Seite (login.vue) - ERWEITERT
+├── SnackEase Header
+├── Persona-Auswahl-Bereich (NEU)
+│   ├── Persona-Karte: Nina (Nürnberg, 25€)
+│   ├── Persona-Karte: Maxine (Berlin, 15€)
+│   ├── Persona-Karte: Lucas (Nürnberg, 30€)
+│   ├── Persona-Karte: Alex (Berlin, 20€)
+│   ├── Persona-Karte: Tom (Nürnberg, 10€)
+│   └── "Als Admin anmelden" Button
+├── Passwort-Eingabefeld
+├── "Anmelden" Button
+└── Demo-Passwort Hinweis
+
+Header (AppHeader) - ERWEITERT
+├── Logo
+├── User-Info (Name + Standort) - NEU
+└── Logout Button
 ```
 
-### 10.2 Seed-Daten
+### 11.3 Daten-Model
 
-Alle 5 Personas in `users` Tabelle einfügen:
+**users Tabelle (existiert bereits):**
+- id: Eindeutige ID
+- email: Demo-Email (@demo.de)
+- name: Vollständiger Name
+- role: "mitarbeiter" (neu) oder "admin"
+- passwordHash: bcrypt Hash von "demo123"
+- location: Standort (Nürnberg/Berlin) - NEU
 
-```typescript
-// Seed-Beispiel (bcrypt hash von "demo123")
-const demoUsers = [
-  { email: 'nina@demo.de', name: 'Nina Neuanfang', role: 'mitarbeiter', location: 'Nürnberg' },
-  { email: 'maxine@demo.de', name: 'Maxine Snackliebhaber', role: 'mitarbeiter', location: 'Berlin' },
-  { email: 'lucas@demo.de', name: 'Lucas Gesundheitsfan', role: 'mitarbeiter', location: 'Nürnberg' },
-  { email: 'alex@demo.de', name: 'Alex Gelegenheitskäufer', role: 'mitarbeiter', location: 'Berlin' },
-  { email: 'tom@demo.de', name: 'Tom Schnellkäufer', role: 'mitarbeiter', location: 'Nürnberg' },
-];
-```
+**Was neu hinzukommt:**
+- location-Feld in users Tabelle
+- 5 neue Demo-User Datensätze
 
-### 10.3 Auth Store Anpassungen
+### 11.4 Tech-Entscheidungen
 
-Bestehenden Store erweitern für Demo-User:
+**Warum keine neue Tabelle?**
+→ users Tabelle existiert bereits aus FEAT-1, wir erweitern sie nur
 
-```typescript
-getters: {
-  isAdmin: (state) => state.user?.role === 'admin',
-  isMitarbeiter: (state) => state.user?.role === 'mitarbeiter',
-}
-```
+**Warum bcrypt für Passwort?**
+→ Bereits in FEAT-1 verwendet, gleiche Sicherheitsstandards
+
+**Warum Cookie-basierte Session?**
+→ Funktioniert bereits aus FEAT-0/1, SSR-fähig
+
+### 11.5 API Änderungen
+
+| Endpoint | Änderung |
+|----------|----------|
+| POST /api/auth/login | Erweitern: auch mitarbeiter-Rolle erlauben |
+| GET /api/auth/me | Bereits vorhanden, funktioniert für alle Rollen |
+| POST /api/auth/logout | Bereits vorhanden, keine Änderung nötig |
+
+### 11.6 Dependencies
+
+**Keine neuen Packages nötig:**
+- bcryptjs: Bereits installiert
+- Drizzle ORM: Bereits installiert
+- Pinia: Bereits installiert
+
+---
+
+## 12. Checklist für Implementierung
+
+- [x] Backend: login.post.ts erweitern (mitarbeiter erlauben)
+- [x] Backend: location-Feld zu users Tabelle hinzufügen
+- [x] Backend: Seed-Daten für 5 Personas erstellen
+- [x] Frontend: login.vue mit Persona-Auswahl erweitern
+- [x] Frontend: dashboard.vue mit User-Info erweitern
+- [x] Frontend: Auth Store mit isMitarbeiterGetter erweitern
+- [x] Test: Login als Demo-User
+- [x] Test: Logout und zurück zur Login-Seite

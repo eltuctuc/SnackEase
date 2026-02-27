@@ -1,29 +1,30 @@
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     isLoggedIn: false,
-    user: null as { id: number; email: string; name: string | null; role: string } | null,
+    user: null as { id: number; email: string; name: string | null; role: string; location: string | null } | null,
   }),
   
   getters: {
     isAdmin: (state) => state.user?.role === 'admin',
+    isMitarbeiter: (state) => state.user?.role === 'mitarbeiter',
   },
   
   actions: {
     async login(credentials: { email: string; password: string }) {
       try {
-        const { data } = await useFetch('/api/auth/login', {
+        const data = await $fetch<{ success: boolean; user: { id: number; email: string; name: string | null; role: string; location: string | null } | null; error?: string }>('/api/auth/login', {
           method: 'POST',
           body: credentials,
         })
         
-        if (data.value?.success) {
+        if (data.success) {
           this.isLoggedIn = true
-          this.user = data.value.user as { id: number; email: string; name: string | null; role: string }
+          this.user = data.user as { id: number; email: string; name: string | null; role: string; location: string | null }
           
           return { success: true }
         }
         
-        return { success: false, error: data.value?.error || 'Anmeldung fehlgeschlagen' }
+        return { success: false, error: data.error || 'Anmeldung fehlgeschlagen' }
       } catch (error) {
         return { success: false, error: 'Ein Fehler ist aufgetreten' }
       }
@@ -33,7 +34,7 @@ export const useAuthStore = defineStore('auth', {
       this.isLoggedIn = false
       this.user = null
       
-      await useFetch('/api/auth/logout', { method: 'POST' })
+      await $fetch('/api/auth/logout', { method: 'POST' })
       
       navigateTo('/login')
     },
@@ -42,11 +43,15 @@ export const useAuthStore = defineStore('auth', {
       const authCookie = useCookie('auth_token')
       
       if (authCookie.value) {
-        const { data } = await useFetch('/api/auth/me')
-        
-        if (data.value?.user) {
-          this.isLoggedIn = true
-          this.user = data.value.user as { id: number; email: string; name: string | null; role: string }
+        try {
+          const data = await $fetch<{ success: boolean; user: { id: number; email: string; name: string | null; role: string; location: string | null } | null }>('/api/auth/me')
+          
+          if (data?.user) {
+            this.isLoggedIn = true
+            this.user = data.user as { id: number; email: string; name: string | null; role: string; location: string | null }
+          }
+        } catch (e) {
+          // Silent fail - user stays logged out
         }
       }
     },

@@ -8,6 +8,11 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
   ],
 
+  routeRules: {
+    '/login': { ssr: false },
+    '/dashboard': { ssr: false },
+  },
+
   css: ['~/assets/css/main.css'],
 
   app: {

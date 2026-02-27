@@ -44,13 +44,17 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: 'Email und Passwort erforderlich' };
   }
 
-  const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!email.toLowerCase().endsWith('@demo.de')) {
+    return { success: false, error: 'Nur demo.de Emails erlaubt' };
+  }
+
+  const user = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
 
   if (!user[0]) {
     return { success: false, error: 'Ungültige Anmeldedaten' };
   }
 
-  if (user[0].role !== 'admin') {
+  if (user[0].role !== 'admin' && user[0].role !== 'mitarbeiter') {
     return { success: false, error: 'Zugriff verweigert' };
   }
 
@@ -61,8 +65,8 @@ export default defineEventHandler(async (event) => {
   }
 
   setCookie(event, 'auth_token', `user_${user[0].id}`, {
-    httpOnly: true,
-    secure: true,
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7,
     path: '/',
@@ -75,6 +79,7 @@ export default defineEventHandler(async (event) => {
       email: user[0].email,
       name: user[0].name,
       role: user[0].role,
+      location: user[0].location,
     },
   };
 });

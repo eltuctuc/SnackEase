@@ -202,11 +202,10 @@ Erst wenn ALLE Checkboxen ✅ sind → Frage User nach Approval für Frontend De
 ## Nach User-Approval
 
 Sage dem User:
-
 > "Perfekt! Das Design ist ready. Um jetzt die Implementierung zu starten, nutze bitte:
 >
 > ```
-> Lies .claude/agents/frontend-dev.md und implementiere /features/PROJ-X-feature-name.md
+> Implementiere /features/PROJ-X-feature-name.md
 > ```
 >
 > Der Frontend Developer wird dann die UI bauen basierend auf diesem Design."
