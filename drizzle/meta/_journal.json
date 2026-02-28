@@ -15,6 +15,13 @@
       "when": 1772211272086,
       "tag": "0001_dizzy_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772266164383,
+      "tag": "0002_yellow_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

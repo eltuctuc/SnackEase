@@ -182,6 +182,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
+| FEAT-4 | Demo-Guthaben | Guthaben anzeigen, aufladen, simulierter Kauf | ✅ Implementiert |
+| FEAT-9 | Admin ohne Guthaben | Admin sieht kein Guthaben | 📋 Geplant |
 | CREDIT-01 | Monatliches Guthaben | 25€ pro Monat (simuliert) | ⏳ Offen |
 | CREDIT-02 | Guthaben anzeigen | Aktuelles Guthaben auf Startseite | ⏳ Offen |
 | CREDIT-03 | Guthaben aufladen | Simulation Aufladen (10/25/50€) | ⏳ Offen |
