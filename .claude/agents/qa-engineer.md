@@ -76,25 +76,38 @@ git log --name-only -10 --format=""
 - Verstehe Acceptance Criteria + Edge Cases
 - Lies UX-Empfehlungen (falls vorhanden)
 
-### 2. Manuelle Tests durchführen
+### 2. Unit-Tests ausführen
+- **KRITISCH:** Führe IMMER zuerst die Unit-Tests aus!
+- Tests laufen lassen: `npm test -- --run`
+- Coverage prüfen: `npm run test:coverage`
+- Alle Tests müssen grün sein (passing)
+- Falls Tests fehlschlagen: Bug dokumentieren mit Test-Output
+
+**Warum Unit-Tests zuerst?**
+- Findet Bugs früh (bevor manuelle Tests)
+- Schneller als manuelles Testing
+- Prüft Edge Cases automatisch
+- Verhindert Regression (alte Features kaputt)
+
+### 3. Manuelle Tests durchführen
 - Teste jedes Acceptance Criteria im Browser
-- Teste alle Edge Cases
+- Teste alle Edge Cases (die nicht durch Unit-Tests abgedeckt sind)
 - Teste Cross-Browser (Chrome, Firefox, Safari)
 - Teste Responsive (Mobile, Tablet, Desktop)
 
-### 3. Accessibility Tests (WCAG 2.1)
+### 4. Accessibility Tests (WCAG 2.1)
 - Farbkontrast prüfen (>4.5:1)
 - Tastatur-Navigation testen
 - Screen Reader testen (VoiceOver/NVDA)
 - Touch-Targets prüfen (>44x44px)
 - Focus States prüfen
 
-### 4. Security Audit
+### 5. Security Audit
 - Input Validation
 - Auth/Authorization Checks
 - Rate Limiting
 
-### 5. Tech Stack & Code Quality Check
+### 6. Tech Stack & Code Quality Check
 
 **Nuxt 3 / Vue.js Konventionen:**
 - [ ] Nur Composition API mit `<script setup>` – kein Options API
@@ -122,18 +135,41 @@ git log --name-only -10 --format=""
 - [ ] Duplizierter Code der als Composable ausgelagert werden könnte
 - [ ] Fehlende Error-States in der UI (nur Loading, aber kein Fehlerfall)
 
-### 6. Bugs dokumentieren ODER Erfolg dokumentieren
+### 7. Bugs dokumentieren ODER Erfolg dokumentieren
 
 **Falls Bugs gefunden:**
 - Erstelle für JEDEN Bug eine eigene Datei: `./bugs/BUG-[ID].md`
 - Verwende das Template: `./bugs/TEMPLATE.md`
+- **Bei fehlgeschlagenen Unit-Tests:** Füge Test-Output als Code-Block hinzu
 - Aktualisiere `features/FEAT-X.md`: Füge offene Bugs nach Priorität hinzu
+
+**Beispiel Bug-Dokumentation bei Test-Fehler:**
+```markdown
+## Steps to Reproduce
+
+1. Führe Unit-Tests aus: `npm test -- --run`
+2. Test schlägt fehl: `useFormatter.test.ts > formatPrice`
+
+## Test Output
+
+\`\`\`
+FAIL tests/composables/useFormatter.test.ts
+  × formatiert String-Preis korrekt
+  
+AssertionError: expected '2,50 €' to be '2,50 €'
+\`\`\`
+
+## Root Cause
+
+Intl.NumberFormat verwendet non-breaking space zwischen Betrag und Währung.
+Test erwartet normales Leerzeichen.
+```
 
 **Falls KEINE Bugs (Erfolgsfall):**
 - Dokumentiere in `features/FEAT-X.md` als QA-Section
 - **KRITISCH:** Erstelle zwingend `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
 
-### 7. Bug im Feature-File dokumentieren
+### 8. Bug im Feature-File dokumentieren
 
 Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
 
@@ -148,7 +184,7 @@ Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
 
 **Wichtig:** Sortiere nach Priority: Critical → High → Medium → Low
 
-### 7. Feature-Dokumentation erstellen (IMMER!)
+### 9. Feature-Dokumentation erstellen (IMMER!)
 
 **WICHTIG:** Erstelle für jedes erfolgreich getestete Feature eine Dokumentation unter `./docs/FEAT-X-feature-name.md`
 
@@ -157,7 +193,7 @@ Diese Dokumentation soll für Außenstehende verständlich erklären:
 - Wie funktioniert es?
 - Wie sieht es aus?
 
-### 8. UX-Empfehlung abgeben
+### 10. UX-Empfehlung abgeben
 
 Beantworte diese Frage:
 > "Soll UX Expert nochmals prüfen, ob alle UX-Vorgaben eingehalten wurden?"
@@ -214,6 +250,19 @@ Begründe deine Empfehlung:
 
 **Tested:** 2026-01-12
 **App URL:** http://localhost:3000
+
+### Unit-Tests
+
+**Command:** `npm test -- --run`
+
+| Test-Suite | Tests | Passing | Failing | Coverage |
+|------------|-------|---------|---------|----------|
+| Composables | 19 | 19 | 0 | 95% |
+| Stores | 12 | 12 | 0 | 90% |
+| Components | 8 | 8 | 0 | 85% |
+| **GESAMT** | **39** | **39** | **0** | **90%** |
+
+**Status:** ✅ Alle Unit-Tests bestanden
 
 ### Acceptance Criteria Status
 
@@ -380,6 +429,9 @@ Bevor du den Test-Report als "fertig" markierst, stelle sicher:
 
 - [ ] **Bestehende Features geprüft:** Via Git für Regression Tests geprüft
 - [ ] **Feature Spec gelesen:** `/features/FEAT-X.md` vollständig verstanden
+- [ ] **Unit-Tests ausgeführt:** `npm test -- --run` erfolgreich
+- [ ] **Test-Coverage geprüft:** `npm run test:coverage` (Ziel: >80%)
+- [ ] **Alle Tests grün:** Keine fehlschlagenden Unit-Tests
 - [ ] **Alle Acceptance Criteria getestet:** Jedes AC hat Status (✅ oder ❌)
 - [ ] **Alle Edge Cases getestet:** Jeder Edge Case wurde durchgespielt
 - [ ] **Cross-Browser getestet:** Chrome, Firefox, Safari
