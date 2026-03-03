@@ -4,9 +4,13 @@
  * @description
  * Wiederverwendbare Logik für Modal-Handling:
  * - Show/Hide State-Management
- * - Keyboard-Event-Handling (ESC zum Schließen)
+ * - Keyboard-Event-Handling (ESC zum Schließen) via VueUse
  * - Auto-Cleanup bei Component-Unmount
  * - Optional: Auto-Close nach Delay
+ * 
+ * REFACTORING:
+ * Nutzt jetzt VueUse's useEventListener für automatisches Cleanup
+ * und SSR-Safety statt manueller Event-Listener-Verwaltung.
  * 
  * @example
  * ```vue
@@ -30,7 +34,8 @@
  * ```
  */
 
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
+import { useEventListener } from '@vueuse/core'
 
 /**
  * Optionen für useModal Composable
@@ -165,57 +170,37 @@ export function useModal(options: UseModalOptions = {}): UseModalReturn {
   }
 
   // ========================================
-  // KEYBOARD HANDLING
+  // KEYBOARD HANDLING - VueUse Integration
   // ========================================
   
   /**
-   * Keyboard-Event-Handler für ESC-Taste
+   * Keyboard-Event-Handler für ESC-Taste via VueUse
    * 
    * @description
    * Ermöglicht Schließen des Modals via ESC-Taste für bessere UX.
-   * Wird nur registriert wenn enableKeyboard = true.
-   */
-  const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && isOpen.value) {
-      close()
-    }
-  }
-
-  // ========================================
-  // LIFECYCLE
-  // ========================================
-  
-  /**
-   * Component-Mount: Event-Listener registrieren
    * 
-   * WICHTIG: Nur im Browser registrieren (SSR-Safe)
+   * VORTEILE von useEventListener (VueUse):
+   * - ✅ Automatisches Cleanup bei Component-Unmount
+   * - ✅ SSR-Safe (kein window-Check nötig)
+   * - ✅ TypeScript-Support
+   * - ✅ Weniger Boilerplate
+   * 
+   * VORHER (manuell):
+   * - onMounted(() => window.addEventListener(...))
+   * - onUnmounted(() => window.removeEventListener(...))
+   * - SSR-Check: if (typeof window !== 'undefined')
+   * 
+   * NACHHER (VueUse):
+   * - useEventListener('keydown', handler)
+   * - Alles andere automatisch!
    */
   if (enableKeyboard) {
-    onMounted(() => {
-      if (typeof window !== 'undefined') {
-        window.addEventListener('keydown', handleKeydown)
+    useEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen.value) {
+        close()
       }
     })
   }
-
-  /**
-   * Component-Unmount: Cleanup
-   * 
-   * - Entfernt Event-Listener
-   * - Stoppt Auto-Close-Timer
-   * 
-   * Verhindert Memory-Leaks!
-   */
-  onUnmounted(() => {
-    if (enableKeyboard && typeof window !== 'undefined') {
-      window.removeEventListener('keydown', handleKeydown)
-    }
-    
-    // Clear Timer falls noch aktiv
-    if (autoCloseTimeout) {
-      clearTimeout(autoCloseTimeout)
-    }
-  })
 
   // ========================================
   // RETURN

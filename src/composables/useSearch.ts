@@ -4,9 +4,13 @@
  * @description
  * Wiederverwendbare Logik für Search/Filter-Funktionalität:
  * - Search-Query-Management
- * - Debouncing für Auto-Search
+ * - Debouncing für Auto-Search via VueUse
  * - Filter-State-Management
  * - Kombinierte Query-Building
+ * 
+ * REFACTORING:
+ * Nutzt jetzt VueUse's watchDebounced für automatisches Debouncing
+ * statt manueller setTimeout/clearTimeout-Verwaltung.
  * 
  * @example Basic Usage
  * ```vue
@@ -37,7 +41,8 @@
  * ```
  */
 
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
+import { watchDebounced } from '@vueuse/core'
 
 /**
  * Optionen für useSearch Composable
@@ -131,9 +136,6 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
   
   /** Aktueller Filter-Wert (z.B. Kategorie) */
   const filter = ref(initialFilter)
-  
-  /** Debounce-Timer für Auto-Search */
-  let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 
   // ========================================
   // METHODS
@@ -199,11 +201,11 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
   }
 
   // ========================================
-  // AUTO-SEARCH (mit Debouncing)
+  // AUTO-SEARCH - VueUse Integration
   // ========================================
   
   /**
-   * Watcher für Auto-Search während Typing
+   * Watcher für Auto-Search während Typing via VueUse
    * 
    * @description
    * Wenn autoSearch aktiviert ist:
@@ -211,6 +213,20 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
    * - Triggert dann automatisch Suche
    * 
    * Verhindert API-Call bei jedem Tastendruck!
+   * 
+   * VORTEILE von watchDebounced (VueUse):
+   * - ✅ Automatisches Timeout-Management
+   * - ✅ Kein manuelles clearTimeout() nötig
+   * - ✅ TypeScript-Support
+   * - ✅ Weniger Boilerplate
+   * - ✅ Bessere Performance
+   * 
+   * VORHER (manuell):
+   * - let timeout = null
+   * - watch(query, () => { clearTimeout(timeout); timeout = setTimeout(...) })
+   * 
+   * NACHHER (VueUse):
+   * - watchDebounced(query, () => search(), { debounce: 300 })
    * 
    * BEISPIEL:
    * User tippt "Apfel":
@@ -222,17 +238,13 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
    * - 300ms Pause → Suche nach "Apfel"
    */
   if (autoSearch) {
-    watch(query, () => {
-      // Clear existierenden Timer
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout)
-      }
-      
-      // Neuer Timer: Suche nach Pause
-      debounceTimeout = setTimeout(() => {
+    watchDebounced(
+      query,
+      () => {
         search()
-      }, debounceMs)
-    })
+      },
+      { debounce: debounceMs }
+    )
   }
 
   // ========================================
