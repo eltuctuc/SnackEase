@@ -1,19 +1,18 @@
-export interface Product {
-  id: number
-  name: string
-  description: string | null
-  category: string
-  price: string
-  imageUrl: string | null
-  calories: number | null
-  protein: number | null
-  sugar: number | null
-  fat: number | null
-  allergens: string[] | null
-  isVegan: boolean
-  isGlutenFree: boolean
-  stock: number
-}
+/**
+ * Products Store - Verwaltung des Produktkatalogs
+ * 
+ * @description
+ * Dieser Store verwaltet:
+ * - Produkt-Liste mit Filtern (Kategorie, Suche)
+ * - Aktuell ausgewähltes Produkt (für Detail-Ansicht)
+ * - Loading- und Error-States
+ * 
+ * Verwendet Composition API mit setup-Syntax (Best Practice).
+ * 
+ * @see src/types/product.ts für Product-Interface
+ */
+
+import type { Product } from '~/types'
 
 export const useProductsStore = defineStore('products', () => {
   const products = ref<Product[]>([])

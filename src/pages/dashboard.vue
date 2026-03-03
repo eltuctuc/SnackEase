@@ -1,18 +1,65 @@
 <script setup lang="ts">
+/**
+ * Dashboard - Hauptseite für Mitarbeiter & Admins
+ * 
+ * Diese Komponente zeigt:
+ * - Guthaben-Stand mit farblicher Statusanzeige (grün/gelb/rot)
+ * - Auflade-Funktionen (manuell + Monatspauschale)
+ * - Produktkatalog mit Suche und Kategorie-Filtern
+ * - Produkt-Details in Modal-Ansicht
+ * 
+ * @component
+ */
+
+import { RECHARGE_OPTIONS, BALANCE_THRESHOLDS } from '~/constants/credits'
+import { RECHARGE_SIMULATION, SUCCESS_MODAL_AUTO_CLOSE_DELAY } from '~/constants/ui'
+import type { Product, ProductCategoryOption } from '~/types'
+
+// ========================================
+// ROUTER & STORES
+// ========================================
+
 const router = useRouter()
 const authStore = useAuthStore()
 const creditsStore = useCreditsStore()
 const productsStore = useProductsStore()
 
+// ========================================
+// REACTIVE STATE - Modal & UI
+// ========================================
+
+/** Zeigt/Versteckt das Guthaben-Auflade-Modal */
 const showRechargeModal = ref(false)
+
+/** Aktuell ausgewählter Auflade-Betrag ('10' | '25' | '50') */
 const selectedAmount = ref<string | null>(null)
+
+/** Loading-State während der Aufladung (für UI-Feedback) */
 const isRecharging = ref(false)
+
+/** Success-State nach erfolgreicher Aufladung (zeigt Checkmark) */
 const rechargeSuccess = ref(false)
+
+/** Zeigt/Versteckt das Produkt-Detail-Modal */
 const showProductDetail = ref(false)
-const selectedProductDetail = ref<any>(null)
+
+/** Aktuell ausgewähltes Produkt für Detail-Ansicht */
+const selectedProductDetail = ref<Product | null>(null)
+
+/** Suchbegriff für Produkt-Suche */
 const searchQuery = ref('')
 
-const categories = [
+// ========================================
+// CONSTANTS - Kategorien
+// ========================================
+
+/**
+ * Verfügbare Produkt-Kategorien mit Icons
+ * 
+ * Diese werden als Filter-Buttons über dem Produktkatalog angezeigt.
+ * Die Kategorie 'alle' zeigt alle Produkte ohne Filter.
+ */
+const categories: ProductCategoryOption[] = [
   { id: 'alle', label: 'Alle', icon: '🍎' },
   { id: 'obst', label: 'Obst', icon: '🍎' },
   { id: 'proteinriegel', label: 'Protein', icon: '💪' },
@@ -22,12 +69,21 @@ const categories = [
   { id: 'getraenke', label: 'Getränke', icon: '🧃' },
 ]
 
-const RECHARGE_OPTIONS = [
-  { amount: '10', label: '10 €', description: 'Klein' },
-  { amount: '25', label: '25 €', description: 'Standard' },
-  { amount: '50', label: '50 €', description: 'Groß' },
-]
+// ========================================
+// COMPUTED PROPERTIES - Balance Styling
+// ========================================
 
+/**
+ * Dynamische CSS-Klassen für Guthaben-Anzeige basierend auf Status
+ * 
+ * @description
+ * Bestimmt die Hintergrund- und Textfarbe der Balance-Card:
+ * - 'good' (> 20€): Grün - Ausreichend Guthaben
+ * - 'warning' (10-20€): Gelb - Bald aufladen
+ * - 'critical' (< 10€): Rot - Dringend aufladen
+ * 
+ * Schwellwerte definiert in: src/constants/credits.ts (BALANCE_THRESHOLDS)
+ */
 const balanceColorClass = computed(() => {
   switch (creditsStore.balanceStatus) {
     case 'good': return 'bg-green-100 border-green-300 text-green-800'
@@ -37,6 +93,11 @@ const balanceColorClass = computed(() => {
   }
 })
 
+/**
+ * Dynamische CSS-Klassen für Guthaben-Status-Indikator-Dot
+ * 
+ * Kleiner farbiger Punkt (Dot) rechts neben dem Guthaben-Betrag.
+ */
 const balanceDotClass = computed(() => {
   switch (creditsStore.balanceStatus) {
     case 'good': return 'bg-green-500'
@@ -46,103 +107,306 @@ const balanceDotClass = computed(() => {
   }
 })
 
+// ========================================
+// EVENT HANDLERS - Auth & Navigation
+// ========================================
+
+/**
+ * Meldet den User ab und leitet zum Login weiter
+ * 
+ * @description
+ * Ruft den Store-Action auf, der:
+ * - Session-Cookie löscht
+ * - Store-State zurücksetzt
+ * - Zur Login-Page navigiert
+ */
 const logout = () => {
   authStore.logout()
 }
 
+// ========================================
+// EVENT HANDLERS - Recharge Modal
+// ========================================
+
+/**
+ * Setzt den ausgewählten Auflade-Betrag
+ * 
+ * @param amount - Auflade-Betrag als String ('10' | '25' | '50')
+ */
 const selectAmount = (amount: string) => {
   selectedAmount.value = amount
 }
 
+/**
+ * Führt die Guthaben-Aufladung durch
+ * 
+ * @description
+ * Workflow:
+ * 1. Zeigt Loading-Spinner (isRecharging = true)
+ * 2. Simuliert Ladezeit für bessere UX (2-3 Sekunden)
+ *    HINWEIS: In Production würde hier echter Payment-Flow stattfinden
+ * 3. Ruft Backend-API auf (POST /api/credits/recharge)
+ * 4. Bei Erfolg: Zeigt Success-Checkmark und schließt Modal nach 1.5s
+ * 5. Bei Fehler: Zeigt Fehlermeldung im Modal
+ * 
+ * @remarks
+ * Das Delay ist bewusst gewählt, um dem User ein natürliches Gefühl
+ * für die "Verarbeitung" zu geben. Sofortige Reaktion würde unnatürlich wirken.
+ */
 const handleRecharge = async () => {
+  // Guard: Verhindere Doppel-Klicks oder Aufladung ohne Betrag
   if (!selectedAmount.value || isRecharging.value) return
 
   isRecharging.value = true
   rechargeSuccess.value = false
 
-  await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000))
+  // Simuliere realistische Ladezeit (2-3 Sekunden)
+  // TODO: In Production durch echten Payment-Provider ersetzen
+  await new Promise(resolve => 
+    setTimeout(
+      resolve, 
+      RECHARGE_SIMULATION.BASE_DELAY + Math.random() * RECHARGE_SIMULATION.RANDOM_DELAY_MAX
+    )
+  )
 
+  // Backend-Call: Guthaben aufladen
   const result = await creditsStore.recharge(selectedAmount.value)
 
   isRecharging.value = false
 
+  // Bei Erfolg: Success-State anzeigen und Modal auto-close
   if (result.success) {
     rechargeSuccess.value = true
     setTimeout(() => {
       showRechargeModal.value = false
       rechargeSuccess.value = false
       selectedAmount.value = null
-    }, 1500)
+    }, SUCCESS_MODAL_AUTO_CLOSE_DELAY)
   }
+  // Bei Fehler: Fehlermeldung bleibt im Modal sichtbar (aus Store)
 }
 
+/**
+ * Löst Monatspauschale-Abruf aus
+ * 
+ * @description
+ * Mitarbeiter können einmal pro Monat 25€ Pauschale abrufen.
+ * Backend prüft ob User bereits in diesem Monat abgerufen hat.
+ * 
+ * Siehe: src/server/api/credits/monthly.post.ts
+ */
 const handleMonthly = async () => {
+  // Guard: Verhindere Doppel-Klicks während Loading
   if (creditsStore.isLoading) return
 
   await creditsStore.receiveMonthly()
 }
 
+/**
+ * Schließt die Fehlermeldung in der Balance-Card oder im Modal
+ * 
+ * @description
+ * Setzt den Error-State im Credits-Store zurück, sodass
+ * die Fehlermeldung aus dem UI verschwindet.
+ */
 const dismissError = () => {
   creditsStore.error = null
 }
 
+/**
+ * Schließt das Recharge-Modal und setzt alle States zurück
+ * 
+ * @description
+ * Wird aufgerufen bei:
+ * - Klick auf "X"-Button
+ * - Klick auf Modal-Backdrop
+ * - ESC-Taste
+ */
 const closeModalAndReset = () => {
   showRechargeModal.value = false
   selectedAmount.value = null
   creditsStore.error = null
 }
 
+// ========================================
+// EVENT HANDLERS - Keyboard Navigation
+// ========================================
+
+/**
+ * Globaler Keyboard-Event-Handler für Modal-Steuerung
+ * 
+ * @description
+ * Ermöglicht Schließen von Modals via ESC-Taste für bessere UX.
+ * 
+ * Unterstützte Keys:
+ * - ESC: Schließt aktuell offenes Modal (Recharge oder Product-Detail)
+ * 
+ * @param e - Keyboard-Event
+ */
 const handleKeydown = (e: KeyboardEvent) => {
+  // ESC-Taste: Schließe Recharge-Modal falls offen
   if (e.key === 'Escape' && showRechargeModal.value) {
     closeModalAndReset()
   }
+  // ESC-Taste: Schließe Product-Detail-Modal falls offen
   if (e.key === 'Escape' && showProductDetail.value) {
     closeProductDetail()
   }
 }
 
+// ========================================
+// LIFECYCLE - Component Initialization
+// ========================================
+
+/**
+ * Component-Mounted-Hook
+ * 
+ * @description
+ * Initialisiert die Dashboard-Seite beim Laden:
+ * 
+ * 1. Auth-Check:
+ *    - Prüft ob User eingeloggt ist (via Cookie)
+ *    - Leitet zu /login weiter falls nicht authentifiziert
+ * 
+ * 2. Daten laden:
+ *    - Guthaben-Stand abrufen (GET /api/credits/balance)
+ *    - Produkt-Katalog laden (GET /api/products)
+ * 
+ * 3. Event-Listener:
+ *    - Registriert globalen Keydown-Handler für ESC-Taste
+ * 
+ * WICHTIG: Keyboard-Events nur im Browser registrieren (SSR-Safe-Check)
+ */
 onMounted(async () => {
+  // Auth-Check: User-Session aus Cookie wiederherstellen
   await authStore.initFromCookie()
   
+  // Redirect zu Login falls nicht authentifiziert
   if (!authStore.user) {
     router.push('/login')
   } else {
+    // User ist eingeloggt → Daten laden
     await creditsStore.fetchBalance()
     await productsStore.fetchProducts()
   }
   
+  // SSR-Safe: Keyboard-Events nur im Browser registrieren
   if (typeof window !== 'undefined') {
     window.addEventListener('keydown', handleKeydown)
   }
 })
 
+// ========================================
+// EVENT HANDLERS - Product Search & Filter
+// ========================================
+
+/**
+ * Führt Produkt-Suche aus
+ * 
+ * @description
+ * Wird getriggert durch:
+ * - Enter-Taste im Suchfeld
+ * - Klick auf "Suchen"-Button
+ * 
+ * Sucht nach Produkten mit aktuellem Suchbegriff und aktiver Kategorie.
+ * Backend führt ILIKE-Query durch (case-insensitive).
+ */
 const handleSearch = () => {
   productsStore.fetchProducts(productsStore.selectedCategory, searchQuery.value)
 }
 
+/**
+ * Setzt Kategorie-Filter und lädt gefilterte Produkte
+ * 
+ * @param category - Kategorie-ID (z.B. 'obst', 'shakes', 'alle')
+ * 
+ * @description
+ * - Speichert Kategorie im Store
+ * - Lädt Produkte mit neuem Filter (behält Suchbegriff bei)
+ */
 const selectCategory = (category: string) => {
   productsStore.setCategory(category)
   productsStore.fetchProducts(category, searchQuery.value)
 }
 
-const openProductDetail = (product: any) => {
+// ========================================
+// EVENT HANDLERS - Product Detail Modal
+// ========================================
+
+/**
+ * Öffnet das Produkt-Detail-Modal
+ * 
+ * @param product - Das anzuzeigende Produkt
+ * 
+ * @description
+ * Zeigt detaillierte Informationen zum Produkt:
+ * - Nährwerte (Kalorien, Protein, Zucker, Fett)
+ * - Allergene
+ * - Verfügbarkeit (Stock)
+ * - Vegan/Glutenfrei-Badges
+ */
+const openProductDetail = (product: Product) => {
   selectedProductDetail.value = product
   showProductDetail.value = true
 }
 
+/**
+ * Schließt das Produkt-Detail-Modal
+ * 
+ * @description
+ * Wird aufgerufen bei:
+ * - Klick auf "Schließen"-Button
+ * - Klick auf Modal-Backdrop
+ * - ESC-Taste
+ */
 const closeProductDetail = () => {
   showProductDetail.value = false
   selectedProductDetail.value = null
 }
 
-const formatPrice = (price: string) => {
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+
+/**
+ * Formatiert Preis-String zu 2 Dezimalstellen
+ * 
+ * @param price - Preis als String (z.B. "2.5" oder "10")
+ * @returns Formatierter Preis mit 2 Dezimalstellen (z.B. "2.50")
+ * 
+ * @description
+ * Preise werden in der DB als String gespeichert (Decimal-Precision).
+ * Diese Funktion stellt sicher, dass sie immer mit 2 Nachkommastellen
+ * angezeigt werden (z.B. "2.50 €" statt "2.5 €").
+ */
+const formatPrice = (price: string): string => {
   return parseFloat(price).toFixed(2)
 }
 
+// ========================================
+// COMPUTED PROPERTIES - Derived State
+// ========================================
+
+/**
+ * Gefilterte Produkt-Liste
+ * 
+ * @description
+ * Gibt die Produkte aus dem Store zurück (bereits gefiltert durch API).
+ * Computed Property für Reaktivität bei Store-Updates.
+ * 
+ * Fallback auf leeres Array falls Store noch keine Daten hat.
+ */
 const filteredProducts = computed(() => {
   return productsStore.products || []
 })
 
+/**
+ * Zeigt Admin-Link nur für Admin-User
+ * 
+ * @description
+ * Bestimmt ob der "Admin-Bereich"-Link angezeigt wird.
+ * Nur Admins haben Zugriff auf /admin Routes.
+ */
 const showAdminLink = computed(() => {
   return authStore.user?.role === 'admin'
 })
