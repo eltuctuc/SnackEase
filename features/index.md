@@ -11,7 +11,7 @@
 | FEAT-3 | User Switcher | ✅ Implementiert | Persona-Karten auf Login-Seite |
 | FEAT-4 | Demo Guthaben | ✅ Implementiert | Guthaben anzeigen, aufladen, Monatspauschale |
 | FEAT-5 | Admin Basis | ✅ Implementiert | System-Reset, Nutzer-Verwaltung |
-| FEAT-6 | Produktkatalog | 📋 Geplant | |
+| FEAT-6 | Produktkatalog | ✅ Implementiert | Produktgrid mit Kategorien, Suche, Details |
 | FEAT-7 | One-Touch-Kauf | 📋 Geplant | |
 | FEAT-8 | Leaderboard | 📋 Geplant | |
 | FEAT-9 | Admin ohne Guthaben | 📋 Geplant | Admin sieht kein Guthaben |

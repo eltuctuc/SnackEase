@@ -1,38 +1,11 @@
 import { db } from '~/server/db'
-import { userCredits, users } from '~/server/db/schema'
+import { userCredits } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { getCurrentUser } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const authCookie = getCookie(event, 'auth_token')
-  
-  if (!authCookie) {
-    throw createError({
-      statusCode: 401,
-      message: 'Nicht eingeloggt',
-    })
-  }
-
   try {
-    const userId = authCookie.replace('user_', '')
-    const userIdNum = parseInt(userId, 10)
-    
-    if (isNaN(userIdNum)) {
-      throw createError({
-        statusCode: 401,
-        message: 'Ungültiges Token',
-      })
-    }
-
-    const userResults = await db.select().from(users).where(eq(users.id, userIdNum)).limit(1)
-
-    if (!userResults[0]) {
-      throw createError({
-        statusCode: 401,
-        message: 'User nicht gefunden',
-      })
-    }
-
-    const user = userResults[0]
+    const user = await getCurrentUser(event)
 
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
 

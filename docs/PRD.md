@@ -193,10 +193,10 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
-| PROD-01 | Produktübersicht | Alle verfügbaren Snacks/Getränke anzeigen | ⏳ Offen |
-| PROD-02 | Kategorien | Obst, Proteinriegel, Shakes, Schokoriegel, Nüsse | ⏳ Offen |
-| PROD-03 | Produktsuche | Nach Namen suchen | ⏳ Offen |
-| PROD-05 | Produktdetails | Logo, Name, Nährwerte, Inhaltsstoffe | ⏳ Offen |
+| PROD-01 | Produktübersicht | Alle verfügbaren Snacks/Getränke anzeigen | 🔵 UX Complete (FEAT-6) |
+| PROD-02 | Kategorien | Obst, Proteinriegel, Shakes, Schokoriegel, Nüsse | 🔵 UX Complete (FEAT-6) |
+| PROD-03 | Produktsuche | Nach Namen suchen | 🔵 UX Complete (FEAT-6) |
+| PROD-05 | Produktdetails | Logo, Name, Nährwerte, Inhaltsstoffe | 🔵 UX Complete (FEAT-6) |
 | BUY-01 | One-Touch Kauf | Mit einem Tap kaufen | ⏳ Offen |
 | BUY-03 | Kaufbestätigung | Erfolgreiche Transaktion anzeigen | ⏳ Offen |
 | BUY-05 | Kontaktlose Abwicklung | Kein Scan/Checkout nötig | ⏳ Offen |
@@ -248,8 +248,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 2.1
+- **Version:** 2.2
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
-- **Letzte Änderung:** 2026-02-28
-- **Änderungen:** CREDIT-01/02/03 als implementiert markiert (FEAT-4)
+- **Letzte Änderung:** 2026-03-03
+- **Änderungen:** FEAT-6 UX Complete, PROD-01/02/03/05 als Teil von FEAT-6

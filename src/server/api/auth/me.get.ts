@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   
   const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-  if (!user[0]) {
+  if (!user[0] || user[0].isActive === false) {
     return { user: null };
   }
 

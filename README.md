@@ -48,9 +48,11 @@ SnackEase/
 
 ## Tech Stack
 
-- **Frontend:** Vue.js 3 + TypeScript + Vite
+- **Framework:** Nuxt 3 (Full-Stack)
+- **Frontend:** Vue.js 3 (Composition API) + TypeScript
 - **State:** Pinia
-- **Backend:** Supabase
+- **Backend:** Neon (PostgreSQL, serverless) + Drizzle ORM
+- **Auth:** Custom (bcryptjs + HttpOnly Cookies)
 - **Styling:** Tailwind CSS
 - **Deployment:** Vercel
 

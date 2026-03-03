@@ -47,3 +47,24 @@ export const snacks = pgTable('snacks', {
   imageUrl: text('image_url'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category').notNull(),
+  price: text('price').notNull(),
+  imageUrl: text('image_url'),
+  calories: integer('calories'),
+  protein: integer('protein'),
+  sugar: integer('sugar'),
+  fat: integer('fat'),
+  allergens: text('allergens').array(),
+  isVegan: boolean('is_vegan').default(false),
+  isGlutenFree: boolean('is_gluten_free').default(false),
+  stock: integer('stock').default(10),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;

@@ -1,41 +1,15 @@
 import { db } from '~/server/db'
-import { userCredits, creditTransactions, users } from '~/server/db/schema'
+import { userCredits, creditTransactions } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { getCurrentUser } from '~/server/utils/auth'
 
 const MONTHLY_AMOUNT = 25
 
 export default defineEventHandler(async (event) => {
-  const authCookie = getCookie(event, 'auth_token')
-  
-  if (!authCookie) {
-    throw createError({
-      statusCode: 401,
-      message: 'Nicht eingeloggt',
-    })
-  }
-
   try {
-    const userId = authCookie.replace('user_', '')
-    const userIdNum = parseInt(userId, 10)
-    
-    if (isNaN(userIdNum)) {
-      throw createError({
-        statusCode: 401,
-        message: 'Ungültiges Token',
-      })
-    }
+    const user = await getCurrentUser(event)
 
-    const userResults = await db.select().from(users).where(eq(users.id, userIdNum)).limit(1)
-
-    if (!userResults[0]) {
-      throw createError({
-        statusCode: 401,
-        message: 'User nicht gefunden',
-      })
-    }
-
-    const user = userResults[0]
-
+    // TODO: Transactions würden Race Conditions verhindern, aber neon-http unterstützt sie nicht
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
     
     let currentBalance = 0

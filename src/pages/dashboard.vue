@@ -2,11 +2,25 @@
 const router = useRouter()
 const authStore = useAuthStore()
 const creditsStore = useCreditsStore()
+const productsStore = useProductsStore()
 
 const showRechargeModal = ref(false)
 const selectedAmount = ref<string | null>(null)
 const isRecharging = ref(false)
 const rechargeSuccess = ref(false)
+const showProductDetail = ref(false)
+const selectedProductDetail = ref<any>(null)
+const searchQuery = ref('')
+
+const categories = [
+  { id: 'alle', label: 'Alle', icon: '🍎' },
+  { id: 'obst', label: 'Obst', icon: '🍎' },
+  { id: 'proteinriegel', label: 'Protein', icon: '💪' },
+  { id: 'shakes', label: 'Shakes', icon: '🥤' },
+  { id: 'schokoriegel', label: 'Schoki', icon: '🍫' },
+  { id: 'nuesse', label: 'Nüsse', icon: '🥜' },
+  { id: 'getraenke', label: 'Getränke', icon: '🧃' },
+]
 
 const RECHARGE_OPTIONS = [
   { amount: '10', label: '10 €', description: 'Klein' },
@@ -82,6 +96,9 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && showRechargeModal.value) {
     closeModalAndReset()
   }
+  if (e.key === 'Escape' && showProductDetail.value) {
+    closeProductDetail()
+  }
 }
 
 onMounted(async () => {
@@ -91,11 +108,39 @@ onMounted(async () => {
     router.push('/login')
   } else {
     await creditsStore.fetchBalance()
+    await productsStore.fetchProducts()
   }
   
   if (typeof window !== 'undefined') {
     window.addEventListener('keydown', handleKeydown)
   }
+})
+
+const handleSearch = () => {
+  productsStore.fetchProducts(productsStore.selectedCategory, searchQuery.value)
+}
+
+const selectCategory = (category: string) => {
+  productsStore.setCategory(category)
+  productsStore.fetchProducts(category, searchQuery.value)
+}
+
+const openProductDetail = (product: any) => {
+  selectedProductDetail.value = product
+  showProductDetail.value = true
+}
+
+const closeProductDetail = () => {
+  showProductDetail.value = false
+  selectedProductDetail.value = null
+}
+
+const formatPrice = (price: string) => {
+  return parseFloat(price).toFixed(2)
+}
+
+const filteredProducts = computed(() => {
+  return productsStore.products || []
 })
 
 const showAdminLink = computed(() => {
@@ -185,9 +230,85 @@ const showAdminLink = computed(() => {
         </div>
       </div>
 
-      <div class="bg-card rounded-lg p-6 border">
-        <p class="text-foreground">Willkommen im Admin-Dashboard!</p>
-        <p class="text-muted-foreground mt-2">Hier werden später die Admin-Funktionen angezeigt.</p>
+      <div class="bg-card rounded-lg border p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-foreground mb-4">Produktkatalog</h2>
+          
+          <div class="flex flex-col sm:flex-row gap-4 mb-4">
+            <div class="relative flex-1">
+              <input
+                v-model="searchQuery"
+                @keyup.enter="handleSearch"
+                type="text"
+                placeholder="Produkte suchen..."
+                class="w-full px-4 py-2 pl-10 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">🔍</span>
+            </div>
+            <button
+              @click="handleSearch"
+              class="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              Suchen
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Kategorien auswählen">
+            <button
+              v-for="category in categories"
+              :key="category.id"
+              @click="selectCategory(category.id)"
+              :class="[
+                'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
+                productsStore.selectedCategory === category.id
+                  ? 'bg-primary text-white'
+                  : 'bg-muted text-muted-foreground hover:bg-primary/20'
+              ]"
+            >
+              {{ category.icon }} {{ category.label }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="productsStore.isLoading" class="text-center py-12">
+          <p class="text-muted-foreground">Produkte werden geladen...</p>
+        </div>
+
+        <div v-else-if="productsStore.error" class="text-center py-12">
+          <p class="text-red-500">{{ productsStore.error }}</p>
+        </div>
+
+        <div v-else-if="filteredProducts.length === 0" class="text-center py-12">
+          <p class="text-muted-foreground">Keine Produkte gefunden.</p>
+        </div>
+
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+            @click="openProductDetail(product)"
+            class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+          >
+            <div class="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl">
+              {{ product.imageUrl ? '' : '🍎' }}
+              <img
+                v-if="product.imageUrl"
+                :src="product.imageUrl"
+                :alt="product.name"
+                class="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+            <h3 class="font-medium text-foreground text-sm truncate">{{ product.name }}</h3>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-lg font-bold text-primary">{{ formatPrice(product.price) }} €</span>
+              <span v-if="product.stock === 0" class="text-xs text-red-500">Ausverkauft</span>
+            </div>
+            <div class="flex gap-1 mt-2">
+              <span v-if="product.isVegan" class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">🌱</span>
+              <span v-if="product.isGlutenFree" class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">GF</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -264,6 +385,93 @@ const showAdminLink = computed(() => {
               {{ isRecharging ? 'Wird aufgeladen...' : 'Jetzt aufladen' }}
             </button>
           </div>
+        </div>
+      </div>
+
+      <div 
+        v-if="showProductDetail && selectedProductDetail" 
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        @click.self="closeProductDetail"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-detail-title"
+      >
+        <div class="bg-background rounded-lg max-w-lg w-full p-6 border shadow-xl max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-start mb-4">
+            <h2 id="product-detail-title" class="text-xl font-bold">{{ selectedProductDetail.name }}</h2>
+            <button 
+              @click="closeProductDetail"
+              class="text-muted-foreground hover:text-foreground p-1"
+              aria-label="Modal schließen"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center text-6xl">
+            {{ selectedProductDetail.imageUrl ? '' : '🍎' }}
+            <img
+              v-if="selectedProductDetail.imageUrl"
+              :src="selectedProductDetail.imageUrl"
+              :alt="selectedProductDetail.name"
+              class="w-full h-full object-cover rounded-lg"
+            />
+          </div>
+
+          <p class="text-2xl font-bold text-primary mb-4">{{ formatPrice(selectedProductDetail.price) }} €</p>
+
+          <p v-if="selectedProductDetail.description" class="text-muted-foreground mb-4">
+            {{ selectedProductDetail.description }}
+          </p>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span v-if="selectedProductDetail.isVegan" class="text-sm bg-green-100 text-green-700 px-2 py-1 rounded">🌱 Vegan</span>
+            <span v-if="selectedProductDetail.isGlutenFree" class="text-sm bg-yellow-100 text-yellow-700 px-2 py-1 rounded">🍞 Glutenfrei</span>
+            <span v-if="selectedProductDetail.stock === 0" class="text-sm bg-red-100 text-red-700 px-2 py-1 rounded">❌ Ausverkauft</span>
+            <span v-else class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">📦 {{ selectedProductDetail.stock }} verfügbar</span>
+          </div>
+
+          <div v-if="selectedProductDetail.calories || selectedProductDetail.protein || selectedProductDetail.sugar || selectedProductDetail.fat" class="border-t pt-4">
+            <h3 class="font-medium mb-3">Nährwerte (pro 100g)</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div v-if="selectedProductDetail.calories" class="flex justify-between">
+                <span class="text-muted-foreground">Kalorien</span>
+                <span>{{ selectedProductDetail.calories }} kcal</span>
+              </div>
+              <div v-if="selectedProductDetail.protein" class="flex justify-between">
+                <span class="text-muted-foreground">Protein</span>
+                <span>{{ selectedProductDetail.protein }}g</span>
+              </div>
+              <div v-if="selectedProductDetail.sugar" class="flex justify-between">
+                <span class="text-muted-foreground">Zucker</span>
+                <span>{{ selectedProductDetail.sugar }}g</span>
+              </div>
+              <div v-if="selectedProductDetail.fat" class="flex justify-between">
+                <span class="text-muted-foreground">Fett</span>
+                <span>{{ selectedProductDetail.fat }}g</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="selectedProductDetail.allergens && selectedProductDetail.allergens.length > 0" class="border-t pt-4 mt-4">
+            <h3 class="font-medium mb-2">Allergene</h3>
+            <div class="flex flex-wrap gap-2">
+              <span 
+                v-for="allergen in selectedProductDetail.allergens" 
+                :key="allergen"
+                class="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded"
+              >
+                ⚠️ {{ allergen }}
+              </span>
+            </div>
+          </div>
+
+          <button 
+            @click="closeProductDetail"
+            class="w-full mt-6 py-3 border border-primary text-primary rounded-lg font-medium hover:bg-primary/10 transition-colors"
+          >
+            Schließen
+          </button>
         </div>
       </div>
     </Teleport>

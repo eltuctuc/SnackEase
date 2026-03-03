@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) {
     return
   }
@@ -9,7 +9,19 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/login')
   }
   
-  if (to.path.startsWith('/admin') && !authCookie.value) {
-    return navigateTo('/login')
+  if (to.path.startsWith('/admin')) {
+    if (!authCookie.value) {
+      return navigateTo('/login')
+    }
+    
+    // Prüfe Admin-Rolle
+    try {
+      const { data } = await useFetch('/api/auth/me')
+      if (!data.value?.user || data.value.user.role !== 'admin') {
+        return navigateTo('/login')
+      }
+    } catch (error) {
+      return navigateTo('/login')
+    }
   }
 })

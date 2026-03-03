@@ -1,19 +1,11 @@
 import { db } from '~/server/db'
-import { userCredits, creditTransactions, users } from '~/server/db/schema'
+import { userCredits, creditTransactions } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { getCurrentUser } from '~/server/utils/auth'
 
 const ALLOWED_AMOUNTS = ['10', '25', '50']
 
 export default defineEventHandler(async (event) => {
-  const authCookie = getCookie(event, 'auth_token')
-  
-  if (!authCookie) {
-    throw createError({
-      statusCode: 401,
-      message: 'Nicht eingeloggt',
-    })
-  }
-
   const body = await readBody(event)
   const { amount } = body
 
@@ -25,28 +17,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const userId = authCookie.replace('user_', '')
-    const userIdNum = parseInt(userId, 10)
-    
-    if (isNaN(userIdNum)) {
-      throw createError({
-        statusCode: 401,
-        message: 'Ungültiges Token',
-      })
-    }
-
-    const userResults = await db.select().from(users).where(eq(users.id, userIdNum)).limit(1)
-
-    if (!userResults[0]) {
-      throw createError({
-        statusCode: 401,
-        message: 'User nicht gefunden',
-      })
-    }
-
-    const user = userResults[0]
+    const user = await getCurrentUser(event)
     const amountNum = parseFloat(amount)
 
+    // TODO: Transactions würden Race Conditions verhindern, aber neon-http unterstützt sie nicht
+    // Für Production: Auf neon-serverless (WebSockets) wechseln
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
     
     let currentBalance = 0

@@ -4,6 +4,16 @@ Dieses Dokument enthält zentrale Regeln und Workflows für die Entwicklung.
 
 ---
 
+## Sprache
+
+**WICHTIG:** Alle Ausgaben des Agents müssen auf **Deutsch** sein.
+- Zusammenfassungen auf Deutsch
+- Kommentare auf Deutsch
+- Dokumentation auf Deutsch
+- Alle Kommunikation mit dem Benutzer auf Deutsch
+
+---
+
 ## Feature-Nummerierung
 
 ### Regeln
