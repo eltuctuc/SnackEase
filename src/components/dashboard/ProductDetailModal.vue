@@ -17,6 +17,13 @@
 import type { Product } from '~/types'
 
 // ========================================
+// COMPOSABLES
+// ========================================
+
+/** useFormatter für Preis-Formatierung */
+const { formatPrice } = useFormatter()
+
+// ========================================
 // PROPS & EMITS
 // ========================================
 
@@ -45,16 +52,6 @@ const emit = defineEmits<{
 // ========================================
 // METHODS
 // ========================================
-
-/**
- * Formatiert Preis-String zu 2 Dezimalstellen
- * 
- * @param price - Preis als String (z.B. "2.5" oder "10")
- * @returns Formatierter Preis mit 2 Dezimalstellen (z.B. "2.50")
- */
-const formatPrice = (price: string): string => {
-  return parseFloat(price).toFixed(2)
-}
 
 /**
  * Schließt Modal

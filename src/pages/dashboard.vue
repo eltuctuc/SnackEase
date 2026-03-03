@@ -24,6 +24,32 @@ import RechargeModal from '~/components/dashboard/RechargeModal.vue'
 import ProductDetailModal from '~/components/dashboard/ProductDetailModal.vue'
 
 // ========================================
+// COMPOSABLES
+// ========================================
+
+/**
+ * useModal für Recharge-Modal
+ * 
+ * Verwaltet Show/Hide-State und Keyboard-Handling (ESC)
+ */
+const {
+  isOpen: showRechargeModal,
+  open: openRechargeModal,
+  close: closeRechargeModal,
+} = useModal()
+
+/**
+ * useModal für Product-Detail-Modal
+ * 
+ * Verwaltet Show/Hide-State und Keyboard-Handling (ESC)
+ */
+const {
+  isOpen: showProductDetail,
+  open: openProductDetailModal,
+  close: closeProductDetailModal,
+} = useModal()
+
+// ========================================
 // ROUTER & STORES
 // ========================================
 
@@ -33,14 +59,8 @@ const creditsStore = useCreditsStore()
 const productsStore = useProductsStore()
 
 // ========================================
-// REACTIVE STATE - Modals
+// REACTIVE STATE
 // ========================================
-
-/** Zeigt/Versteckt das Guthaben-Auflade-Modal */
-const showRechargeModal = ref(false)
-
-/** Zeigt/Versteckt das Produkt-Detail-Modal */
-const showProductDetail = ref(false)
 
 /** Aktuell ausgewähltes Produkt für Detail-Ansicht */
 const selectedProductDetail = ref<Product | null>(null)
@@ -121,17 +141,13 @@ const logout = () => {
 // ========================================
 
 /**
- * Öffnet das Recharge-Modal
- */
-const openRechargeModal = () => {
-  showRechargeModal.value = true
-}
-
-/**
  * Schließt das Recharge-Modal und resettet Error
+ * 
+ * @description
+ * Erweitert den useModal close() mit zusätzlichem Error-Reset.
  */
-const closeRechargeModal = () => {
-  showRechargeModal.value = false
+const handleCloseRechargeModal = () => {
+  closeRechargeModal()
   creditsStore.error = null
 }
 
@@ -201,17 +217,24 @@ const handleCategorySelect = (category: string) => {
  * Öffnet Produkt-Detail-Modal
  * 
  * @param product - Angeklicktes Produkt
+ * 
+ * @description
+ * - Setzt selectedProduct
+ * - Öffnet Modal via useModal
  */
 const handleProductClick = (product: Product) => {
   selectedProductDetail.value = product
-  showProductDetail.value = true
+  openProductDetailModal()
 }
 
 /**
  * Schließt Produkt-Detail-Modal
+ * 
+ * @description
+ * Erweitert den useModal close() mit Product-Reset.
  */
-const closeProductDetailModal = () => {
-  showProductDetail.value = false
+const handleCloseProductDetailModal = () => {
+  closeProductDetailModal()
   selectedProductDetail.value = null
 }
 
@@ -296,7 +319,7 @@ const showAdminLink = computed(() => {
       :show="showRechargeModal"
       :is-loading="creditsStore.isLoading"
       :error="creditsStore.error"
-      @close="closeRechargeModal"
+      @close="handleCloseRechargeModal"
       @recharge="handleRecharge"
       @dismiss-error="dismissBalanceError"
     />
@@ -305,7 +328,7 @@ const showAdminLink = computed(() => {
     <ProductDetailModal
       :show="showProductDetail"
       :product="selectedProductDetail"
-      @close="closeProductDetailModal"
+      @close="handleCloseProductDetailModal"
     />
   </div>
 </template>

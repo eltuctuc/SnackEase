@@ -15,6 +15,13 @@
 import type { BalanceStatus } from '~/types'
 
 // ========================================
+// COMPOSABLES
+// ========================================
+
+/** useFormatter für Datums-Formatierung */
+const { formatDate } = useFormatter()
+
+// ========================================
 // PROPS & EMITS
 // ========================================
 
@@ -91,10 +98,12 @@ const balanceDotClass = computed(() => {
  * Formatiert ISO-Datum zu deutschem Format
  * 
  * @returns Formatiertes Datum (z.B. "04.03.2026") oder null
+ * 
+ * @description
+ * Nutzt useFormatter() Composable für konsistente Formatierung.
  */
 const formattedLastRechargedAt = computed(() => {
-  if (!props.lastRechargedAt) return null
-  return new Date(props.lastRechargedAt).toLocaleDateString('de-DE')
+  return formatDate(props.lastRechargedAt)
 })
 </script>
 
