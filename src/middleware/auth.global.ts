@@ -8,4 +8,8 @@ export default defineNuxtRouteMiddleware((to) => {
   if (to.path === '/dashboard' && !authCookie.value) {
     return navigateTo('/login')
   }
+  
+  if (to.path.startsWith('/admin') && !authCookie.value) {
+    return navigateTo('/login')
+  }
 })

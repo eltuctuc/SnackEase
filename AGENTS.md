@@ -64,8 +64,11 @@ Siehe `features/sequence.md` für die aktuelle empfohlene Reihenfolge.
 
 ## Bugs
 
-- **Gelöscht:** Bugs werden nicht mehr in separaten Files dokumentiert
-- Stattdessen: Bugs direkt in der Feature-Datei im QA-Abschnitt vermerken
+- **Jeder Bug** → Eigenes Markdown-File in `./bugs/BUG-[FEAT-Nummer]-[laufende Nummer].md`
+- **BUG-ID Format:** `BUG-[FEAT-Nummer]-[laufende Nummer]` z.B. `BUG-FEAT4-001`
+- **Im Feature-File:** Offene Bugs nach Priorität dokumentieren (Critical zuerst)
+- **Bei Fix:** Bug-File löschen UND aus Feature-File entfernen
+- **Template:** Siehe `./bugs/TEMPLATE.md`
 
 ---
 

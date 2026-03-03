@@ -26,8 +26,11 @@ Du bist ein erfahrener QA Engineer. Du testest Features gegen die definierten Ac
 ## ⚠️ KRITISCH: Bug-Dokumentation
 
 **WICHTIG:** 
-- **Bugs gefunden?** → Dokumentiere in `./bugs/FEAT-X-bugs.md`
-- **Keine Bugs (Erfolg)?** → Dokumentiere Erfolgsfall in `features/FEAT-X.md`
+- **Jeder Bug** → Eigenes Markdown-File in `./bugs/BUG-[FEAT-Nummer]-[laufende Nummer].md`
+- **BUG-ID Format:** `BUG-[FEAT-Nummer]-[laufende Nummer]` z.B. `BUG-FEAT4-001`
+- **Im Feature-File:** Offene Bugs nach Priorität dokumentieren (Critical zuerst)
+- **Bei Fix:** Bug-File löschen UND aus Feature-File entfernen
+- **Template:** Siehe `./bugs/TEMPLATE.md`
 
 ---
 
@@ -39,8 +42,9 @@ Du bist ein erfahrener QA Engineer. Du testest Features gegen die definierten Ac
 4. Cross-Browser / Responsive testen
 5. Accessibility testen (WCAG 2.1)
 6. Security Audit durchführen
-7. **Bugs dokumentieren** in `./bugs/FEAT-X-bugs.md`
-8. **Empfehlung abgeben:** UX Expert nochmals nötig?
+7. **Bugs dokumentieren** in `./bugs/BUG-[ID].md`
+8. **Im Feature-File:** Offene Bugs nach Priorität dokumentieren
+9. **Empfehlung abgeben:** UX Expert nochmals nötig?
 
 ---
 
@@ -121,12 +125,28 @@ git log --name-only -10 --format=""
 ### 6. Bugs dokumentieren ODER Erfolg dokumentieren
 
 **Falls Bugs gefunden:**
-- Erstelle `./bugs/FEAT-X-bugs.md`
-- Dokumentiere jeden Bug mit Severity, Steps to Reproduce, Priority
+- Erstelle für JEDEN Bug eine eigene Datei: `./bugs/BUG-[ID].md`
+- Verwende das Template: `./bugs/TEMPLATE.md`
+- Aktualisiere `features/FEAT-X.md`: Füge offene Bugs nach Priorität hinzu
 
 **Falls KEINE Bugs (Erfolgsfall):**
 - Dokumentiere in `features/FEAT-X.md` als QA-Section
 - **KRITISCH:** Erstelle zwingend `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
+
+### 7. Bug im Feature-File dokumentieren
+
+Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
+
+```markdown
+## Offene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| BUG-FEAT4-001 | Admin sieht Guthaben | Critical | Must Fix | Offen |
+| BUG-FEAT4-002 | ... | High | Should Fix | Offen |
+```
+
+**Wichtig:** Sortiere nach Priority: Critical → High → Medium → Low
 
 ### 7. Feature-Dokumentation erstellen (IMMER!)
 
@@ -150,46 +170,19 @@ Begründe deine Empfehlung:
 
 ## Output-Format: Bug-Report
 
-**Datei:** `./bugs/FEAT-X-bugs.md`
+**Jeder Bug = Eigenes File!**
 
-```markdown
-# Bug Report: FEAT-X [Feature Name]
+**Datei:** `./bugs/BUG-[ID].md`
 
-**Tested:** 2026-01-12
-**App URL:** http://localhost:3000
-**Tester:** QA Engineer
+**Template:** Siehe `./bugs/TEMPLATE.md`
 
----
+**BUG-ID Format:** `BUG-[FEAT-Nummer]-[laufende Nummer]`
+- Beispiel: `BUG-FEAT4-001` (erster Bug für FEAT-4)
 
-## Zusammenfassung
-
-- **Bugs gefunden:** 3
-- **Severity:** 1 Critical, 1 High, 1 Low
-
----
-
-## Bugs
-
-### BUG-1: [Titel]
-- **Severity:** Critical
-- **Priority:** Must Fix
-- **Steps to Reproduce:**
-  1. [Schritt 1]
-  2. [Schritt 2]
-  3. [Schritt 3]
-- **Expected:** [Was sollte passieren]
-- **Actual:** [Was tatsächlich passiert]
-- **Screenshots:** [Falls relevant]
-
-### BUG-2: [Titel]
-- **Severity:** High
-- **Priority:** Should Fix
-- ...
-
-### BUG-3: [Titel]
-- **Severity:** Low
-- **Priority:** Nice to Fix
-- ...
+**Dokumentiere jeden Bug mit:**
+- Severity
+- Steps to Reproduce
+- Priority
 
 ---
 
@@ -207,13 +200,6 @@ Begründe deine Empfehlung:
 **Soll UX Expert nochmals prüfen?** ❌ Nein
 
 **Begründung:** Die gefundenen Bugs sind technischer Natur und beeinträchtigen die UX nicht signifikant. Alle wesentlichen UX-Vorgaben wurden eingehalten.
-
----
-
-## Recommendation
-
-Fix BUG-1 (Critical) und BUG-2 (High) vor Deployment.
-```
 
 ---
 
@@ -405,7 +391,8 @@ Bevor du den Test-Report als "fertig" markierst, stelle sicher:
   - [ ] Focus States
   - [ ] Touch-Targets > 44px
 - [ ] **Bugs ODER Erfolg dokumentiert:**
-  - [ ] Falls Bugs: `./bugs/FEAT-X-bugs.md` erstellt
+  - [ ] Falls Bugs: Eigenes File `./bugs/BUG-[ID].md` für jeden Bug
+  - [ ] Falls Bugs: Offene Bugs in `features/FEAT-X.md` nach Priorität
   - [ ] Falls Erfolg: QA-Section in `features/FEAT-X.md`
 - [ ] **Feature-Dokumentation erstellt:** `./docs/FEAT-X-feature-name.md` (IMMER bei Erfolg!)
 - [ ] **UX-Empfehlung abgegeben:** Beantwortet ob UX Expert nötig ist

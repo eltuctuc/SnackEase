@@ -7,6 +7,7 @@ export const users = pgTable('users', {
   role: text('role').default('user'), // 'admin' | 'mitarbeiter'
   passwordHash: text('password_hash'),
   location: text('location'), // 'Nürnberg' | 'Berlin'
+  isActive: boolean('is_active').default(true), // Für Admin: Nutzer deaktivieren
   createdAt: timestamp('created_at').defaultNow(),
 });
 

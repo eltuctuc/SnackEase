@@ -97,6 +97,10 @@ onMounted(async () => {
     window.addEventListener('keydown', handleKeydown)
   }
 })
+
+const showAdminLink = computed(() => {
+  return authStore.user?.role === 'admin'
+})
 </script>
 
 <template>
@@ -121,6 +125,14 @@ onMounted(async () => {
           Abmelden
         </button>
       </div>
+      
+      <NuxtLink 
+        v-if="showAdminLink"
+        to="/admin"
+        class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4"
+      >
+        → Admin-Bereich
+      </NuxtLink>
 
       <div class="grid gap-6 mb-8">
           <div 

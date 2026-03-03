@@ -58,6 +58,10 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: 'Zugriff verweigert' };
   }
 
+  if (user[0].isActive === false) {
+    return { success: false, error: 'Account ist deaktiviert' };
+  }
+
   const isValid = await bcrypt.compare(password, user[0].passwordHash || '');
 
   if (!isValid) {

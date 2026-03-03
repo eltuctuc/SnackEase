@@ -209,7 +209,7 @@ Alle Features werden nach dem SnackEase-Workflow dokumentiert:
 | Requirements | `features/FEAT-X.md` |
 | UX | `features/FEAT-X-user-flow.md`, `features/FEAT-X-wireframes.*` |
 | Architecture | In `features/FEAT-X.md` |
-| QA | `./bugs/FEAT-X-bugs.md` (falls Bugs) |
+| QA | `./bugs/BUG-[FEAT-Nummer]-[laufende Nummer].md` (eigenes File pro Bug) |
 | Feature Docs | `docs/FEAT-X-feature-name.md` |
 
 ### Feature-ID Schema

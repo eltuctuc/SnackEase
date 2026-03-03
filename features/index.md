@@ -10,7 +10,7 @@
 | FEAT-2 | Demo User Authentication | ✅ Implementiert | Persona-Auswahl + Cookie-Auth |
 | FEAT-3 | User Switcher | ✅ Implementiert | Persona-Karten auf Login-Seite |
 | FEAT-4 | Demo Guthaben | ✅ Implementiert | Guthaben anzeigen, aufladen, Monatspauschale |
-| FEAT-5 | Admin Basis | 📋 Geplant | |
+| FEAT-5 | Admin Basis | ✅ Implementiert | System-Reset, Nutzer-Verwaltung |
 | FEAT-6 | Produktkatalog | 📋 Geplant | |
 | FEAT-7 | One-Touch-Kauf | 📋 Geplant | |
 | FEAT-8 | Leaderboard | 📋 Geplant | |

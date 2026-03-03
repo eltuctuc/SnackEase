@@ -107,14 +107,16 @@
 - Cross-Browser / Responsive testen
 - Accessibility testen (WCAG 2.1)
 - Security Audit
-- **Bugs dokumentieren:** `./bugs/FEAT-X-bugs.md`
+- **Bugs dokumentieren:** `./bugs/FEAT[id]-BUG-[ID].md` (eigenes File pro Bug)
+- **Im Feature-File:** Offene Bugs nach Priorität dokumentieren
 - **Erfolgsfall dokumentieren:** in `features/FEAT-X.md`
 - **Feature-Dokumentation:** `./docs/FEAT-X-feature-name.md`
 - **Empfehlung abgeben:** UX Expert nochmals nötig?
 
 **Deliverables:**
-- `./bugs/FEAT-X-bugs.md` (falls Bugs gefunden)
-- QA-Section in `features/FEAT-X.md` (nur bei Erfolg)
+- `./bugs/BUG-[FEAT-Nummer]-[laufende Nummer].md` (eigenes File pro Bug)
+- Offene Bugs in `features/FEAT-X.md` nach Priorität sortiert
+- QA-Section in `features/FEAT-X.md` (nur bei Erfolg ohne Bugs)
 - `./docs/FEAT-X-feature-name.md` (Feature-Dokumentation)
 
 ---
