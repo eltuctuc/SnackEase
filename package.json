@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
+    "@nuxt/test-utils": "^4.0.0",
     "@nuxtjs/tailwindcss": "^6.10.0",
     "@playwright/experimental-ct-vue": "^1.58.2",
     "@playwright/test": "^1.58.2",
