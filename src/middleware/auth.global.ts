@@ -22,7 +22,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Admin-only routes
+  // Nicht-Admins werden zu /dashboard weitergeleitet (nicht zu /login)
+  // Siehe FEAT-5 Edge Case EC-1 und BUG-FEAT5-001
   if (adminPaths.some(p => to.path.startsWith(p)) && authStore.user.role !== 'admin') {
-    return navigateTo('/login')
+    return navigateTo('/dashboard')
   }
 })

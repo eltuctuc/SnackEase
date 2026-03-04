@@ -209,6 +209,7 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
+| FEAT-10 | Erweitertes Admin-Dashboard | Nutzer/Produkte/Kategorien/Statistiken/Reset | 📋 Geplant |
 | PROD-04 | Filter | Vegan, Glutenfrei, Allergene | ⏳ Offen |
 | PROD-06 | Favoriten | Produkte als Favorit speichern | ⏳ Offen |
 | BUY-02 | Warenkorb | Mehrere Produkte auf einmal | ⏳ Offen |
@@ -216,8 +217,6 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | STAT-01 | Guthaben-Übersicht | Aktueller Kontostand | ⏳ Offen |
 | STAT-02 | Ausgaben-Statistik | Bereits ausgegebene Beträge | ⏳ Offen |
 | STAT-04 | Nährwert-Zusammenfassung | Zucker, Fett, Kalorien, Eiweiß | ⏳ Offen |
-| ADMIN-01 | Produktverwaltung | CRUD für Produkte | ⏳ Offen |
-| ADMIN-02 | Nutzerverwaltung | CRUD für Nutzer | ⏳ Offen |
 
 ### Release 5: Future
 
@@ -248,8 +247,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 2.2
+- **Version:** 2.3
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
-- **Letzte Änderung:** 2026-03-03
-- **Änderungen:** FEAT-6 UX Complete, PROD-01/02/03/05 als Teil von FEAT-6
+- **Letzte Änderung:** 2026-03-04
+- **Änderungen:** FEAT-10 Erweitertes Admin-Dashboard hinzugefügt

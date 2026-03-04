@@ -135,7 +135,7 @@ const formattedLastRechargedAt = computed(() => {
       <div>
         <p class="text-sm font-medium opacity-80" id="balance-label">Guthaben</p>
         <p class="text-4xl font-bold" aria-labelledby="balance-label">
-          <span aria-live="polite">{{ balance }}</span> €
+          <span aria-live="polite" data-testid="balance-amount">{{ balance }}</span> €
         </p>
       </div>
       <!-- Status-Indikator-Dot -->

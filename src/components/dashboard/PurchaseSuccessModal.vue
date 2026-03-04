@@ -148,12 +148,14 @@ function handleClose() {
         <div
           class="bg-card rounded-lg border shadow-lg max-w-md w-full p-6 relative"
           @click.stop
+          data-testid="purchase-success-modal"
         >
           <!-- Close Button -->
           <button
             @click="handleClose"
             class="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
             aria-label="Modal schließen"
+            data-testid="modal-close-button"
           >
             ✕
           </button>
@@ -194,7 +196,7 @@ function handleClose() {
           <!-- PIN-Anzeige -->
           <div class="bg-primary/10 border-2 border-primary rounded-lg p-4 mb-4">
             <p class="text-sm text-center text-muted-foreground mb-2">🔐 Deine Abhol-PIN:</p>
-            <div class="text-4xl font-bold text-center text-primary tracking-wider">
+            <div class="text-4xl font-bold text-center text-primary tracking-wider" data-testid="pickup-pin">
               {{ purchase.pickupPin }}
             </div>
           </div>

@@ -57,8 +57,13 @@ const handleLogin = async () => {
     isLoading.value = false
     
     if (result.success) {
+      // Rolle-basierte Weiterleitung
+      // Admin → /admin, Mitarbeiter → /dashboard
+      const targetRoute = authStore.user?.role === 'admin' ? '/admin' : '/dashboard'
+      
       setTimeout(() => {
-        window.location.href = '/dashboard'
+        // Nuxt navigateTo() für korrektes SSR-Routing
+        navigateTo(targetRoute)
       }, 500)
     } else {
       error.value = result.error || 'Anmeldung fehlgeschlagen'
