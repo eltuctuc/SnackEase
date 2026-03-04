@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
 import BalanceCard from '~/components/dashboard/BalanceCard.vue'
+import AdminInfoBanner from '~/components/dashboard/AdminInfoBanner.vue'
 import ProductGrid from '~/components/dashboard/ProductGrid.vue'
 import RechargeModal from '~/components/dashboard/RechargeModal.vue'
 import ProductDetailModal from '~/components/dashboard/ProductDetailModal.vue'
@@ -116,11 +117,16 @@ onMounted(async () => {
   if (!authStore.user) {
     router.push('/login')
   } else {
-    // Parallel laden → schneller, kein Flash von Default-Werten
-    await Promise.all([
-      creditsStore.fetchBalance(),
-      productsStore.fetchProducts(),
-    ])
+    // Admin hat kein Guthaben → fetchBalance() NICHT aufrufen (verhindert 403-Fehler)
+    // Mitarbeiter: beides parallel laden → schneller, kein Flash von Default-Werten
+    if (authStore.isAdmin) {
+      await productsStore.fetchProducts()
+    } else {
+      await Promise.all([
+        creditsStore.fetchBalance(),
+        productsStore.fetchProducts(),
+      ])
+    }
     pageReady.value = true
   }
 })
@@ -320,9 +326,14 @@ const showAdminLink = computed(() => {
 
       <!-- Echte Inhalte erst wenn alle Daten geladen sind -->
       <template v-else>
-        <!-- Balance Card Component -->
+        <!-- Balance-Bereich: AdminInfoBanner fuer Admin, BalanceCard fuer Mitarbeiter -->
         <div class="grid gap-6 mb-8">
+          <!-- Admin: zeigt Info-Banner statt Guthaben-Karte -->
+          <AdminInfoBanner v-if="authStore.isAdmin" />
+
+          <!-- Mitarbeiter: zeigt Guthaben-Karte mit allen Aktionen -->
           <BalanceCard
+            v-else
             :balance="creditsStore.balance"
             :balance-status="creditsStore.balanceStatus"
             :last-recharged-at="creditsStore.lastRechargedAt"

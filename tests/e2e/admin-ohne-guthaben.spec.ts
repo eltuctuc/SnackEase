@@ -1,0 +1,140 @@
+/**
+ * E2E-Tests fuer FEAT-9: Admin ohne Guthaben
+ *
+ * Testet die kritischen User-Flows:
+ * 1. Admin-Dashboard: Admin loggt sich ein → sieht AdminInfoBanner, keine BalanceCard
+ * 2. Admin-Link: "Zum Admin-Bereich" navigiert korrekt zu /admin
+ * 3. Mitarbeiter-Dashboard: Mitarbeiter sieht BalanceCard (Regression-Test)
+ * 4. API-Guard: Direkter Aufruf /api/credits/balance als Admin → 403
+ *
+ * Voraussetzung: Applikation laeuft auf http://localhost:3000
+ * Demo-Credentials:
+ * - Admin: admin@demo.de / admin123
+ * - Mitarbeiter: nina@demo.de / nina123
+ */
+
+import { test, expect } from '@playwright/test'
+
+/**
+ * Hilfsfunktion: Login als Admin
+ */
+async function loginAsAdmin(page: import('@playwright/test').Page) {
+  await page.goto('/login')
+  // Admin-Persona auswaehlen (falls vorhanden) oder direkt eintippen
+  const adminPersona = page.locator('text=Admin')
+  if (await adminPersona.isVisible()) {
+    await adminPersona.click()
+  } else {
+    await page.fill('input[type="email"]', 'admin@demo.de')
+    await page.fill('input[type="password"]', 'admin123')
+  }
+  await page.click('button[type="submit"]')
+  await page.waitForURL('/dashboard', { timeout: 10000 })
+}
+
+/**
+ * Hilfsfunktion: Login als Mitarbeiter (Nina)
+ */
+async function loginAsMitarbeiter(page: import('@playwright/test').Page) {
+  await page.goto('/login')
+  const ninaPersona = page.locator('text=Nina Neuanfang')
+  if (await ninaPersona.isVisible()) {
+    await ninaPersona.click()
+  } else {
+    await page.fill('input[type="email"]', 'nina@demo.de')
+    await page.fill('input[type="password"]', 'nina123')
+  }
+  await page.click('button[type="submit"]')
+  await page.waitForURL('/dashboard', { timeout: 10000 })
+}
+
+test.describe('FEAT-9: Admin ohne Guthaben', () => {
+  test.describe('Admin-Dashboard', () => {
+    test('Admin sieht AdminInfoBanner statt BalanceCard', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      // AdminInfoBanner muss sichtbar sein
+      await expect(page.locator('text=Admin-Modus aktiv')).toBeVisible({ timeout: 5000 })
+
+      // BalanceCard darf NICHT sichtbar sein (kein "Guthaben" Label + Euro-Betrag)
+      await expect(page.locator('text=Guthaben').first()).not.toBeVisible()
+    })
+
+    test('Admin sieht keinen Guthaben-Betrag in Euro', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      // Kein Guthaben-Betrag (BalanceCard zeigt z.B. "25.50 €")
+      // Der AdminInfoBanner zeigt keinen Euro-Betrag
+      const balanceCard = page.locator('[role="status"]')
+      await expect(balanceCard).not.toBeVisible()
+    })
+
+    test('Admin sieht Erklaerungstext ueber fehlendes Guthaben', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      await expect(page.locator('text=kein persoenliches Guthaben')).toBeVisible({ timeout: 5000 })
+    })
+
+    test('Admin sieht CTA-Link zum Admin-Bereich im Banner', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      await expect(page.locator('text=Zum Admin-Bereich')).toBeVisible({ timeout: 5000 })
+    })
+  })
+
+  test.describe('Admin-Navigation', () => {
+    test('Admin-Link "Zum Admin-Bereich" navigiert zu /admin', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      // Auf den CTA-Link im AdminInfoBanner klicken
+      const adminLink = page.locator('a[href="/admin"]').first()
+      await expect(adminLink).toBeVisible({ timeout: 5000 })
+      await adminLink.click()
+
+      await page.waitForURL('/admin', { timeout: 10000 })
+      await expect(page).toHaveURL(/\/admin/)
+    })
+  })
+
+  test.describe('Mitarbeiter-Dashboard (Regression)', () => {
+    test('Mitarbeiter sieht weiterhin BalanceCard', async ({ page }) => {
+      await loginAsMitarbeiter(page)
+
+      // BalanceCard muss vorhanden sein (role="status" ist auf BalanceCard)
+      await expect(page.locator('[role="status"]')).toBeVisible({ timeout: 5000 })
+    })
+
+    test('Mitarbeiter sieht kein AdminInfoBanner', async ({ page }) => {
+      await loginAsMitarbeiter(page)
+
+      // AdminInfoBanner darf fuer Mitarbeiter NICHT erscheinen
+      await expect(page.locator('text=Admin-Modus aktiv')).not.toBeVisible()
+    })
+
+    test('Mitarbeiter sieht Guthaben-Karte mit Aktions-Buttons', async ({ page }) => {
+      await loginAsMitarbeiter(page)
+
+      await expect(page.locator('text=Guthaben aufladen')).toBeVisible({ timeout: 5000 })
+    })
+  })
+
+  test.describe('API-Guard (FEAT-9)', () => {
+    test('Admin erhaelt 403 bei direktem Aufruf von /api/credits/balance', async ({ page }) => {
+      // Erst als Admin einloggen (Cookie setzen)
+      await loginAsAdmin(page)
+
+      // Direkten API-Aufruf machen
+      const response = await page.request.get('/api/credits/balance')
+      expect(response.status()).toBe(403)
+    })
+
+    test('API-Fehler-Response enthaelt passende Meldung', async ({ page }) => {
+      await loginAsAdmin(page)
+
+      const response = await page.request.get('/api/credits/balance')
+      const body = await response.json()
+      // H3-Fehler sendet message im Body
+      expect(body.message || body.statusMessage).toBeTruthy()
+    })
+  })
+})

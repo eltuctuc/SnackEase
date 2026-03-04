@@ -7,6 +7,14 @@ export default defineEventHandler(async (event) => {
   try {
     const user = await getCurrentUser(event)
 
+    // Admin-Guard: Admins haben kein Guthaben-Konto
+    if (user.role === 'admin') {
+      throw createError({
+        statusCode: 403,
+        message: 'Admin hat kein Guthaben',
+      })
+    }
+
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
 
     if (!creditsResults[0]) {

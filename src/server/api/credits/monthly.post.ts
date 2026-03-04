@@ -9,6 +9,14 @@ export default defineEventHandler(async (event) => {
   try {
     const user = await getCurrentUser(event)
 
+    // Admin-Guard: Admins erhalten keine Monatspauschale
+    if (user.role === 'admin') {
+      throw createError({
+        statusCode: 403,
+        message: 'Admin hat kein Guthaben',
+      })
+    }
+
     // TODO: Transactions würden Race Conditions verhindern, aber neon-http unterstützt sie nicht
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
     

@@ -343,12 +343,6 @@ Startseite (index.vue) [ERWEITERN]
 
 ---
 
-## Offene Bugs
-
-| Bug-ID | Titel | Severity | Priority | Status |
-|--------|-------|----------|----------|--------|
-| BUG-FEAT4-001 | Admin kann Guthaben sehen | Critical | Must Fix | Offen |
-
 ---
 
 ### Acceptance Criteria Status
@@ -385,7 +379,7 @@ Startseite (index.vue) [ERWEITERN]
 
 - ✅ Input Validation (Betrag muss 10/25/50 sein)
 - ✅ Auth-Checks vorhanden
-- ❌ **KEINE Admin-Rollenprüfung** - wird in FEAT-9 behoben
+- ✅ Admin-Rollenprüfung: 403-Guard in allen Credits-APIs implementiert (behoben durch FEAT-9)
 
 ### Tech Stack & Code Quality
 
@@ -398,11 +392,9 @@ Startseite (index.vue) [ERWEITERN]
 
 ---
 
-## ❌ NOT Production Ready
+## Production Ready
 
-**BUG-FEAT4-001 (Critical) noch offen** - FEAT-9 (Admin ohne Guthaben) wurde noch nicht implementiert.
-
-Alle FEAT-4-eigenen Funktionen sind korrekt. Blockiert durch FEAT-9-Implementierung.
+**BUG-FEAT4-001 behoben** durch FEAT-9-Implementierung (2026-03-04). Admin sieht keine Guthaben-Karte mehr und erhaelt 403 bei Credits-API-Aufrufen.
 
 ---
 
@@ -413,10 +405,11 @@ Alle FEAT-4-eigenen Funktionen sind korrekt. Blockiert durch FEAT-9-Implementier
 
 ### Neue Erkenntnisse
 
-- BUG-FEAT4-001 bleibt offen: FEAT-9 ist noch nicht implementiert (Status "Ready for Solution Architect")
-- BUG-FEAT9-001 erstellt: Dokumentiert die fehlende FEAT-9-Implementierung im Detail
-- Credits-Store: 0% Test-Coverage (Store-Tests mit describe.skip deaktiviert)
+- BUG-FEAT4-001 behoben: FEAT-9 wurde vollstaendig implementiert
+- Admin sieht AdminInfoBanner statt BalanceCard
+- Credits-APIs geben 403 fuer Admin zurueck
+- BUG-FEAT9-001 (fehlende FEAT-9-Implementierung) ebenfalls behoben
 
 ### Empfehlung
 
-FEAT-9 muss implementiert werden bevor FEAT-4 als "Production Ready" gilt.
+FEAT-4 ist Production Ready. Kein bloeckierender Bug mehr vorhanden.

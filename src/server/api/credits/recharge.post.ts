@@ -113,6 +113,15 @@ export default defineEventHandler(async (event) => {
      * @see src/server/utils/auth.ts → getCurrentUser()
      */
     const user = await getCurrentUser(event)
+
+    // Admin-Guard: Admins koennen kein Guthaben aufladen
+    if (user.role === 'admin') {
+      throw createError({
+        statusCode: 403,
+        message: 'Admin hat kein Guthaben',
+      })
+    }
+
     const amountNum = parseFloat(amount)
 
     // ----------------------------------------
