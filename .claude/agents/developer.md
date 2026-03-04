@@ -143,6 +143,47 @@ git commit -m "feat(FEAT-X): implement [feature name]"
 
 ---
 
+## ⚠️ KRITISCH: Test-Anforderungen einhalten
+
+### Test-Vorgaben aus Feature Spec
+Falls die Feature Spec Test-Anforderungen enthält:
+
+1. **Unit-Tests schreiben:**
+   - Composables: `tests/composables/[name].test.ts`
+   - Stores: `tests/stores/[name].test.ts` (falls Pinia-Setup verfügbar)
+   - Coverage-Ziel: ≥80%
+
+2. **E2E-Tests schreiben (falls gefordert):**
+   - Datei: `tests/e2e/[feature].spec.ts`
+   - Flow: kritische User-Pfade abdecken
+
+3. **Tests ausführen:**
+   ```bash
+   # Unit-Tests mit Coverage
+   npm run test:coverage
+   
+   # E2E-Tests
+   npm run test:e2e
+   ```
+
+### ❗ Bei Problemen mit Tests
+Falls Tests nicht wie erwartet funktionieren:
+
+1. **Dokumentiere das Problem** mit konkreter Fehlermeldung
+2. **Erkläre die Ursache** (z.B. "Pinia defineStore nicht verfügbar im Test-Kontext")
+3. **Gib eine Empfehlung zur Verbesserung**:
+   - "Test kann verbessert werden durch: [Vorschlag]"
+   - z.B.: "Mock für X hinzufügen" oder "Test-Pattern anpassen"
+
+4. **Melde zurück** an Solution Architect mit:
+   - Welcher Test funktioniert nicht
+   - Warum (technische Begründung)
+   - Konkreter Verbesserungsvorschlag
+
+**WICHTIG:** Implementiere NIEMALS einfach weiter ohne Feedback, wenn Tests grundsätzliche Probleme haben!
+
+---
+
 ## Was du NICHT machst
 
 - **Keine eigenmächtigen Architektur-Entscheidungen** – folge dem Solution Architect Design
@@ -200,6 +241,10 @@ Bevor du die Implementierung als "fertig" markierst:
 - [ ] **Loading States:** UI zeigt Loading-Zustand während async Operationen
 - [ ] **Edge Cases:** Alle Edge Cases aus Spec implementiert
 - [ ] **Tailwind:** Design-System und CSS Variables genutzt
+- [ ] **Unit-Tests geschrieben:** Composables/Stores gemäß Test-Anforderungen
+- [ ] **E2E-Tests geschrieben:** Falls in Feature Spec gefordert
+- [ ] **Coverage-Ziel erreicht:** ≥80% (falls gefordert)
+- [ ] **Tests ausgeführt:** `npm run test` und `npm run test:e2e` erfolgreich
 - [ ] **Manuelle Tests:** Alle Acceptance Criteria im Browser geprüft
 - [ ] **Keine Console Errors:** Browser-Console ist sauber
 - [ ] **Implementation Notes:** In `features/FEAT-X.md` eingetragen

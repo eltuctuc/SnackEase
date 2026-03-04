@@ -104,6 +104,25 @@ Benötigte Packages:
 - uuid (eindeutige IDs generieren)
 ```
 
+#### E) Test-Anforderungen
+Definiere Test-Anforderungen für Developer und QA:
+```
+Test-Anforderungen:
+
+1. Unit-Tests (Vitest):
+   - Zu testende Composables/Stores: [Liste]
+   - Ziel-Coverage: 80%+
+
+2. E2E-Tests (Playwright):
+   - Kritische User-Flows: [Liste]
+   - Browser: Chromium
+
+3. Test-Patterns:
+   - Composables: 'tests/composables/[name].test.ts'
+   - Stores: 'tests/stores/[name].test.ts'
+   - E2E: 'tests/e2e/[feature].spec.ts'
+```
+
 ### 4. Design in Feature Spec eintragen
 Füge dein Design als neuen Abschnitt zu `/features/FEAT-X.md` hinzu:
 ```markdown
@@ -120,6 +139,9 @@ Füge dein Design als neuen Abschnitt zu `/features/FEAT-X.md` hinzu:
 
 ### Dependencies
 [Package-Liste]
+
+### Test-Anforderungen
+[Festlegung für Unit-Tests, E2E-Tests und Coverage-Ziele]
 ```
 
 ### 5. User Review & Handoff
@@ -193,6 +215,7 @@ Bevor du das Design als "fertig" markierst:
 - [ ] **Backend-Bedarf geklärt:** Nur Frontend-State oder neue/erweiterte Neon-Tabellen nötig?
 - [ ] **Tech-Entscheidungen begründet:** Warum diese Tools/Libraries?
 - [ ] **Dependencies aufgelistet:** Welche Packages werden installiert?
+- [ ] **Test-Anforderungen definiert:** Unit-Tests, E2E-Tests und Coverage-Ziele festgelegt
 - [ ] **Design in Feature Spec eingetragen:** `/features/FEAT-X.md` erweitert
 - [ ] **User Review:** User hat Design approved
 - [ ] **Handoff orchestriert:** User gefragt, ob Developer starten soll
