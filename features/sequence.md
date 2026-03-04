@@ -11,10 +11,13 @@
 | 5 | User Switcher | FEAT-3 | ✅ Implementiert | FEAT-2 (User müssen existieren) |
 | 6 | Demo Guthaben | FEAT-4 | ✅ Implementiert | FEAT-2, FEAT-3 (User brauchen Guthaben + User-Wechsel) |
 | 7 | Admin Basis | FEAT-5 | ✅ Implementiert | FEAT-1 |
-| 8 | Admin ohne Guthaben | FEAT-9 | 📋 Geplant | FEAT-4 (Admin sieht kein Guthaben) |
-| 9 | Produktkatalog | FEAT-6 | ✅ Implementiert | FEAT-4 (Guthaben für Käufe) |
+| 8 | Produktkatalog | FEAT-6 | ✅ Implementiert | FEAT-4 (Guthaben für Käufe) |
+| 9 | Admin ohne Guthaben | FEAT-9 | ✅ Implementiert | FEAT-4 (Admin sieht kein Guthaben) |
 | 10 | One-Touch-Kauf | FEAT-7 | 📋 Geplant | FEAT-4, FEAT-6 |
-| 11 | Leaderboard | FEAT-8 | 📋 Geplant | FEAT-7 (Käufe für Rangliste) |
+| 11 | Bestandsverwaltung | FEAT-12 | 📋 Geplant | FEAT-5, FEAT-6, FEAT-10 |
+| 12 | Bestellabholung am Automaten | FEAT-11 | 📋 Geplant | FEAT-2, FEAT-7, FEAT-12 |
+| 13 | Low-Stock-Benachrichtigungen | FEAT-13 | 📋 Geplant | FEAT-5, FEAT-12 |
+| 14 | Leaderboard | FEAT-8 | 📋 Geplant | FEAT-7 (Käufe für Rangliste) |
 
 ## Bereits umgesetzte Features
 
@@ -26,12 +29,15 @@
 - ✅ FEAT-4: Demo Guthaben
 - ✅ FEAT-5: Admin Basis
 - ✅ FEAT-6: Produktkatalog
+- ✅ FEAT-9: Admin ohne Guthaben
 
 ## Offene Features (nach Reihenfolge)
 
-1. FEAT-9: Admin ohne Guthaben
-2. FEAT-7: One-Touch-Kauf
-3. FEAT-8: Leaderboard
+1. FEAT-7: One-Touch-Kauf
+3. FEAT-12: Bestandsverwaltung
+4. FEAT-11: Bestellabholung am Automaten
+5. FEAT-13: Low-Stock-Benachrichtigungen
+6. FEAT-8: Leaderboard
 
 ## Hinweis zu Abweichungen
 
