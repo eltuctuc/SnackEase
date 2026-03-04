@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, decimal, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, decimal, integer, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -6,7 +6,7 @@ export const users = pgTable('users', {
   name: text('name'),
   role: text('role').default('user'), // 'admin' | 'mitarbeiter'
   passwordHash: text('password_hash'),
-  location: text('location'), // 'Nürnberg' | 'Berlin'
+  location: varchar('location', { length: 50 }), // 'Nürnberg' | 'Berlin'
   isActive: boolean('is_active').default(true), // Für Admin: Nutzer deaktivieren
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -68,3 +68,36 @@ export const products = pgTable('products', {
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+// FEAT-7: Purchases Tabelle für One-Touch Kauf
+export const purchases = pgTable('purchases', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  bonusPoints: integer('bonus_points').default(0),
+  
+  // Für FEAT-11 (Bestellabholung):
+  status: varchar('status', { length: 20 }).default('pending_pickup').notNull(),
+  // Status: 'pending_pickup', 'picked_up', 'cancelled'
+  
+  pickupPin: varchar('pickup_pin', { length: 4 }).notNull(),
+  // 4-stellige PIN (z.B. "1234")
+  
+  pickupLocation: varchar('pickup_location', { length: 50 }).default('Nürnberg').notNull(),
+  // Standort des Automaten
+  
+  expiresAt: timestamp('expires_at').notNull(),
+  // createdAt + 2 Stunden
+  
+  pickedUpAt: timestamp('picked_up_at'),
+  // NULL wenn noch nicht abgeholt
+  
+  cancelledAt: timestamp('cancelled_at'),
+  // NULL wenn nicht storniert
+  
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;

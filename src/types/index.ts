@@ -40,6 +40,17 @@ export type {
   TransactionType
 } from './credits'
 
+// Purchase-Types (FEAT-7)
+export type {
+  Purchase,
+  PurchaseWithProduct,
+  PurchaseStatus,
+  PurchaseSuccessResponse,
+  PurchaseErrorResponse,
+  PurchaseResponse,
+  PurchaseRequest
+} from './purchase'
+
 // API-Types
 export type {
   CreditsBalanceResponse,

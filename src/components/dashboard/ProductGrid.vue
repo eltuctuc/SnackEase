@@ -7,12 +7,15 @@
   - Grid-Layout mit Produktkarten
   - Loading- und Error-States
   - Empty-State bei keinen Ergebnissen
+  - PurchaseButton auf jeder Produktkarte (FEAT-7)
   
   @component
 -->
 
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
+import PurchaseButton from './PurchaseButton.vue'
+import PurchaseSuccessModal from './PurchaseSuccessModal.vue'
 
 // ========================================
 // COMPOSABLES
@@ -61,11 +64,21 @@ const emit = defineEmits<{
 }>()
 
 // ========================================
+// COMPOSABLES & STORES (FEAT-7)
+// ========================================
+
+const purchasesStore = usePurchasesStore()
+const creditsStore = useCreditsStore()
+
+// ========================================
 // REACTIVE STATE
 // ========================================
 
 /** Suchbegriff-Input */
 const searchQuery = ref('')
+
+/** Success-Modal State (FEAT-7) */
+const isSuccessModalOpen = ref(false)
 
 // ========================================
 // METHODS
@@ -98,6 +111,21 @@ const selectCategory = (category: string) => {
  */
 const openProductDetail = (product: Product) => {
   emit('productClick', product)
+}
+
+/**
+ * Kauf erfolgreich → Success-Modal öffnen (FEAT-7)
+ */
+const handlePurchaseSuccess = () => {
+  isSuccessModalOpen.value = true
+}
+
+/**
+ * Success-Modal schließen (FEAT-7)
+ */
+const closeSuccessModal = () => {
+  isSuccessModalOpen.value = false
+  purchasesStore.clearLastPurchase()
 }
 </script>
 
@@ -165,45 +193,63 @@ const openProductDetail = (product: Product) => {
       <div
         v-for="product in products"
         :key="product.id"
-        @click="openProductDetail(product)"
-        class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+        class="bg-background border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all"
       >
-        <!-- Produktbild oder Fallback-Icon -->
-        <div class="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl">
-          <span v-if="!product.imageUrl" aria-hidden="true">🍎</span>
-          <img
-            v-else
-            :src="product.imageUrl"
-            :alt="product.name"
-            class="w-full h-full object-cover rounded-lg"
-          />
+        <!-- Produktbild oder Fallback-Icon (klickbar für Detail-Ansicht) -->
+        <div 
+          @click="openProductDetail(product)"
+          class="cursor-pointer"
+        >
+          <div class="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl">
+            <span v-if="!product.imageUrl" aria-hidden="true">🍎</span>
+            <img
+              v-else
+              :src="product.imageUrl"
+              :alt="product.name"
+              class="w-full h-full object-cover rounded-lg"
+            />
+          </div>
+          
+          <!-- Produktname -->
+          <h3 class="font-medium text-foreground text-sm truncate">{{ product.name }}</h3>
+          
+          <!-- Preis + Stock-Status -->
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-lg font-bold text-primary">{{ formatPrice(product.price) }} €</span>
+            <span v-if="product.stock === 0" class="text-xs text-red-500">Ausverkauft</span>
+          </div>
+          
+          <!-- Badges (Vegan, Glutenfrei) -->
+          <div class="flex gap-1 mt-2">
+            <span 
+              v-if="product.isVegan" 
+              class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded"
+            >
+              🌱
+            </span>
+            <span 
+              v-if="product.isGlutenFree" 
+              class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded"
+            >
+              GF
+            </span>
+          </div>
         </div>
-        
-        <!-- Produktname -->
-        <h3 class="font-medium text-foreground text-sm truncate">{{ product.name }}</h3>
-        
-        <!-- Preis + Stock-Status -->
-        <div class="flex items-center gap-2 mt-1">
-          <span class="text-lg font-bold text-primary">{{ formatPrice(product.price) }} €</span>
-          <span v-if="product.stock === 0" class="text-xs text-red-500">Ausverkauft</span>
-        </div>
-        
-        <!-- Badges (Vegan, Glutenfrei) -->
-        <div class="flex gap-1 mt-2">
-          <span 
-            v-if="product.isVegan" 
-            class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded"
-          >
-            🌱
-          </span>
-          <span 
-            v-if="product.isGlutenFree" 
-            class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded"
-          >
-            GF
-          </span>
-        </div>
+
+        <!-- FEAT-7: Purchase Button -->
+        <PurchaseButton
+          :product="product"
+          :user-balance="creditsStore.balanceNumeric"
+          @purchase-success="handlePurchaseSuccess"
+        />
       </div>
     </div>
+
+    <!-- FEAT-7: Success Modal -->
+    <PurchaseSuccessModal
+      :is-open="isSuccessModalOpen"
+      :purchase="purchasesStore.lastPurchase"
+      @close="closeSuccessModal"
+    />
   </div>
 </template>
