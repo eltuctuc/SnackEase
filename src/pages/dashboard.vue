@@ -65,6 +65,9 @@ const productsStore = useProductsStore()
 /** Aktuell ausgewähltes Produkt für Detail-Ansicht */
 const selectedProductDetail = ref<Product | null>(null)
 
+/** Verhindert Flash von Default-Store-Werten — erst true wenn alle Daten geladen sind */
+const pageReady = ref(false)
+
 // ========================================
 // CONSTANTS - Kategorien
 // ========================================
@@ -108,14 +111,17 @@ const categories: ProductCategoryOption[] = [
 onMounted(async () => {
   // Auth-Check: User-Session aus Cookie wiederherstellen
   await authStore.initFromCookie()
-  
+
   // Redirect zu Login falls nicht authentifiziert
   if (!authStore.user) {
     router.push('/login')
   } else {
-    // User ist eingeloggt → Daten laden
-    await creditsStore.fetchBalance()
-    await productsStore.fetchProducts()
+    // Parallel laden → schneller, kein Flash von Default-Werten
+    await Promise.all([
+      creditsStore.fetchBalance(),
+      productsStore.fetchProducts(),
+    ])
+    pageReady.value = true
   }
 })
 
@@ -287,31 +293,59 @@ const showAdminLink = computed(() => {
         → Admin-Bereich
       </NuxtLink>
 
-      <!-- Balance Card Component -->
-      <div class="grid gap-6 mb-8">
-        <BalanceCard
-          :balance="creditsStore.balance"
-          :balance-status="creditsStore.balanceStatus"
-          :last-recharged-at="creditsStore.lastRechargedAt"
-          :is-loading="creditsStore.isLoading"
-          :error="creditsStore.error"
-          @open-recharge-modal="openRechargeModal"
-          @request-monthly="handleMonthly"
-          @dismiss-error="dismissBalanceError"
-        />
-      </div>
+      <!-- Lade-Skeleton bis alle Daten bereit sind (verhindert Flash von Default-Werten) -->
+      <template v-if="!pageReady">
+        <div class="grid gap-6 mb-8">
+          <div class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <div class="h-3 bg-gray-300 rounded w-16 mb-2"></div>
+                <div class="h-10 bg-gray-300 rounded w-28"></div>
+              </div>
+              <div class="w-4 h-4 rounded-full bg-gray-300"></div>
+            </div>
+            <div class="flex gap-3">
+              <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+              <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+        <div class="rounded-lg border bg-gray-50 p-8 animate-pulse">
+          <div class="h-4 bg-gray-300 rounded w-1/4 mb-6"></div>
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div v-for="i in 6" :key="i" class="h-32 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
+      </template>
 
-      <!-- Product Grid Component -->
-      <ProductGrid
-        :products="productsStore.products"
-        :categories="categories"
-        :selected-category="productsStore.selectedCategory"
-        :is-loading="productsStore.isLoading"
-        :error="productsStore.error"
-        @select-category="handleCategorySelect"
-        @search="handleSearch"
-        @product-click="handleProductClick"
-      />
+      <!-- Echte Inhalte erst wenn alle Daten geladen sind -->
+      <template v-else>
+        <!-- Balance Card Component -->
+        <div class="grid gap-6 mb-8">
+          <BalanceCard
+            :balance="creditsStore.balance"
+            :balance-status="creditsStore.balanceStatus"
+            :last-recharged-at="creditsStore.lastRechargedAt"
+            :is-loading="creditsStore.isLoading"
+            :error="creditsStore.error"
+            @open-recharge-modal="openRechargeModal"
+            @request-monthly="handleMonthly"
+            @dismiss-error="dismissBalanceError"
+          />
+        </div>
+
+        <!-- Product Grid Component -->
+        <ProductGrid
+          :products="productsStore.products"
+          :categories="categories"
+          :selected-category="productsStore.selectedCategory"
+          :is-loading="productsStore.isLoading"
+          :error="productsStore.error"
+          @select-category="handleCategorySelect"
+          @search="handleSearch"
+          @product-click="handleProductClick"
+        />
+      </template>
     </div>
 
     <!-- Recharge Modal Component -->

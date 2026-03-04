@@ -108,7 +108,24 @@ const formattedLastRechargedAt = computed(() => {
 </script>
 
 <template>
-  <div 
+  <!-- Loading Skeleton -->
+  <div v-if="isLoading" class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <div class="h-3 bg-gray-300 rounded w-16 mb-2"></div>
+        <div class="h-10 bg-gray-300 rounded w-28"></div>
+      </div>
+      <div class="w-4 h-4 rounded-full bg-gray-300"></div>
+    </div>
+    <div class="flex gap-3">
+      <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+      <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+    </div>
+  </div>
+
+  <!-- Echte Karte -->
+  <div
+    v-else
     :class="['rounded-lg p-6 border-2 transition-all', balanceColorClass]"
     role="status"
     aria-live="polite"

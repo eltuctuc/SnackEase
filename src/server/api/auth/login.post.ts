@@ -119,23 +119,28 @@ function getClientIp(event: any): string {
  * (Konfiguration siehe: src/constants/auth.ts → RATE_LIMIT_CONFIG)
  */
 function checkRateLimit(clientIp: string): boolean {
+  // Rate-Limiting nur in Production aktiv
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+
   const now = Date.now();
   const record = rateLimitMap.get(clientIp);
-  
+
   // Fall 1: Kein Record vorhanden ODER Zeitfenster abgelaufen → Neues Fenster starten
   if (!record || now > record.resetTime) {
-    rateLimitMap.set(clientIp, { 
-      count: 1, 
-      resetTime: now + RATE_LIMIT_CONFIG.WINDOW_MS 
+    rateLimitMap.set(clientIp, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_CONFIG.WINDOW_MS
     });
     return true; // Request erlaubt
   }
-  
+
   // Fall 2: Limit erreicht → Request blockieren
   if (record.count >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS) {
     return false; // Request blockiert
   }
-  
+
   // Fall 3: Innerhalb Limit → Counter erhöhen und erlauben
   record.count++;
   return true; // Request erlaubt

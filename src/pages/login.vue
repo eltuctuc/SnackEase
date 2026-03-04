@@ -6,10 +6,16 @@ definePageMeta({
 const router = useRouter()
 const authStore = useAuthStore()
 
-onMounted(() => {
-  const authCookie = useCookie('auth_token')
-  if (authCookie.value) {
+/** Verhindert Flash des Login-Formulars für bereits eingeloggte User */
+const authChecked = ref(false)
+
+onMounted(async () => {
+  // httpOnly-Cookie nicht client-seitig lesbar → /api/auth/me fragen
+  await authStore.initFromCookie()
+  if (authStore.user) {
     router.push('/dashboard')
+  } else {
+    authChecked.value = true
   }
 })
 
@@ -66,7 +72,10 @@ const handleLogin = async () => {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-    <div class="text-center max-w-md w-full">
+    <div v-if="!authChecked" class="text-center">
+      <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+    </div>
+    <div v-else class="text-center max-w-md w-full">
       <h1 class="text-4xl font-bold text-primary mb-2">SnackEase</h1>
       <p class="text-muted-foreground mb-8">Willkommen zurück!</p>
       

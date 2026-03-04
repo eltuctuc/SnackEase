@@ -11,6 +11,7 @@ const stats = ref({
 })
 const isLoading = ref(true)
 const error = ref<string | null>(null)
+const pageReady = ref(false)
 
 const showResetModal = ref(false)
 const showCreditsResetModal = ref(false)
@@ -98,6 +99,7 @@ onMounted(async () => {
   }
   
   await fetchStats()
+  pageReady.value = true
 })
 </script>
 
@@ -123,31 +125,47 @@ onMounted(async () => {
         </NuxtLink>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-card rounded-lg p-6 border">
-          <p class="text-sm text-muted-foreground">Gesamt-Nutzer</p>
-          <p class="text-3xl font-bold text-foreground">{{ stats.totalUsers }}</p>
+      <!-- Skeleton bis Daten geladen sind -->
+      <template v-if="!pageReady">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-pulse">
+          <div v-for="i in 4" :key="i" class="bg-card rounded-lg p-6 border">
+            <div class="h-3 bg-gray-200 rounded w-2/3 mb-3"></div>
+            <div class="h-8 bg-gray-300 rounded w-1/2"></div>
+          </div>
         </div>
-        
-        <div class="bg-card rounded-lg p-6 border">
-          <p class="text-sm text-muted-foreground">Aktive Nutzer</p>
-          <p class="text-3xl font-bold text-foreground">{{ stats.activeUsers }}</p>
+        <div class="bg-card rounded-lg p-6 border mb-8 animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-1/3"></div>
         </div>
-        
-        <div class="bg-card rounded-lg p-6 border">
-          <p class="text-sm text-muted-foreground">Transaktionen heute</p>
-          <p class="text-3xl font-bold text-foreground">{{ stats.todayTransactions }}</p>
-        </div>
-        
-        <div class="bg-card rounded-lg p-6 border">
-          <p class="text-sm text-muted-foreground">Gesamt-Guthaben</p>
-          <p class="text-3xl font-bold text-foreground">{{ stats.totalCredits.toFixed(2) }} €</p>
-        </div>
-      </div>
+      </template>
 
-      <div class="bg-card rounded-lg p-6 border mb-8">
-        <p class="text-muted-foreground">Gesamt-Transaktionen: {{ stats.totalTransactions }}</p>
-      </div>
+      <!-- Echte Statistiken -->
+      <template v-else>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="bg-card rounded-lg p-6 border">
+            <p class="text-sm text-muted-foreground">Gesamt-Nutzer</p>
+            <p class="text-3xl font-bold text-foreground">{{ stats.totalUsers }}</p>
+          </div>
+
+          <div class="bg-card rounded-lg p-6 border">
+            <p class="text-sm text-muted-foreground">Aktive Nutzer</p>
+            <p class="text-3xl font-bold text-foreground">{{ stats.activeUsers }}</p>
+          </div>
+
+          <div class="bg-card rounded-lg p-6 border">
+            <p class="text-sm text-muted-foreground">Transaktionen heute</p>
+            <p class="text-3xl font-bold text-foreground">{{ stats.todayTransactions }}</p>
+          </div>
+
+          <div class="bg-card rounded-lg p-6 border">
+            <p class="text-sm text-muted-foreground">Gesamt-Guthaben</p>
+            <p class="text-3xl font-bold text-foreground">{{ stats.totalCredits.toFixed(2) }} €</p>
+          </div>
+        </div>
+
+        <div class="bg-card rounded-lg p-6 border mb-8">
+          <p class="text-muted-foreground">Gesamt-Transaktionen: {{ stats.totalTransactions }}</p>
+        </div>
+      </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-card rounded-lg p-6 border">

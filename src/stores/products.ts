@@ -17,7 +17,7 @@ import type { Product } from '~/types'
 export const useProductsStore = defineStore('products', () => {
   const products = ref<Product[]>([])
   const selectedProduct = ref<Product | null>(null)
-  const isLoading = ref(false)
+  const isLoading = ref(true)
   const error = ref<string | null>(null)
   const selectedCategory = ref<string>('alle')
   const searchQuery = ref<string>('')

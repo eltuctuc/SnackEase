@@ -398,8 +398,25 @@ Startseite (index.vue) [ERWEITERN]
 
 ---
 
-## ✅ Production Ready
+## ❌ NOT Production Ready
 
-**Bedingt bereit** - BUG-FEAT4-001 (Critical) wird in FEAT-9 behoben
+**BUG-FEAT4-001 (Critical) noch offen** - FEAT-9 (Admin ohne Guthaben) wurde noch nicht implementiert.
 
-Alle anderen Bugs sind behoben. FEAT-4 ist funktional vollständig und barrierefrei.
+Alle FEAT-4-eigenen Funktionen sind korrekt. Blockiert durch FEAT-9-Implementierung.
+
+---
+
+## QA Re-Test 2026-03-04
+
+**Re-Tested:** 2026-03-04
+**Tester:** QA Engineer
+
+### Neue Erkenntnisse
+
+- BUG-FEAT4-001 bleibt offen: FEAT-9 ist noch nicht implementiert (Status "Ready for Solution Architect")
+- BUG-FEAT9-001 erstellt: Dokumentiert die fehlende FEAT-9-Implementierung im Detail
+- Credits-Store: 0% Test-Coverage (Store-Tests mit describe.skip deaktiviert)
+
+### Empfehlung
+
+FEAT-9 muss implementiert werden bevor FEAT-4 als "Production Ready" gilt.

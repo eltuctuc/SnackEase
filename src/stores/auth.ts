@@ -215,16 +215,11 @@ export const useAuthStore = defineStore('auth', () => {
    * @see src/server/api/auth/me.get.ts für Backend-Implementierung
    */
   async function initFromCookie(): Promise<void> {
-    const authCookie = useCookie('auth_token')
-    
-    // Kein Cookie vorhanden → User ist nicht eingeloggt
-    if (!authCookie.value) {
-      return
-    }
-    
     try {
+      // httpOnly-Cookies sind client-seitig nicht lesbar (document.cookie).
+      // Deshalb direkt /api/auth/me aufrufen – der Server liest den Cookie.
       const data = await $fetch<MeResponse>('/api/auth/me')
-      
+
       // Cookie valide und User gefunden
       if (data?.user) {
         isLoggedIn.value = true
@@ -233,7 +228,6 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (e) {
       // Silent fail - Cookie abgelaufen oder invalide
       // User bleibt ausgeloggt (isLoggedIn = false)
-      // Keine Error-Message nötig (normale Situation bei abgelaufener Session)
     }
   }
 

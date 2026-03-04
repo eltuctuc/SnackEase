@@ -30,7 +30,7 @@ export const useCreditsStore = defineStore('credits', () => {
   const lastRechargedAt = ref<string | null>(null)
   
   /** Loading-State für UI-Feedback während API-Calls */
-  const isLoading = ref(false)
+  const isLoading = ref(true)
   
   /** Error-State für Fehleranzeige in UI */
   const error = ref<string | null>(null)
