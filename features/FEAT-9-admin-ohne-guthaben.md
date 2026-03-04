@@ -681,7 +681,7 @@ Test-Pfad: tests/e2e/admin-ohne-guthaben.spec.ts (neu)
 
 ### Optimierungen
 
-- Skeleton-Loading zeigt BalanceCard-Form auch fuer Admin (Severity: Low) → BUG-FEAT9-002
+- ✅ Skeleton-Loading für Admin behoben (BUG-FEAT9-002)
 
 ### Regression
 
@@ -694,15 +694,13 @@ Test-Pfad: tests/e2e/admin-ohne-guthaben.spec.ts (neu)
 
 ## Offene Bugs
 
-| Bug-ID | Titel | Severity | Priority | Status |
-|--------|-------|----------|----------|--------|
-| BUG-FEAT9-002 | Skeleton-Loading zeigt BalanceCard-Form fuer Admin | Low | Nice to Fix | Offen |
+Keine offenen Bugs.
 
 ---
 
 ## Production Ready
 
-**Empfehlung:** Bedingt bereit – alle Must-Have Acceptance Criteria erfuellt. BUG-FEAT9-002 ist Low-Severity und blockiert nicht den Release.
+**Empfehlung:** Production ready – alle Must-Have Acceptance Criteria erfuellt. Alle Bugs behoben.
 
 **Empfehlung UX Expert:** Nicht noetig
 

@@ -209,10 +209,18 @@ const dismissBalanceError = () => {
  * - Enter-Taste im Suchfeld
  * - Klick auf "Suchen"-Button
  * 
- * Sucht nach Produkten mit aktuellem Suchbegriff und aktiver Kategorie.
+ * BUG-FEAT6-001 Fix: Bei aktiver Suche wird Kategorie auf "alle" zurückgesetzt,
+ * damit kategorie-übergreifend gesucht wird (wie Amazon/eBay Standard).
  */
 const handleSearch = (query: string) => {
-  productsStore.fetchProducts(productsStore.selectedCategory, query)
+  if (query.trim()) {
+    // Bei aktiver Suche: Kategorie auf "alle" zurücksetzen
+    productsStore.setCategory('alle')
+    productsStore.fetchProducts('alle', query)
+  } else {
+    // Leere Suche: Aktuelle Kategorie beibehalten
+    productsStore.fetchProducts(productsStore.selectedCategory, '')
+  }
 }
 
 /**
@@ -302,7 +310,19 @@ const showAdminLink = computed(() => {
       <!-- Lade-Skeleton bis alle Daten bereit sind (verhindert Flash von Default-Werten) -->
       <template v-if="!pageReady">
         <div class="grid gap-6 mb-8">
-          <div class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
+          <!-- Admin-Skeleton: Neutraler Info-Banner ohne Buttons (BUG-FEAT9-002 Fix) -->
+          <div v-if="authStore.isAdmin" class="rounded-lg p-6 border-2 bg-blue-50 border-blue-200 animate-pulse">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-blue-300"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-blue-300 rounded w-32 mb-2"></div>
+                <div class="h-3 bg-blue-200 rounded w-48"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mitarbeiter-Skeleton: BalanceCard mit Buttons -->
+          <div v-else class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
             <div class="flex items-center justify-between mb-4">
               <div>
                 <div class="h-3 bg-gray-300 rounded w-16 mb-2"></div>

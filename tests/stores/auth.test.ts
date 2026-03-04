@@ -6,30 +6,20 @@
  * - User-Session-State
  * - Rollen-basierte Berechtigungen (inkl. isAdmin fuer FEAT-9)
  *
- * HINWEIS: Die Store-Tests sind derzeit uebersprungen (skipped), da sie ein
- * vollstaendiges Nuxt/Pinia-Test-Setup erfordern.
- * Siehe tests/stores/README.md fuer Details.
- *
- * Die isAdmin-Logik wird direkt ueber computed() getestet (ohne Store-Setup).
+ * HINWEIS: Store-Integration-Tests sind uebersprungen (skipped), da defineStore
+ * im Test-Kontext nicht verfuegbar ist. Die Store-Logik wird stattdessen isoliert
+ * getestet (siehe isAdmin Tests unten).
  */
 
 import { describe, it, expect } from 'vitest'
 import { ref, computed } from 'vue'
 
-describe.skip('auth Store', () => {
+describe.skip('auth Store (Integration - erfordert Nuxt-Context)', () => {
   it('startet mit isLoggedIn = false', () => {
     expect(true).toBe(true)
   })
 
   it('startet mit user = null', () => {
-    expect(true).toBe(true)
-  })
-
-  it('isAdmin gibt false zurueck wenn kein User', () => {
-    expect(true).toBe(true)
-  })
-
-  it('isAdmin gibt true fuer Admin-User', () => {
     expect(true).toBe(true)
   })
 

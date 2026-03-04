@@ -67,6 +67,7 @@ const emit = defineEmits<{
 // COMPOSABLES & STORES (FEAT-7)
 // ========================================
 
+const authStore = useAuthStore()
 const purchasesStore = usePurchasesStore()
 const creditsStore = useCreditsStore()
 
@@ -130,7 +131,7 @@ const closeSuccessModal = () => {
 </script>
 
 <template>
-  <div class="bg-card rounded-lg border p-6">
+  <div class="bg-card rounded-lg border p-6" data-testid="product-grid">
     <!-- Header: Suche + Kategorien -->
     <div class="mb-6">
       <h2 class="text-xl font-bold text-foreground mb-4">Produktkatalog</h2>
@@ -194,6 +195,7 @@ const closeSuccessModal = () => {
         v-for="product in products"
         :key="product.id"
         class="bg-background border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all"
+        data-testid="product-card"
       >
         <!-- Produktbild oder Fallback-Icon (klickbar für Detail-Ansicht) -->
         <div 
@@ -215,7 +217,7 @@ const closeSuccessModal = () => {
           
           <!-- Preis + Stock-Status -->
           <div class="flex items-center gap-2 mt-1">
-            <span class="text-lg font-bold text-primary">{{ formatPrice(product.price) }} €</span>
+            <span class="text-lg font-bold text-primary" data-testid="product-price">{{ formatPrice(product.price) }} €</span>
             <span v-if="product.stock === 0" class="text-xs text-red-500">Ausverkauft</span>
           </div>
           
@@ -236,12 +238,18 @@ const closeSuccessModal = () => {
           </div>
         </div>
 
-        <!-- FEAT-7: Purchase Button -->
+        <!-- FEAT-7: Purchase Button (nur für Mitarbeiter) -->
         <PurchaseButton
+          v-if="!authStore.isAdmin"
           :product="product"
           :user-balance="creditsStore.balanceNumeric"
           @purchase-success="handlePurchaseSuccess"
         />
+        
+        <!-- Admin: Info-Text statt Kauf-Button -->
+        <p v-else class="text-sm text-muted-foreground text-center mt-3">
+          Nur zur Information
+        </p>
       </div>
     </div>
 

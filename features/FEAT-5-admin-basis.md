@@ -363,9 +363,7 @@ Die bestehende `auth.global.ts` muss erweitert werden:
 
 ## Offene Bugs
 
-| Bug-ID | Titel | Severity | Priority | Status |
-|--------|-------|----------|----------|--------|
-| BUG-FEAT5-001 | Middleware leitet Mitarbeiter bei /admin-Zugriff zu /login statt /dashboard | Medium | Should Fix | Offen |
+Keine offenen Bugs.
 
 ---
 
@@ -437,7 +435,7 @@ Die bestehende `auth.global.ts` muss erweitert werden:
 
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
-**Begründung:** Alle Must-Have Acceptance Criteria erfüllt. BUG-FEAT5-001 (Medium) beeintrachtigt UX eines eingeloggten Mitarbeiters beim manuellen /admin-Aufruf, ist aber kein Sicherheitsproblem (Zugriff wird korrekt verweigert).
+**Begründung:** Alle Must-Have Acceptance Criteria erfüllt. Alle Bugs behoben.
 
 ---
 
@@ -448,7 +446,6 @@ Die bestehende `auth.global.ts` muss erweitert werden:
 
 ### Neue Erkenntnisse
 
-- BUG-FEAT5-001 gefunden: Middleware leitet Mitarbeiter bei /admin-Zugriff zu /login statt /dashboard
-- Edge Case EC-1 aus FEAT-5 Spec ist nicht korrekt implementiert
-- Sicherheit: Der Zugriff wird korrekt verweigert - nur der Redirect-Ziel ist falsch
+- ✅ BUG-FEAT5-001 behoben: Middleware leitet Mitarbeiter bei /admin-Zugriff korrekt zu /dashboard
+- ✅ Edge Case EC-1 aus FEAT-5 Spec korrekt implementiert
 - Admin-Store-Tests: 0% Coverage (describe.skip in auth.test.ts)

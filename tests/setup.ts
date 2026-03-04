@@ -17,6 +17,26 @@ beforeAll(() => {
   setActivePinia(piniaInstance)
 })
 
+vi.mock('#app', () => ({
+  useCookie: vi.fn((_name: string) => {
+    return {
+      value: undefined,
+    }
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+  navigateTo: vi.fn(),
+  useRoute: () => ({
+    query: {},
+    params: {},
+  }),
+  useRuntimeConfig: () => ({
+    public: {},
+  }),
+  defineNuxtComponent: vi.fn(),
+}))
+
 vi.mock('nuxt/app', () => ({
   useCookie: vi.fn((_name: string) => {
     return {

@@ -7,34 +7,16 @@
  * - Balance-Status Berechnung
  * - FEAT-9: 403-Response Handling (Admin-Guard)
  *
- * HINWEIS: Store-Tests erfordern vollstaendiges Nuxt/Pinia-Setup (skipped).
- * Siehe tests/stores/README.md fuer Details.
- *
- * Die balanceStatus-Logik und 403-Handling werden direkt ueber
- * computed() und ref() isoliert getestet.
+ * HINWEIS: Store-Integration-Tests sind uebersprungen (skipped), da defineStore
+ * im Test-Kontext nicht verfuegbar ist. Die Store-Logik wird stattdessen isoliert
+ * getestet (siehe balanceStatus Tests unten).
  */
 
 import { describe, it, expect } from 'vitest'
 import { ref, computed } from 'vue'
 
-describe.skip('credits Store', () => {
+describe.skip('credits Store (Integration - erfordert Nuxt-Context)', () => {
   it('startet mit balance "0"', () => {
-    expect(true).toBe(true)
-  })
-
-  it('balanceNumeric konvertiert String zu Number', () => {
-    expect(true).toBe(true)
-  })
-
-  it('balanceStatus ist "good" bei > 20€', () => {
-    expect(true).toBe(true)
-  })
-
-  it('balanceStatus ist "warning" bei 10-20€', () => {
-    expect(true).toBe(true)
-  })
-
-  it('balanceStatus ist "critical" bei < 10€', () => {
     expect(true).toBe(true)
   })
 
