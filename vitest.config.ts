@@ -7,9 +7,23 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    setupFiles: ['./tests/setup.ts'],
+    include: [
+      'tests/**/*.test.ts',
+      'tests/**/*.test.vue',
+    ],
+    exclude: [
+      '**/e2e/**',
+      '**/tests/e2e/**',
+      '**/node_modules/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      include: [
+        'src/**/*.ts',
+        'src/**/*.vue',
+      ],
       exclude: [
         'node_modules/',
         '.nuxt/',
@@ -18,6 +32,8 @@ export default defineConfig({
         '**/*.config.*',
         '**/types/**',
         '**/*.d.ts',
+        '**/e2e/**',
+        '**/tests/e2e/**',
       ],
     },
   },

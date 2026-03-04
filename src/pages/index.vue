@@ -48,7 +48,7 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-    <div class="text-center max-w-md">
+    <main class="text-center max-w-md" role="main">
       <div class="mb-8">
         <h1 class="text-5xl font-bold text-primary">SnackEase</h1>
       </div>
@@ -57,18 +57,25 @@ onMounted(async () => {
         Dein Weg zu Gesundheit und Genuss
       </p>
       
-      <div class="w-full">
-        <div class="h-2 bg-accent/20 rounded-full overflow-hidden mb-2">
+      <div class="w-full" aria-label="Ladefortschritt">
+        <div 
+          class="h-2 bg-accent/20 rounded-full overflow-hidden mb-2" 
+          role="progressbar" 
+          :aria-valuenow="progress" 
+          aria-valuemin="0" 
+          aria-valuemax="100"
+          :aria-label="`Ladefortschritt: ${progress} Prozent`"
+        >
           <div 
             class="h-full bg-accent transition-all duration-300 ease-out rounded-full"
             :style="{ width: `${progress}%` }"
           ></div>
         </div>
         
-        <p class="text-sm text-muted-foreground">
+        <p class="text-sm text-muted-foreground" aria-live="polite">
           {{ progress }}% geladen
         </p>
       </div>
-    </div>
+    </main>
   </div>
 </template>
