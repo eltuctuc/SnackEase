@@ -21,9 +21,24 @@ export default defineEventHandler(async (event) => {
     const creditsResults = await db.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
     
     let currentBalance = 0
-    
+
     if (creditsResults[0]) {
       currentBalance = parseFloat(creditsResults[0].balance.toString()) || 0
+
+      // Monats-Check: Prüfe ob Monatspauschale in diesem Kalendermonat bereits abgerufen wurde
+      if (creditsResults[0].lastRechargedAt) {
+        const lastRecharged = new Date(creditsResults[0].lastRechargedAt)
+        const now = new Date()
+        if (
+          lastRecharged.getFullYear() === now.getFullYear() &&
+          lastRecharged.getMonth() === now.getMonth()
+        ) {
+          throw createError({
+            statusCode: 409,
+            message: 'Monatspauschale wurde in diesem Monat bereits abgerufen.',
+          })
+        }
+      }
     }
 
     const newBalance = currentBalance + MONTHLY_AMOUNT
