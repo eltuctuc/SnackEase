@@ -139,7 +139,9 @@ const closeSuccessModal = () => {
       <!-- Suchfeld -->
       <div class="flex flex-col sm:flex-row gap-4 mb-4">
         <div class="relative flex-1">
+          <label for="product-search" class="sr-only">Produkte suchen</label>
           <input
+            id="product-search"
             v-model="searchQuery"
             @keyup.enter="handleSearch"
             type="text"
