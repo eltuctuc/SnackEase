@@ -49,6 +49,9 @@ const { formatPrice } = useFormatter()
 // REACTIVE STATE
 // ========================================
 
+/** Ref zum Close-Button für Focus-Management */
+const closeButtonRef = ref<HTMLButtonElement | null>(null)
+
 /** Verbleibende Zeit bis Ablauf (dynamisch) */
 const timeRemaining = ref('')
 
@@ -94,6 +97,11 @@ let countdownInterval: NodeJS.Timeout | null = null
 
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen && props.purchase) {
+    // Fokus auf Close-Button setzen wenn Modal geöffnet wird
+    nextTick(() => {
+      closeButtonRef.value?.focus()
+    })
+
     // Countdown starten
     timeRemaining.value = calculateTimeRemaining()
     
@@ -149,9 +157,13 @@ function handleClose() {
           class="bg-card rounded-lg border shadow-lg max-w-md w-full p-6 relative"
           @click.stop
           data-testid="purchase-success-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="purchase-success-title"
         >
           <!-- Close Button -->
           <button
+            ref="closeButtonRef"
             @click="handleClose"
             class="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
             aria-label="Modal schließen"
@@ -163,7 +175,7 @@ function handleClose() {
           <!-- Success-Header -->
           <div class="text-center mb-6">
             <div class="text-5xl mb-3">✅</div>
-            <h2 class="text-2xl font-bold text-foreground">Kauf erfolgreich!</h2>
+            <h2 id="purchase-success-title" class="text-2xl font-bold text-foreground">Kauf erfolgreich!</h2>
           </div>
 
           <!-- Produkt-Info -->
