@@ -24,6 +24,7 @@ const password = ref('demo123')
 const error = ref('')
 const isLoading = ref(false)
 const selectedPersona = ref<string | null>(null)
+const passwordInput = ref<HTMLInputElement | null>(null)
 
 const personas = [
   { email: 'nina@demo.de', name: 'Nina Neuanfang', location: 'Nürnberg', initial: 'N' },
@@ -39,8 +40,7 @@ const selectPersona = (personaEmail: string) => {
   email.value = personaEmail
   password.value = personaEmail === 'admin@demo.de' ? 'admin123' : 'demo123'
   nextTick(() => {
-    const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement
-    passwordInput?.focus()
+    passwordInput.value?.focus()
   })
 }
 
