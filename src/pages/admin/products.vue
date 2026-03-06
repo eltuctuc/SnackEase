@@ -40,6 +40,7 @@ const error = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 const searchQuery = ref('')
 const filterStatus = ref<'all' | 'active' | 'inactive'>('all')
+const filterCategory = ref<number | 'all'>('all')
 
 // Create/Edit Modal
 const showFormModal = ref(false)
@@ -85,7 +86,11 @@ const filteredProducts = computed(() => {
       (filterStatus.value === 'active' && p.isActive !== false) ||
       (filterStatus.value === 'inactive' && p.isActive === false)
 
-    return matchesSearch && matchesStatus
+    const matchesCategory =
+      filterCategory.value === 'all' ||
+      p.categories.some(c => c.id === filterCategory.value)
+
+    return matchesSearch && matchesStatus && matchesCategory
   })
 })
 
@@ -285,8 +290,15 @@ const handleSaveProduct = async () => {
     if (imageFile.value) {
       const imageUrl = await uploadImage(savedProductId)
       if (!imageUrl && imageFile.value) {
-        // Bild-Upload fehlgeschlagen
-        formError.value = imageError.value || 'Fehler beim Hochladen des Bildes'
+        // Bild-Upload fehlgeschlagen: Bei neuen Produkten Erstellung rückgängig machen (EC-3)
+        if (!isEditMode.value) {
+          try {
+            await $fetch(`/api/admin/products/${savedProductId}`, { method: 'DELETE' })
+          } catch {
+            // Rollback-Fehler ignorieren, Hauptfehlermeldung zeigen
+          }
+        }
+        formError.value = imageError.value || 'Fehler beim Hochladen des Bildes. Das Produkt wurde nicht gespeichert.'
         isSaving.value = false
         return
       }
@@ -403,6 +415,13 @@ onMounted(async () => {
           placeholder="Produktname suchen..."
           class="flex-1 px-4 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background"
         />
+        <select
+          v-model="filterCategory"
+          class="px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background"
+        >
+          <option value="all">Alle Kategorien</option>
+          <option v-for="cat in categoryOptions" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+        </select>
         <select
           v-model="filterStatus"
           class="px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background"

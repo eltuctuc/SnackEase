@@ -1,6 +1,6 @@
 import { db } from '~/server/db';
 import { users, userCredits, creditTransactions, purchases, loginEvents } from '~/server/db/schema';
-import { eq, sql, gte } from 'drizzle-orm';
+import { and, eq, sql, gte } from 'drizzle-orm';
 import { requireAdmin } from '~/server/utils/auth';
 
 export default defineEventHandler(async (event) => {
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     failedLoginsResult,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(users),
-    db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'mitarbeiter')),
+    db.select({ count: sql<number>`count(*)` }).from(users).where(and(eq(users.role, 'mitarbeiter'), eq(users.isActive, true))),
     db.select({ count: sql<number>`count(*)` }).from(creditTransactions),
     db.select({ count: sql<number>`count(*)` }).from(creditTransactions).where(gte(creditTransactions.createdAt, today)),
     db.select({ sum: sql<string>`coalesce(sum(${userCredits.balance}), '0')` }).from(userCredits),
