@@ -51,8 +51,8 @@
  */
 
 import { db } from '~/server/db'
-import { products } from '~/server/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { products, productCategories, categories } from '~/server/db/schema'
+import { eq, and, sql, inArray, notInArray } from 'drizzle-orm'
 
 // ========================================
 // HELPER - Product Selection
@@ -84,6 +84,7 @@ const productSelectFields = {
   allergens: products.allergens,
   isVegan: products.isVegan,
   isGlutenFree: products.isGlutenFree,
+  isActive: products.isActive,
   stock: products.stock,
 }
 
@@ -105,21 +106,63 @@ export default defineEventHandler(async (event) => {
    * - /api/products?search=apfel → query = { search: 'apfel' }
    */
   const query = getQuery(event)
-  
+
   try {
+    // ----------------------------------------
+    // EC-10: Inaktive Kategorien ermitteln
+    // Produkte werden ausgeblendet wenn: isActive = false ODER Kategorie.isActive = false
+    // ----------------------------------------
+
+    // IDs der inaktiven Kategorien ermitteln
+    const inactiveCategories = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.isActive, false))
+
+    // Produkte die ausschließlich in inaktiven Kategorien sind (müssen ausgeblendet werden)
+    let productIdsToExclude: number[] = []
+
+    if (inactiveCategories.length > 0) {
+      const inactiveCategoryIds = inactiveCategories.map(c => c.id)
+
+      // Alle product_categories Links für inaktive Kategorien
+      const linksInInactiveCategories = await db
+        .select({ productId: productCategories.productId })
+        .from(productCategories)
+        .where(inArray(productCategories.categoryId, inactiveCategoryIds))
+
+      if (linksInInactiveCategories.length > 0) {
+        const affectedProductIds = [...new Set(linksInInactiveCategories.map(l => l.productId))]
+
+        // Prüfen welche dieser Produkte AUCH in aktiven Kategorien sind
+        const linksInActiveCategories = await db
+          .select({ productId: productCategories.productId })
+          .from(productCategories)
+          .where(
+            and(
+              inArray(productCategories.productId, affectedProductIds),
+              notInArray(productCategories.categoryId, inactiveCategoryIds)
+            )
+          )
+
+        const productIdsWithActiveCategories = new Set(linksInActiveCategories.map(l => l.productId))
+
+        // Nur Produkte ausblenden die KEINE aktive Kategorie haben (oder keine in product_categories stehen)
+        productIdsToExclude = affectedProductIds.filter(pid => !productIdsWithActiveCategories.has(pid))
+      }
+    }
+
     // ----------------------------------------
     // SCHRITT 2: WHERE-Conditions aufbauen
     // ----------------------------------------
-    
+
     /**
      * Sammelt alle Filter-Bedingungen für SQL WHERE-Clause
-     * 
-     * Array wird später mit AND verknüpft:
-     * WHERE condition1 AND condition2 AND ...
-     * 
-     * Leeres Array = keine Filter = alle Produkte
      */
-    const conditions: any[] = []
+    const conditions: ReturnType<typeof eq>[] = []
+
+    // Nur aktive Produkte (isActive = true oder NULL für alte Einträge ohne isActive-Feld)
+    conditions.push(sql`(${products.isActive} IS NULL OR ${products.isActive} = true)` as unknown as ReturnType<typeof eq>)
     
     // ----------------------------------------
     // FILTER 1: Kategorie
@@ -136,7 +179,7 @@ export default defineEventHandler(async (event) => {
      * SQL: WHERE category = 'obst'
      */
     if (query.category && query.category !== 'alle') {
-      conditions.push(eq(products.category, query.category as string))
+      conditions.push(eq(products.category, query.category as string) as unknown as ReturnType<typeof eq>)
     }
     
     // ----------------------------------------
@@ -161,7 +204,14 @@ export default defineEventHandler(async (event) => {
      */
     if (query.search) {
       conditions.push(
-        sql`${products.name} ILIKE ${'%' + query.search + '%'}`
+        sql`${products.name} ILIKE ${'%' + query.search + '%'}` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // Produkte mit ausschließlich inaktiven Kategorien ausblenden (EC-10)
+    if (productIdsToExclude.length > 0) {
+      conditions.push(
+        notInArray(products.id, productIdsToExclude) as unknown as ReturnType<typeof eq>
       )
     }
     
@@ -184,16 +234,10 @@ export default defineEventHandler(async (event) => {
      * 
      * Aktuell getrennt für bessere Lesbarkeit.
      */
-    if (conditions.length > 0) {
-      // Query mit Filtern
-      return await db.select(productSelectFields)
-        .from(products)
-        .where(and(...conditions)) // AND-Verknüpfung aller Conditions
-    }
-    
-    // Query ohne Filter (alle Produkte)
+    // Immer mit WHERE-Clause (mindestens isActive-Filter ist immer vorhanden)
     return await db.select(productSelectFields)
       .from(products)
+      .where(and(...conditions))
       
   } catch (error) {
     // ----------------------------------------

@@ -62,12 +62,47 @@ export const products = pgTable('products', {
   allergens: text('allergens').array(),
   isVegan: boolean('is_vegan').default(false),
   isGlutenFree: boolean('is_gluten_free').default(false),
+  isActive: boolean('is_active').default(true),
   stock: integer('stock').default(10),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+// FEAT-10: Kategorien-Tabelle
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
+
+// FEAT-10: Many-to-Many Verknüpfung Produkt <-> Kategorie
+export const productCategories = pgTable('product_categories', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  categoryId: integer('category_id').references(() => categories.id).notNull(),
+});
+
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type NewProductCategory = typeof productCategories.$inferInsert;
+
+// FEAT-10: Login-Events für Statistiken und Peak-Zeiten
+export const loginEvents = pgTable('login_events', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id),
+  success: boolean('success').notNull(),
+  ip: text('ip'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type LoginEvent = typeof loginEvents.$inferSelect;
+export type NewLoginEvent = typeof loginEvents.$inferInsert;
 
 // FEAT-7: Purchases Tabelle für One-Touch Kauf
 export const purchases = pgTable('purchases', {

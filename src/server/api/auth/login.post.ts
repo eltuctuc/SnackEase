@@ -54,7 +54,7 @@
  */
 
 import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
+import { users, loginEvents } from '~/server/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { RATE_LIMIT_CONFIG, SESSION_CONFIG, ALLOWED_EMAIL_DOMAIN, USER_ROLES } from '~/constants/auth';
@@ -249,7 +249,12 @@ export default defineEventHandler(async (event) => {
   const isValid = await bcrypt.compare(password, user[0].passwordHash || '');
 
   if (!isValid) {
-    // Passwort falsch → Generische Fehlermeldung (Security Best Practice)
+    // Login-Event protokollieren (fehlgeschlagen)
+    await db.insert(loginEvents).values({
+      userId: user[0].id,
+      success: false,
+      ip: String(clientIp),
+    }).catch(() => {}); // Fehler beim Logging ignorieren
     return { success: false, error: 'Ungültige Anmeldedaten' };
   }
 
@@ -290,6 +295,13 @@ export default defineEventHandler(async (event) => {
    * BEACHTE: Passwort-Hash wird NICHT zurückgegeben (Security)
    * Nur öffentliche User-Daten werden an Frontend gesendet.
    */
+  // Login-Event protokollieren (erfolgreich)
+  await db.insert(loginEvents).values({
+    userId: user[0].id,
+    success: true,
+    ip: String(clientIp),
+  }).catch(() => {}); // Fehler beim Logging ignorieren
+
   return {
     success: true,
     user: {
