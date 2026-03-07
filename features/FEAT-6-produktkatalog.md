@@ -331,9 +331,11 @@ Jedes Produkt hat vollständige Nährwerte und Allergene.
 
 ---
 
-### Offene Bugs
+### Behobene Bugs
 
-Keine offenen Bugs.
+| Bug-ID | Titel | Severity | Behoben am |
+|--------|-------|----------|------------|
+| BUG-FEAT6-010 | Suchfeld hatte kein programmatisches Label (WCAG 1.3.1 / 4.1.2) | High | 2026-03-05 |
 
 ---
 
@@ -387,10 +389,10 @@ Keine offenen Bugs.
 
 ---
 
-## 🟢 Production Ready
+## ✅ Production Ready
 
-**Empfehlung:** Bereit - BUG-FEAT6-001 behoben. 2 ACs nicht testbar (ProductDetailModal fehlt?).
+**Empfehlung:** Bereit - Alle Bugs behoben (BUG-FEAT6-001, BUG-FEAT6-010). 2 ACs nicht testbar (ProductDetailModal fehlt?).
 
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
-**Begründung:** Produktkatalog funktioniert einwandfrei. Suche funktioniert kategorie-übergreifend. ProductDetailModal könnte in separatem Feature implementiert sein.
+**Begründung:** Produktkatalog funktioniert einwandfrei. Suche funktioniert kategorie-übergreifend. Suchfeld ist jetzt WCAG-konform mit programmatischem Label (sr-only). ProductDetailModal koennte in separatem Feature implementiert sein. Keine offenen Bugs.

@@ -412,4 +412,17 @@ Startseite (index.vue) [ERWEITERN]
 
 ### Empfehlung
 
-FEAT-4 ist Production Ready. Kein bloeckierender Bug mehr vorhanden.
+FEAT-4 ist **vollstaendig Production Ready**. BUG-FEAT4-010 wurde am 2026-03-05 behoben: Der monatliche Guthabenbonus hat jetzt serverseitig ein Monats-Limit mit 409-Response.
+
+---
+
+## Behobene Bugs
+
+| Bug-ID | Titel | Severity | Behoben am |
+|--------|-------|----------|------------|
+| BUG-FEAT4-001 | Admin sieht Guthaben-Karte (FEAT-9) | Medium | 2026-03-04 |
+| BUG-FEAT4-010 | monthly.post.ts hatte keine monatliche Limit-Pruefung | High | 2026-03-05 |
+
+## ✅ Production Ready
+
+**Alle Bugs behoben.** Keine offenen Bugs.

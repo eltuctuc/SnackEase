@@ -47,7 +47,7 @@ Passe die `content`-Pfade ggf. an deine Projektstruktur an.
 | `background` | `#F4F6F9` | Seitenhintergrund |
 | `card` | `#FFFFFF` | Karten, Sheets |
 | `foreground` | `#1E2D3D` | Fließtext, Überschriften |
-| `muted-foreground` | `#6B7C8F` | Platzhaltertext, Labels |
+| `muted-foreground` | `#5D6C7E` | Platzhaltertext, Labels (WCAG AA: ≥4.5:1 auf card & background) |
 | `surface-tint` | `#D9E5F0` | Bild-Placeholder, Karten-Header |
 
 ---

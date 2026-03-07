@@ -330,8 +330,16 @@ Header (AppHeader) - ERWEITERT
 
 ---
 
+## Behobene Bugs
+
+| Bug-ID | Titel | Severity | Behoben am |
+|--------|-------|----------|------------|
+| BUG-FEAT2-010 | Direkter DOM-Zugriff via document.querySelector in login.vue | Low | 2026-03-05 |
+
+---
+
 ## ✅ Production Ready
 
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
-**Begründung:** Alle Acceptance Criteria erfüllt, alle Bugs behoben, Security und Regression Tests bestanden.
+**Begründung:** Alle Acceptance Criteria erfüllt, alle Bugs behoben (inkl. BUG-FEAT2-010 Tech-Stack-Fix via Template-Ref). Security und Regression Tests bestanden. Keine offenen Bugs.

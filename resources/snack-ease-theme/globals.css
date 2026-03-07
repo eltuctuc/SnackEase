@@ -42,7 +42,7 @@
 
     /* Muted – very light gray (placeholder areas, disabled) */
     --muted:                  214 17% 93%;   /* #EBECF0 */
-    --muted-foreground:       213 15% 50%;   /* #6B7C8F */
+    --muted-foreground:       213 15% 43%;   /* #5D6C7E — WCAG AA: ≥4.5:1 on card & background */
 
     /* Accent – teal (highlights, active badges, progress) */
     --accent:                 177 49% 45%;   /* #3AACA7 */

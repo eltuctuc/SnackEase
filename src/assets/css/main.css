@@ -17,7 +17,7 @@
     --secondary: 212 20% 92%;
     --secondary-foreground: 211 33% 18%;
     --muted: 214 17% 93%;
-    --muted-foreground: 213 15% 50%;
+    --muted-foreground: 213 15% 43%; /* WCAG AA fix: 50%→43% → ≥4.5:1 on card/background */
     --accent: 177 49% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;

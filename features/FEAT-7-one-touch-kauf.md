@@ -1572,15 +1572,14 @@ Kritische User-Flows:
 
 ---
 
-## Offene Bugs
+## Behobene Bugs
 
-Alle Bugs behoben!
-
-| Bug-ID | Titel | Severity | Priority | Status | Behoben am |
-|--------|-------|----------|----------|--------|------------|
-| **BUG-FEAT7-001** | Keine atomare Transaktion - Race Condition möglich | **Critical** | **Must Fix** | ✅ Behoben | 2026-03-04 |
-| **BUG-FEAT7-002** | E2E-Tests schlagen fehl - Login funktioniert nicht | High | Should Fix | ✅ Behoben | 2026-03-04 |
-| **BUG-FEAT7-003** | Admin sieht "Kaufen"-Buttons auf Produkten | Medium | Should Fix | ✅ Behoben | 2026-03-04 |
+| Bug-ID | Titel | Severity | Behoben am |
+|--------|-------|----------|------------|
+| **BUG-FEAT7-001** | Keine atomare Transaktion - Race Condition moeglich | **Critical** | 2026-03-04 |
+| **BUG-FEAT7-002** | E2E-Tests schlugen fehl - Login funktionierte nicht | High | 2026-03-04 |
+| **BUG-FEAT7-003** | Admin sah "Kaufen"-Buttons auf Produkten | Medium | 2026-03-04 |
+| **BUG-FEAT7-010** | PurchaseSuccessModal fehlte role="dialog", aria-modal, aria-labelledby | High | 2026-03-05 |
 
 ### BUG-FEAT7-001: ✅ Behoben
 
