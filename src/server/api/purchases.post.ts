@@ -55,7 +55,7 @@
  */
 
 import { db } from '~/server/db'
-import { userCredits, creditTransactions, products, purchases } from '~/server/db/schema'
+import { userCredits, creditTransactions, products, purchases, lowStockNotifications } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 import { generatePin, calculateBonusPoints } from '~/server/utils/purchase'
@@ -223,6 +223,40 @@ export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
     // - Bestand bleibt unverändert
     // - Kein Purchase-Record erstellt
     // - Kein Transaction-Log
+
+    // ========================================
+    // SCHRITT 7: Low-Stock-Check (FEAT-13)
+    // Läuft NACH der Transaktion — Fehler hier rollen den Kauf NICHT zurück
+    // ========================================
+
+    try {
+      const stockRows = await db
+        .select({ stock: products.stock })
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1)
+
+      const updatedStock = stockRows[0]?.stock ?? 0
+
+      if (updatedStock <= 3) {
+        // Prüfe ob bereits eine Warnung für dieses Produkt existiert (EC-1, EC-2)
+        const existingNotification = await db
+          .select({ id: lowStockNotifications.id })
+          .from(lowStockNotifications)
+          .where(eq(lowStockNotifications.productId, productId))
+          .limit(1)
+
+        if (existingNotification.length === 0) {
+          await db.insert(lowStockNotifications).values({
+            productId,
+            stockQuantity: updatedStock,
+          })
+        }
+      }
+    } catch (notificationError: unknown) {
+      // Benachrichtigungs-Fehler nicht an den Nutzer weitergeben (EC-7)
+      console.error('Low-Stock-Benachrichtigung konnte nicht erstellt werden:', notificationError)
+    }
 
     // ========================================
     // SCHRITT 8: Success-Response mit Produkt-Details

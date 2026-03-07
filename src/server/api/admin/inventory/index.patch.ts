@@ -25,7 +25,7 @@
  */
 
 import { db } from '~/server/db'
-import { products } from '~/server/db/schema'
+import { products, lowStockNotifications } from '~/server/db/schema'
 import { requireAdmin } from '~/server/utils/auth'
 import { eq, inArray } from 'drizzle-orm'
 
@@ -76,6 +76,20 @@ export default defineEventHandler(async (event) => {
         .where(eq(products.id, u.productId))
     }
   })
+
+  // FEAT-13: Benachrichtigungen für aufgefüllte Produkte automatisch entfernen
+  // Läuft nach der Transaktion — kein Rollback des Bestands bei Fehler
+  try {
+    for (const u of updates) {
+      if (u.stockQuantity > 3) {
+        await db
+          .delete(lowStockNotifications)
+          .where(eq(lowStockNotifications.productId, u.productId))
+      }
+    }
+  } catch (notificationError: unknown) {
+    console.error('Fehler beim Bereinigen der Low-Stock-Benachrichtigungen:', notificationError)
+  }
 
   return { success: true, updatedCount: updates.length }
 })

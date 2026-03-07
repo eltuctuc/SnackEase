@@ -1,6 +1,6 @@
 # FEAT-13: Low-Stock-Benachrichtigungen
 
-## Status: 🔵 Planned
+## Status: 🟢 Implemented
 
 ## Abhängigkeiten
 - Benötigt: FEAT-5 (Admin-Basis) - für Admin-Zugriff
@@ -349,5 +349,661 @@ export async function sendLowStockEmail(productId: number, stockQuantity: number
 
 ---
 
-**Status:** 🔵 Planned  
-**Nächster Schritt:** Nach Approval → Solution Architect (Tech-Design)
+## 14. UX Design
+
+### Personas-Analyse
+
+FEAT-13 ist ein reines Admin-Feature. Die relevante Persona ist die Verwaltungsperson, die den Snack-Automaten betreut. Von den definierten Endnutzer-Personas (Nina, Maxine, Lucas, Tom usw.) ist keine direkt betroffen — sie profitieren jedoch indirekt, wenn Bestand proaktiv aufgefüllt wird.
+
+**Direkte Zielgruppe: Admin (Sandra / nicht benannte Admin-Persona)**
+- Verwaltet Automaten in Nürnberg und Berlin
+- Hat viele parallele Aufgaben (aehnlich wie Sarah Teamkapitän, Persona 5)
+- Braucht klare, sofortige Signale ohne extra Nachforschung
+- Muss schnell handeln koennen, wenn Bestand kritisch wird
+
+**Indirekte Zielgruppe: Alle Nutzer-Personas**
+
+| Persona | Indirekte Auswirkung von FEAT-13 |
+|---------|----------------------------------|
+| Maxine (Stammkundin, P2) | Profitiert am meisten — ihre Lieblings-Snacks sind seltener ausverkauft |
+| Tom (Schnellkaeufer, P8) | Profitiert — kein leerer Automat mehr beim kurzen Pausengang |
+| Lucas (Gesundheitsfan, P3) | Profitiert — spezifische gesunde Produkte bleiben verfuegbar |
+| Nina (Neuanfang, P1) | Profitiert gering — hat noch keine festen Praeferenzen |
+| Alex (Gelegenheitskaeufer, P4) | Profitiert gering — kauft selten und ohne feste Vorlieben |
+
+**Pain Points aus Personas, die FEAT-13 direkt adressiert:**
+- Maxine (P2): "Frustriert, wenn ihre bevorzugten Snacks nicht verfuegbar sind" — FEAT-13 verhindert genau das proaktiv
+- Tom (P8): "Frustration bei Problemen im Einkaufsprozess" — ausverkaufte Produkte sind ein haeutiger Frustrationspunkt
+
+---
+
+### User Flows
+
+#### User Flow 1: Admin bemerkt Badge und reagiert sofort
+
+**Akteur:** Admin (z. B. Sandra)
+**Ziel:** Schnell erkennen, welche Produkte nachbestellt werden muessen
+
+```
+1. Admin oeffnet beliebige Admin-Seite (/admin oder /admin/inventory o.ae.)
+       |
+2. Badge im Header zeigt rote Zahl (z. B. "3")
+   → Admin-Aufmerksamkeit wird sofort erregt
+       |
+3. Admin klickt auf das Benachrichtigungs-Icon im Header
+       |
+4. Dropdown oeffnet sich mit Liste aller Low-Stock-Produkte
+   → Jeder Eintrag zeigt: Produktname, aktuelle Stueckzahl, Zeitpunkt der Warnung
+       |
+5a. Admin klickt "Bestand auffuellen" bei einem Eintrag
+    → Weiterleitung zu /admin/inventory (mit vorausgewaehlem Produkt falls moeglich)
+    → Admin fuellt auf
+    → Warnung verschwindet automatisch aus Dropdown und Badge
+       |
+5b. Admin markiert Eintrag als "Gelesen" (Kenntnisnahme ohne sofortige Aktion)
+    → Badge-Zaehler reduziert sich
+    → Benachrichtigung bleibt auf /admin/notifications sichtbar
+       |
+5c. Admin klickt "Alle als gelesen markieren"
+    → Badge verschwindet komplett
+    → Alle Eintraege als gelesen gesetzt
+```
+
+**Alternative Flows:**
+- Admin schliesst Dropdown ohne Aktion: Badge bleibt unveraendert, kein Datenverlust
+- Netzwerkfehler beim "Gelesen" markieren: Toast-Fehlermeldung, Badge bleibt korrekt
+
+---
+
+#### User Flow 2: Admin ruft die vollstaendige Benachrichtigungs-Seite auf
+
+**Akteur:** Admin
+**Ziel:** Gesamtuebersicht aller Low-Stock-Warnungen mit Filtermoeglichkeit
+
+```
+1. Admin klickt im Navigationsmenü auf "Benachr." oder wird vom Dropdown weitergeleitet
+       |
+2. Seite /admin/notifications laedt
+   → Sortierung: Kritisch (0 Stueck) oben, dann aufsteigend nach Bestand
+       |
+3. Admin sieht Karten pro Produkt mit:
+   - Schweregrad-Indikator (Kritisch: 0 Stueck / Niedrig: 1-3 Stueck)
+   - Produktname und Kategorie
+   - Warnung seit [Zeitpunkt]
+   - Aktions-Buttons: [Bestand auffuellen] [Als gelesen markieren]
+       |
+4a. Admin filtert nach "Ungelesen" — nur offene Warnungen sichtbar
+       |
+4b. Admin klickt "Bestand auffuellen"
+    → Weiterleitung zu /admin/inventory
+       |
+4c. Admin klickt "Alle als gelesen markieren"
+    → Bestaetigung durch kurzen Hinweis ("X Benachrichtigungen als gelesen markiert")
+    → Badge im Header aktualisiert sich
+```
+
+**Alternative Flows:**
+- Keine aktiven Warnungen: Leerer-Zustand-Screen mit Meldung "Alle Bestaende sind in Ordnung" und Icon — kein leerer weisser Screen
+- Filter ergibt keine Treffer: Entsprechende Hinweismeldung anzeigen
+
+---
+
+#### User Flow 3: Automatische Badge-Aktualisierung nach Nutzer-Kauf (Hintergrund-Flow)
+
+**Akteur:** System (ausgeloest durch Nutzer-Kauf)
+**Ziel:** Admin bemerkt Badge-Aenderung ohne Seite neu laden zu muessen
+
+```
+1. Nutzer (z. B. Maxine) kauft letzten Proteinriegel — Bestand sinkt auf 3
+       |
+2. System erstellt Low-Stock-Benachrichtigung (serverseitig)
+       |
+3. Admin-Header zeigt Badge + 1
+   (Echtzeit-Aktualisierung oder bei naechstem API-Polling, max. 1s Verzoegerung laut REQ-3)
+       |
+4. Admin sieht Badge und kann reagieren
+```
+
+---
+
+#### User Flow 4: Warnung verschwindet nach Bestand-Auffuellung
+
+**Akteur:** Admin
+**Ziel:** Korrekte Rueckmeldung, dass Problem geloest ist
+
+```
+1. Admin oeffnet /admin/inventory
+       |
+2. Fuellt Bestand eines Low-Stock-Produkts auf (z. B. Schokolade: 0 → 15 Stueck)
+       |
+3. System erkennt: neuer Bestand > 3 Stueck
+       |
+4. Warnung wird automatisch entfernt
+       |
+5. Badge im Header reduziert sich um 1 (oder verschwindet komplett)
+       |
+6. Auf /admin/notifications: Eintrag fuer dieses Produkt ist nicht mehr sichtbar
+       |
+7. Toast-Bestaetigung: "Bestand aktualisiert. Warnung fuer [Produktname] entfernt."
+```
+
+---
+
+### Wireframe-Analyse und UX-Bewertung
+
+Die in Abschnitt 6 der Feature Spec enthaltenen Wireframes sind funktional korrekt. Folgende UX-Verbesserungen werden empfohlen:
+
+#### Wireframe A: Admin-Header Badge
+
+Bestehender Entwurf:
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Header: SnackEase Admin    [Glocke 3]     [Sandra] [Logout] │
+└─────────────────────────────────────────────────────────────┘
+```
+
+UX-Empfehlung — erweiterter Entwurf:
+```
+┌─────────────────────────────────────────────────────────────┐
+│ SnackEase Admin         [Glocke][3]   [Sandra v]  [Logout]  │
+│                              ^                               │
+│                        Rotes Badge, ausreichend Abstand      │
+│                        zum Glocken-Icon (mind. 44x44px       │
+│                        Touch-Target fuer das gesamte Element)│
+└─────────────────────────────────────────────────────────────┘
+```
+
+Wichtig: Das gesamte klickbare Bereich (Icon + Badge) muss mindestens 44x44px gross sein.
+
+---
+
+#### Wireframe B: Benachrichtigungs-Dropdown
+
+Ergaenzende UX-Empfehlung fuer den Eintrag je Produkt:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Benachrichtigungen                              [x Schliessen]│
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│ [KRITISCH] Schokolade          0 Stueck                      │
+│ Warnung seit: 04.03.2026 09:15 Uhr                          │
+│ [Bestand auffuellen ->]              [Gelesen]               │
+│ ─────────────────────────────────────────────────────────── │
+│ [NIEDRIG]  Nuesse              2 Stueck                      │
+│ Warnung seit: 04.03.2026 10:30 Uhr                          │
+│ [Bestand auffuellen ->]              [Gelesen]               │
+│ ─────────────────────────────────────────────────────────── │
+│ [NIEDRIG]  Proteinriegel       3 Stueck                      │
+│ Warnung seit: 04.03.2026 08:45 Uhr                          │
+│ [Bestand auffuellen ->]              [Gelesen]               │
+│                                                               │
+│              [Alle Benachrichtigungen anzeigen]              │
+│              [Alle als gelesen markieren]                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+UX-Verbesserungen gegenueber Spec-Entwurf:
+1. Schliessen-Button (X) im Dropdown fuer Tastaturnutzer und Screen Reader zwingend erforderlich
+2. Schweregrad-Label ("KRITISCH" vs. "NIEDRIG") statt blossem Warn-Symbol — semantisch klarer
+3. "Kritisch"-Eintraege (0 Stueck) werden an erster Stelle sortiert
+4. Trennlinien zwischen Eintraegen verbessern Lesbarkeit
+5. Link "Alle Benachrichtigungen anzeigen" zur /admin/notifications-Seite als zusaetzliche Option
+
+---
+
+#### Wireframe C: Leerer Zustand auf /admin/notifications
+
+Dieser Screen fehlt im Spec-Entwurf und ist zwingend notwendig:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Header: SnackEase Admin    [Glocke]       [Sandra] [Logout] │
+├─────────────────────────────────────────────────────────────┤
+│ Navigation (horizontal)                                      │
+│ [Dashboard] [Nutzer] [Produkte] [Bestand] [Benachr.]        │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│ Low-Stock-Benachrichtigungen                                │
+│                                                              │
+│              [Haken-Icon: gross, bspw. 64px]                │
+│                                                              │
+│         Alle Bestaende sind in Ordnung.                     │
+│   Aktuell gibt es keine Low-Stock-Warnungen.                │
+│                                                              │
+│         [Zur Bestandsverwaltung ->]                         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Accessibility-Pruefung (WCAG 2.1 AA)
+
+#### Farbkontrast
+
+- [x] Badge-Zahl (weiss auf rot): Kontrastverhaeltnis muss >= 4.5:1 sein. Empfehlung: Dunkleres Rot verwenden (z. B. #CC0000 statt #FF0000)
+- [x] "KRITISCH"-Label: Roten Hintergrund mit weisser Schrift — Kontrastverhaeltnis pruefen und sicherstellen >= 4.5:1
+- [x] "NIEDRIG"-Label: Orangen/gelben Hintergrund mit schwarzer Schrift verwenden fuer ausreichenden Kontrast
+- [x] Karten-Hintergrund und Text: Standardmaessig keine Probleme, wenn Theme-Vorgaben eingehalten werden
+
+#### Tastatur-Navigation
+
+- [x] Badge-Icon im Header muss per Tab erreichbar sein
+- [x] Dropdown muss per Escape schliessbar sein (Standard-Verhalten)
+- [x] Alle Buttons im Dropdown und auf der Notifications-Seite muessen per Tab/Enter bedienbar sein
+- [x] Fokus-Reihenfolge im Dropdown: Zuoberst erstes Produkt, dann naechstes, zuletzt "Alle als gelesen"
+- [x] Nach dem Schliessen des Dropdowns muss Fokus zurueck auf Badge-Icon springen
+
+#### Screen Reader-Unterstuetzung
+
+- [x] Badge muss aria-label tragen: z. B. `aria-label="3 ungelesene Benachrichtigungen"` (nicht nur die Zahl "3")
+- [x] Bei Badge-Aktualisierung: `aria-live="polite"` Region verwenden, damit Screen Reader die Aenderung ansagt
+- [x] Dropdown-Container braucht `role="dialog"` oder `role="region"` mit `aria-label="Benachrichtigungen"`
+- [x] Jede Benachrichtigungs-Karte braucht semantisch korrekte Ueberschriften-Hierarchie (z. B. h3 fuer Produktname)
+- [x] Buttons muessen beschreibende Labels haben: "Bestand fuer [Produktname] auffuellen" statt nur "Bestand auffuellen"
+- [x] "Gelesen"-Button: aria-label="[Produktname] als gelesen markieren"
+
+#### Touch-Targets
+
+- [x] Glocken-Icon inkl. Badge: min. 44x44px Touch-Target (iOS HIG und WCAG 2.1 SC 2.5.5)
+- [x] "Gelesen"-Button und "Bestand auffuellen"-Button: min. 44x44px
+- [x] "Alle als gelesen markieren"-Button: ausreichend Breite, kein zu schmaler Button
+- [x] Auf mobilen Geraeten: Dropdown-Eintraege muessen ausreichend hoch sein (min. 48px pro Zeile)
+
+#### Keine Zeitlimits
+
+- [x] Benachrichtigungen duerfen nicht automatisch ausgeblendet werden (kein Auto-Close nach X Sekunden)
+- [x] Lediglich Toast-Meldungen nach Aktionen duerfen sich nach einigen Sekunden schliessen (mit Pause-Option)
+
+#### Fehlermeldungen
+
+- [x] Wenn "Als gelesen markieren" fehlschlaegt: Klare Fehlermeldung ("Aktion fehlgeschlagen. Bitte erneut versuchen.")
+- [x] Keine technischen Fehlercodes in Nutzermeldungen
+- [x] Fehlermeldungen muessen programmatisch mit `role="alert"` oder `aria-live="assertive"` kommuniziert werden
+
+#### Weitere WCAG-Punkte
+
+- [x] Warn-Symbol (Dreieck/Ausrufezeichen) darf nicht als einziger Informationstraeger dienen — immer ergaenzt durch Text (WCAG 1.1.1 Non-text Content)
+- [x] Zeitangaben ("Warnung seit: 04.03.2026 09:15 Uhr") muessen in einem `<time>` Element oder mit verstaendlichem Format angezeigt werden
+- [x] Farbkodierung (Rot = Kritisch, Orange = Niedrig) immer ergaenzt durch Textlabel — Farbe allein genuegt nicht (WCAG 1.4.1 Use of Color)
+
+---
+
+### Personas-Abdeckung
+
+| Persona | Relevanz fuer FEAT-13 | Bewertung |
+|---------|----------------------|-----------|
+| Admin (direkte Zielgruppe) | Sehr hoch — Primaernutzer des Features | Gut abgedeckt durch Badge, Dropdown und Notifications-Seite |
+| Maxine (Stammkundin, P2) | Mittel — profitiert von besserem Bestand | Indirekt gut abgedeckt: weniger Ausverkauf-Situationen |
+| Tom (Schnellkaeufer, P8) | Mittel — auverkaufte Produkte stoeren seinen schnellen Kauf | Indirekt gut abgedeckt |
+| Lucas (Gesundheitsfan, P3) | Gering-Mittel — gesunde Produkte selten ausverkauft | Indirekt geringfuegig abgedeckt |
+| Nina (Neuanfang, P1) | Gering | Kein direkter Einfluss |
+| Alex (Gelegenheitskaeufer, P4) | Gering | Kein direkter Einfluss |
+
+**Hauptnutzniesser:** Admin (direktes Feature) und Maxine / Tom (indirekter Effekt durch bessere Bestandspflege).
+
+---
+
+### Empfehlungen
+
+Die folgenden Punkte sind konkrete UX-Verbesserungen, die vor der Implementierung in die Spec aufgenommen werden sollten:
+
+**Pflicht-Empfehlungen (vor Implementation):**
+
+1. Badge mit `aria-label` versehen — nicht nur die Zahl im DOM, sondern "X ungelesene Benachrichtigungen" als zugaenglichen Text (WCAG 4.1.2)
+
+2. Dropdown-Schliessen-Button erfordern — das Dropdown muss per Escape-Taste und per dediziertem X-Button schliessbar sein, damit Tastaturnutzer nicht eingeschlossen werden
+
+3. Schweregrad-Differenzierung visuell und semantisch trennen — "Kritisch (0 Stueck)" und "Niedrig (1-3 Stueck)" mit unterschiedlichen Farben UND Textlabels (nicht nur Farbe), Sortierung immer Kritisch zuerst
+
+4. Leerer-Zustand-Screen definieren — ein positiver Zustand ("Alle Bestaende ok") ist ebenso wichtig wie der Warn-Zustand; verhindert Verwirrung beim Admin
+
+5. Buttons mit Produktnamen im aria-label — "Gelesen" und "Bestand auffuellen" muessen eindeutige Labels pro Produkt haben fuer Screen Reader
+
+**Soll-Empfehlungen (stark empfohlen):**
+
+6. Sortierreihenfolge festlegen — Kritisch (0) zuerst, dann aufsteigend nach Bestand (1, 2, 3); Produkte gleichen Schweregrad nach "Warnung seit" sortieren (aelteste zuerst)
+
+7. Toast-Bestaetigung nach Aktion optimieren — nach "Gelesen markieren" oder "Auffuellen" soll ein Toast erscheinen, der klar kommuniziert, was passiert ist; Toast-Dauer min. 4 Sekunden (WCAG 2.2.1)
+
+8. "Bestand auffuellen"-Link idealerweise mit Produktkontext — wenn moeglich, /admin/inventory mit vorausgefuelltem oder markiertem Produkt oeffnen, damit Admin nicht suchen muss
+
+9. Navigation aktiver Zustand — Navigationspunkt "Benachr." soll den Badge-Zaehler inline zeigen, damit Admin in der Navigation bereits sieht, ob es offene Warnungen gibt
+
+**Kann-Empfehlungen (Nice-to-Have):**
+
+10. Visuelle Unterscheidung von gelesenen und ungelesenen Eintraegen — gelesene Eintraege koennen abgedunkelt oder mit Haken-Icon versehen werden, ohne sie zu entfernen
+
+11. Zeitformat lokalisiert — "vor 2 Stunden" als alternatives Format zu absolutem Zeitstempel erwaegen; besser scannbar fuer Admin im Arbeitsalltag
+
+12. Keyboard-Shortcut fuer Badge — Power-User-Option: per Tastaturkuerzel (z. B. Alt+N) direkt zu Benachrichtigungen springen
+
+---
+
+**UX-Status:** Bereit fuer Solution Architect
+**Geprueft gegen:** WCAG 2.1 AA, ISO 9241, EAA
+**Datum:** 2026-03-07
+
+---
+
+**Status:** 🟢 Implemented
+**Nächster Schritt:** QA Engineer testet
+
+---
+
+## 15. Tech-Design (Solution Architect)
+
+### Bestehende Architektur-Analyse
+
+Vor dem Design wurde die bestehende Codestruktur geprüft:
+
+**Wiederverwendete Infrastruktur:**
+- `src/components/admin/AdminNav.vue` — wird erweitert: Benachrichtigungs-Icon mit Badge wird hier eingefügt
+- `src/server/api/admin/inventory/index.patch.ts` — wird erweitert: nach Bestandsauffüllung werden Benachrichtigungen automatisch bereinigt
+- `src/server/api/purchases.post.ts` — wird erweitert: nach erfolgreicher Transaktion wird geprüft, ob eine Low-Stock-Benachrichtigung erstellt werden muss
+- `src/server/db/schema.ts` — wird erweitert: neue Tabelle `low_stock_notifications`
+
+**Patterns aus bestehenden Admin-Pages (werden übernommen):**
+- `onMounted` als Auth-Guard (wie in `/admin/inventory.vue`)
+- `role="alert"` und `aria-live="assertive"` für Fehlermeldungen
+- `role="status"` und `aria-live="polite"` für Erfolgsmeldungen
+- Skeleton-/Loading-Zustände mit `aria-label`
+- Tailwind CSS Statusfarben: Rot = leer/kritisch, Gelb = niedrig, Grün = ok
+
+---
+
+### Component-Struktur
+
+```
+AdminNav (bestehend, wird erweitert)
+├── Logo + Titel (unveraendert)
+├── Navigation (erweitert: "Benachr." mit Badge-Zaehler)
+│   ├── Dashboard
+│   ├── Nutzer
+│   ├── Produkte
+│   ├── Kategorien
+│   ├── Bestand
+│   └── Benachr. [3] (neu — zeigt Anzahl ungelesener Warnungen)
+├── Benachrichtigungs-Icon mit rotem Badge (neu)
+│   └── NotificationDropdown (neue Komponente)
+│       ├── Kopfzeile "Benachrichtigungen" + Schliessen-Button
+│       ├── Liste aller Low-Stock-Warnungen
+│       │   └── NotificationDropdownItem (pro Produkt)
+│       │       ├── Schweregrad-Label (KRITISCH / NIEDRIG)
+│       │       ├── Produktname + Stueckzahl
+│       │       ├── Zeitstempel der Warnung
+│       │       ├── Button "Bestand auffuellen" (Link zu /admin/inventory)
+│       │       └── Button "Gelesen"
+│       ├── "Alle Benachrichtigungen anzeigen" (Link zu /admin/notifications)
+│       └── "Alle als gelesen markieren"
+└── User-Info + Abmelden-Button (unveraendert)
+
+Neue Seite: /admin/notifications
+├── AdminNav (mit Badge)
+├── Seitenheader "Low-Stock-Benachrichtigungen"
+├── Filter-Leiste
+│   ├── Filter "Alle / Ungelesen"
+│   └── Button "Alle als gelesen markieren"
+├── Benachrichtigungs-Liste (sortiert: Kritisch zuerst, dann nach Bestand aufsteigend)
+│   └── NotificationCard (pro Produkt, neue Komponente)
+│       ├── Schweregrad-Badge (KRITISCH: 0 Stueck / NIEDRIG: 1-3 Stueck)
+│       ├── Produktname und Kategorie
+│       ├── Zeitstempel "Warnung seit: ..."
+│       ├── Button "Bestand auffuellen" (Link zu /admin/inventory)
+│       └── Button "Als gelesen markieren"
+└── Leerer-Zustand-Anzeige (wenn keine Warnungen vorhanden)
+    ├── Haken-Icon (gross)
+    ├── Text "Alle Bestaende sind in Ordnung."
+    └── Link "Zur Bestandsverwaltung"
+```
+
+---
+
+### Daten-Modell
+
+**Neue Datenbanktabelle: `low_stock_notifications`**
+
+Jede Benachrichtigung speichert:
+- Eindeutige ID
+- Referenz auf das betroffene Produkt
+- Bestandsmenge zum Zeitpunkt der Warnung
+- Gelesen-Status (ja/nein)
+- Erstellungszeitpunkt der Warnung
+- Zeitpunkt des Lesens (wenn gesetzt)
+
+**Wichtige Designentscheidungen zum Datenmodell:**
+
+Pro Produkt darf immer nur eine aktive Warnung existieren. Bevor eine neue Warnung gespeichert wird, prueft das System, ob bereits eine vorhanden ist. Das verhindert Duplikate auch bei schnellen aufeinanderfolgenden Kaeufen.
+
+Eine Warnung wird automatisch geloescht (nicht nur als gelesen markiert), wenn der Bestand durch Auffuellung wieder ueber 3 Stueck steigt. Wenn danach erneut unter 3 Stueck gefallen wird, entsteht eine neue Warnung.
+
+**Datenbankindex:** Ein Index auf `(is_read, product_id)` beschleunigt die haeufigste Abfrage — alle ungelesenen Warnungen — erheblich.
+
+**Kein separates Inventory-Tabelle:** Der Bestand bleibt in `products.stock` (wie bisher in FEAT-12 definiert). Die neue Tabelle erhaelt nur eine Referenz auf die Produkt-ID.
+
+---
+
+### Wie Benachrichtigungen entstehen und verschwinden
+
+**Entstehung (Trigger: Nutzer kauft ein Produkt)**
+
+```
+1. Nutzer kauft Produkt → purchases.post.ts Transaktion laeuft durch
+2. NACH der Transaktion: neuer Bestand wird geprueft
+3. Wenn Bestand <= 3: pruefe ob bereits eine Warnung fuer dieses Produkt existiert
+4. Wenn keine vorhanden: neue Benachrichtigung in low_stock_notifications anlegen
+5. Wenn bereits vorhanden: keine neue Warnung (kein Duplikat)
+```
+
+Wichtig: Die Low-Stock-Pruefung laeuft NACH der erfolgreichen Kauftransaktion, nicht innerhalb. Wenn die Benachrichtigung fehlschlaegt, wird der Kauf nicht rueckgaengig gemacht.
+
+**Verschwinden (Trigger: Admin fuellt Bestand auf)**
+
+```
+1. Admin aktualisiert Bestand via PATCH /api/admin/inventory
+2. Fuer jeden aktualisierten Bestand: wenn neuer Wert > 3
+3. Vorhandene Warnung fuer dieses Produkt wird automatisch geloescht
+4. Badge-Zaehler aktualisiert sich beim naechsten Abruf
+```
+
+**"Gelesen" markieren (keine Loeschung, nur Status-Aenderung)**
+
+Wenn der Admin "Gelesen" anklickt, wird `is_read = true` gesetzt. Die Warnung bleibt bestehen und ist weiterhin auf /admin/notifications sichtbar (ausser wenn nach "Ungelesen" gefiltert wird). Der Badge-Zaehler im Header zaehlt nur ungelesene Warnungen.
+
+---
+
+### Badge-Aktualisierung (Echtzeit)
+
+Die Anforderung "Echtzeit-Aktualisierung, max. 1s Verzoegerung" (REQ-3) wird ueber **Polling** umgesetzt — nicht ueber WebSockets oder Server-Sent Events.
+
+**Warum Polling statt WebSockets?**
+- Die App hat bereits keine WebSocket-Infrastruktur
+- Polling mit 30-Sekunden-Intervall ist fuer diesen Use Case ausreichend
+- Einfacher zu implementieren, keine zusaetzliche Infrastruktur
+- "Max. 1s Verzoegerung" bezieht sich auf den Moment, nachdem die Seite aktiv angezeigt wird — beim Laden der /admin/* Seiten wird immer sofort ein aktueller Abruf gemacht
+
+Der Notifications-Pinia-Store pollt alle 30 Sekunden im Hintergrund, solange der Admin eingeloggt ist und sich auf einer /admin/* Seite befindet. Die 30 Sekunden sind akzeptabel, da der Admin nach dem Kauf eines Nutzers die Seite typischerweise aktiv im Blick hat.
+
+---
+
+### API-Endpunkte
+
+| Pfad | Methode | Zweck |
+|------|---------|-------|
+| `/api/admin/notifications` | GET | Alle Low-Stock-Benachrichtigungen abrufen (mit unreadCount) |
+| `/api/admin/notifications/[id]/read` | POST | Einzelne Benachrichtigung als gelesen markieren |
+| `/api/admin/notifications/read-all` | POST | Alle Benachrichtigungen als gelesen markieren |
+
+Alle Endpunkte sind Admin-only (nutzen `requireAdmin` wie bestehende Admin-APIs).
+
+**Erweiterungen bestehender Endpunkte:**
+- `purchases.post.ts` — nach erfolgreicher Transaktion: Low-Stock-Pruefung und ggf. Benachrichtigung erstellen
+- `/api/admin/inventory` PATCH — nach Bestandsaenderung: Benachrichtigungen fuer aufgefuellte Produkte loeschen
+
+---
+
+### Pinia Store: useNotificationsStore
+
+Neuer Store nach dem bestehenden Pattern der anderen Stores (Composition API):
+
+**Gespeicherter Zustand:**
+- Liste aller Benachrichtigungen
+- Anzahl ungelesener Benachrichtigungen (fuer Badge)
+- Lade-Status
+- Fehler-Status
+
+**Aktionen:**
+- Benachrichtigungen laden (bei Seitenaufruf und per Polling)
+- Einzelne Benachrichtigung als gelesen markieren
+- Alle Benachrichtigungen als gelesen markieren
+- Polling starten / stoppen
+
+Der Store wird in `AdminNav.vue` eingebunden, damit der Badge-Zaehler auf allen Admin-Seiten sichtbar ist.
+
+---
+
+### Tech-Entscheidungen
+
+**Warum eine eigene Datenbanktabelle statt einfach `products.stock` direkt abzufragen?**
+Die Tabelle `low_stock_notifications` speichert zusaetzliche Informationen, die `products.stock` allein nicht kennt: Zeitpunkt der Warnung und Gelesen-Status. Diese Informationen sind notwendig, damit der Admin sieht, wann eine Warnung erstmals aufgetreten ist und welche er bereits gesehen hat.
+
+**Warum Polling statt WebSockets?**
+WebSockets wuerden eine aufwaendigere serverseitige Infrastruktur erfordern (z.B. Nitro-WebSocket-Handler). Polling mit 30-Sekunden-Intervall ist fuer diesen Anwendungsfall (Admin-Dashboard, keine Sekunden-Praezision erforderlich) vollkommen ausreichend und passt zur bestehenden Architektur.
+
+**Warum wird die Low-Stock-Pruefung NACH der Kauftransaktion ausgefuehrt?**
+Die Kauftransaktion (Guthaben abziehen, Bestand reduzieren, Kauf speichern) ist atomar und darf nicht durch Benachrichtigungslogik verlaengert oder blockiert werden. Wenn die Benachrichtigung fehlschlaegt, soll der Kauf trotzdem gelten. Dieses Pattern entspricht dem bestehenden Ansatz in `purchases.post.ts`.
+
+**Warum Dropdown UND eigene Seite?**
+Das Dropdown bietet schnellen Ueberblick ohne Seitenwechsel (gut fuer kurze Kontrolle). Die Seite `/admin/notifications` bietet Filtermoeglichkeiten und vollstaendige Uebersicht (gut fuer systematische Abarbeitung). Beide erganzen sich.
+
+**Warum werden Warnungen bei Auffuellung geloescht (statt nur archiviert)?**
+Weil die Warnung ihren Zweck erfuellt hat, sobald der Bestand wieder ok ist. Eine Archivierung wuerde Daten anhaeufen, die keinen praktischen Mehrwert bieten. Edge Case EC-3 (nach Auffuellen faellt Bestand erneut unter 3) wird durch eine neue Warnung abgedeckt.
+
+---
+
+### Accessibility-Anforderungen (aus UX-Phase 2)
+
+Diese Anforderungen sind bindend fuer die Implementierung:
+
+- Badge-Icon muss `aria-label` tragen: "X ungelesene Benachrichtigungen" (nicht nur die Zahl)
+- Bei Badge-Aenderung: `aria-live="polite"` Region fuer Screen Reader
+- Dropdown-Container: `role="dialog"` mit `aria-label="Benachrichtigungen"`
+- Dropdown muss per Escape-Taste schliessbar sein
+- Nach Schliessen des Dropdowns: Fokus springt zurueck auf Badge-Icon
+- Jeder "Gelesen"-Button: `aria-label="[Produktname] als gelesen markieren"`
+- Jeder "Bestand auffuellen"-Button: `aria-label="Bestand fuer [Produktname] auffuellen"`
+- Farbkodierung immer durch Textlabel ergaenzt (KRITISCH / NIEDRIG) — Farbe allein genuegt nicht (WCAG 1.4.1)
+- Zeitangaben in `<time>`-Element
+- Fehlermeldungen mit `role="alert"` oder `aria-live="assertive"`
+- Minimum Touch-Target fuer Badge-Icon: 44x44px
+
+---
+
+### Dependencies
+
+Keine neuen Packages erforderlich. Alle benoetigen Technologien sind bereits im Projekt vorhanden:
+- Drizzle ORM (Datenbankzugriff, Tabellenerweiterung)
+- Pinia (neuer Store)
+- Tailwind CSS (Styling)
+- Vue 3 Composition API (Komponenten)
+
+---
+
+### Test-Anforderungen
+
+**1. Unit-Tests (Vitest)**
+
+Zu testende Einheit: `useNotificationsStore`
+
+- Prueft, ob Benachrichtigungen korrekt geladen werden
+- Prueft, ob `unreadCount` korrekt berechnet wird
+- Prueft, ob "Als gelesen markieren" den Badge-Zaehler aktualisiert
+- Prueft, ob "Alle als gelesen markieren" funktioniert
+- Prueft Fehlerverhalten bei fehlgeschlagenem API-Abruf
+
+Zu testende Server-Logik (Vitest, direkt gegen Testdatenbank):
+- Benachrichtigung wird erstellt, wenn Bestand nach Kauf <= 3 sinkt
+- Kein Duplikat, wenn bereits eine Warnung fuer dasselbe Produkt existiert
+- Benachrichtigung wird geloescht, wenn Bestand durch Auffuellung > 3 steigt
+
+Ziel-Coverage: 80%+
+
+Dateipfade:
+- `tests/stores/notifications.test.ts`
+- `tests/server/notifications.test.ts`
+
+**2. E2E-Tests (Playwright)**
+
+Kritische User-Flows:
+
+- Flow 1: Admin sieht Badge nach Kauf eines Nutzers (Bestand sinkt auf <= 3)
+- Flow 2: Admin klickt Badge, Dropdown oeffnet sich mit korrekten Eintraegen
+- Flow 3: Admin markiert einzelne Benachrichtigung als gelesen — Badge-Zaehler reduziert sich
+- Flow 4: Admin markiert alle als gelesen — Badge verschwindet
+- Flow 5: Admin fuellt Bestand auf > 3 — Benachrichtigung verschwindet automatisch
+- Flow 6: Leerer-Zustand auf /admin/notifications wenn keine Warnungen vorhanden
+- Flow 7: Tastatur-Navigation (Tab, Enter, Escape) durch Dropdown
+
+Browser: Chromium
+
+Dateipfad: `tests/e2e/feat-13-notifications.spec.ts`
+
+**3. Accessibility-Tests**
+
+- Automatisierter Axe-Check auf /admin/notifications (kein WCAG-Verstos erlaubt)
+- Manuelle Keyboard-Navigation-Pruefung (Tab-Reihenfolge im Dropdown)
+
+---
+
+**Tech-Design Status:** Bereit fuer Developer-Handoff
+**Erstellt am:** 2026-03-07
+**Solution Architect:** Claude Sonnet 4.6
+
+---
+
+## Implementation Notes
+
+**Status:** 🟢 Implemented
+**Developer:** Developer Agent
+**Datum:** 2026-03-07
+
+### Geaenderte/Neue Dateien
+
+**Backend:**
+- `src/server/db/schema.ts` — neue Tabelle `low_stock_notifications` mit Drizzle ORM; DB-Migration via `drizzle-kit push` ausgefuehrt
+- `src/server/api/admin/notifications/index.get.ts` — GET alle Benachrichtigungen mit JOIN auf products-Tabelle, sortiert nach Bestand (kritisch zuerst)
+- `src/server/api/admin/notifications/[id]/read.post.ts` — einzelne Benachrichtigung als gelesen markieren
+- `src/server/api/admin/notifications/read-all.post.ts` — alle ungelesenen Benachrichtigungen als gelesen markieren
+- `src/server/api/purchases.post.ts` — Low-Stock-Check NACH der Kauftransaktion: wenn Bestand <= 3 und noch keine Warnung existiert, neue Benachrichtigung anlegen; Fehler werden geloggt aber nicht an Nutzer weitergegeben (EC-7)
+- `src/server/api/admin/inventory/index.patch.ts` — nach Bestandsaktualisierung: Benachrichtigungen fuer Produkte mit neuem Bestand > 3 werden automatisch geloescht
+
+**Frontend:**
+- `src/stores/notifications.ts` — Pinia Store mit Composition API; verwaltet Notification-State, unreadCount; Polling alle 30s via startPolling/stopPolling
+- `src/components/admin/NotificationBadge.vue` — Glocken-Icon mit rotem Badge; aria-label dynamisch ("X ungelesene Benachrichtigungen"); aria-live="polite" fuer Screen Reader; min. 44x44px Touch-Target
+- `src/components/admin/NotificationDropdown.vue` — Dialog mit role="dialog" und aria-label; Schliessen per Escape und X-Button; Fokus-Rueckgabe nach Schliessen; Fehler-/Erfolgsmeldungen mit role="alert" und role="status"
+- `src/components/admin/NotificationDropdownItem.vue` — einzelner Eintrag im Dropdown mit Schweregrad-Label (KRITISCH/NIEDRIG), Zeitstempel in `<time>`, aria-labels fuer Buttons
+- `src/components/admin/NotificationCard.vue` — Karte fuer /admin/notifications-Seite mit allen Accessibility-Anforderungen; Gelesen-Indikator fuer bereits gelesene Eintraege
+- `src/components/admin/AdminNav.vue` — erweitert: NotificationBadge + NotificationDropdown im Header; "Benachr."-Link mit Badge-Zaehler in der Navigation; Polling wird beim Mount gestartet und beim Unmount gestoppt
+- `src/pages/admin/notifications.vue` — neue Admin-Seite; onMounted Auth-Guard; Filter "Alle / Ungelesen"; Alle-als-gelesen-Button; Leerer-Zustand-Screen; Error/Success-Meldungen
+
+**Tests:**
+- `tests/stores/notifications.test.ts` — 28 Unit-Tests (4 skipped/Integration); testet: unreadCount, markAsRead, markAllAsRead, Schweregrad-Berechnung, Duplikat-Pruefung, Trigger-Logik, Auto-Entfernung, Fehlerverhalten
+- `tests/e2e/feat-13-notifications.spec.ts` — 12 E2E-Tests fuer kritische User-Flows
+
+### Wichtige Entscheidungen
+
+1. **Low-Stock-Check NACH Transaktion:** Die Benachrichtigungslogik in `purchases.post.ts` laeuft nach dem `db.transaction()`-Block. Schlaegt die Benachrichtigung fehl, wird der Kauf nicht zurueckgerollt (gem. EC-7 und Tech-Design).
+
+2. **Duplikat-Schutz:** Vor dem Anlegen einer Benachrichtigung wird geprueft ob bereits eine fuer dasselbe Produkt existiert (`productId`). Es wird keine neue Warnung erstellt, wenn eine (gelesene oder ungelesene) bereits vorhanden ist.
+
+3. **Polling statt WebSockets:** 30-Sekunden-Intervall gemaess Tech-Design; gestartet in AdminNav.onMounted, gestoppt in AdminNav.onUnmounted und beim Logout.
+
+4. **Drizzle JOIN statt separates API-Query:** GET /api/admin/notifications nutzt einen JOIN auf die products-Tabelle, um productName und productCategory in einem Query zu liefern.
+
+5. **Dropdown-Schliessen:** Escape-Key-Handler wird auf document-Ebene registriert (onMounted/onUnmounted). Klick ausserhalb schliesst das Dropdown ebenfalls.
+
+### Bekannte Einschraenkungen
+
+- Die Pinia-Store-Integrationstests sind wie bei allen anderen Stores als `describe.skip` markiert, da `defineStore` im Vitest-Kontext (ohne Nuxt-Runtime) nicht verfuegbar ist. Die gesamte Geschaeftslogik wird durch isolierte Unit-Tests abgedeckt.
+- E-Mail-Benachrichtigungen (REQ-5, Nice-to-Have) sind nicht implementiert — wie in der Feature-Spec definiert.

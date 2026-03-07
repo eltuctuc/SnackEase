@@ -138,3 +138,16 @@ export const purchases = pgTable('purchases', {
 
 export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
+
+// FEAT-13: Low-Stock-Benachrichtigungen
+export const lowStockNotifications = pgTable('low_stock_notifications', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  stockQuantity: integer('stock_quantity').notNull(), // Bestand zum Zeitpunkt der Warnung
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  readAt: timestamp('read_at'),
+});
+
+export type LowStockNotification = typeof lowStockNotifications.$inferSelect;
+export type NewLowStockNotification = typeof lowStockNotifications.$inferInsert;
