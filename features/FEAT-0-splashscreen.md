@@ -384,3 +384,31 @@ Automatisch zu Login weiterleiten
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
 **Begründung:** Alle Acceptance Criteria erfüllt, 1 Low-Severity Bug (nicht kritisch für MVP), Accessibility bestanden.
+
+---
+
+## UI Refresh
+
+> Abweichungen zwischen der aktuellen Implementierung und dem Wireframe `resources/high-fidelity/splashscreen.png`. Diese Änderungen sind unabhängig voneinander umsetzbar.
+
+### Abweichungen
+
+| ID | Bereich | Aktuell (Implementierung) | Wireframe-Vorgabe |
+|----|---------|--------------------------|-------------------|
+| UIR-0-1 | Titeltext | Einzeilig: "SnackEase" (groß, bold, primary) + Tagline darunter | Zweizeilig: "Willkommen bei" (normal) + "**Snack Ease**" (groß, bold) — kein Tagline sichtbar |
+| UIR-0-2 | Ladeindikator | Horizontaler Fortschrittsbalken + "XX% geladen" Text | Kreisförmiger Spinner (kein Balken, kein Prozenttext) |
+| UIR-0-3 | Illustration | Keine Illustration vorhanden | Illustration einer Frau mit Lebensmitteln um den Kopf (obere Hälfte des Screens) |
+
+### Anforderungen
+
+| ID | Anforderung | Prio | Hinweis |
+|----|-------------|------|---------|
+| UIR-REQ-0-1 | Titeltext auf "Willkommen bei" (regulär) + "Snack Ease" (bold, größer, neue Zeile) umstellen | Must-Have | Tagline entfällt gemäß Wireframe |
+| UIR-REQ-0-2 | Fortschrittsbalken + Prozenttext durch Teenyicons-Spinner ersetzen | Must-Have | Icon: `teenyicons/outline/loading.svg` oder ähnliches Lade-Icon; kein numerischer Fortschritt |
+| UIR-REQ-0-3 | Illustration in oberer Screenbereich einfügen | Nice-to-Have | Benötigt Asset (z.B. SVG oder PNG in `src/assets/`); vor Umsetzung mit User klären ob Asset vorhanden |
+
+### Acceptance Criteria
+
+- [ ] UIR-AC-0-1: Splashscreen zeigt "Willkommen bei" + "Snack Ease" in zwei Zeilen; kein Tagline
+- [ ] UIR-AC-0-2: Ladeindikator ist ein Spinner (Teenyicons), kein Balken, keine Prozentzahl
+- [ ] UIR-AC-0-3 (optional): Illustration im oberen Bereich sichtbar, sofern Asset bereitgestellt

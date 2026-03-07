@@ -5,6 +5,14 @@
 ## Abhängigkeiten
 - Benötigt: FEAT-4 (Demo-Guthaben) - für Preis-Anzeige und Kauf-Integration
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Dashboard / Snacks-Tab | `resources/high-fidelity/produkte.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review.
+
 ## 1. Overview
 
 **Beschreibung:** Anzeige aller verfügbaren Snacks und Getränke mit Kategorien, Suche und Produktdetails.
@@ -396,3 +404,35 @@ Jedes Produkt hat vollständige Nährwerte und Allergene.
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
 **Begründung:** Produktkatalog funktioniert einwandfrei. Suche funktioniert kategorie-übergreifend. Suchfeld ist jetzt WCAG-konform mit programmatischem Label (sr-only). ProductDetailModal koennte in separatem Feature implementiert sein. Keine offenen Bugs.
+
+---
+
+## UI Refresh
+
+> Abweichungen zwischen der aktuellen Implementierung (`src/pages/dashboard.vue` + `src/components/dashboard/BalanceCard.vue`) und dem Wireframe `resources/high-fidelity/produkte.png`. Viele Unterschiede (Tab-Bar, Angebote-Slider, Empfehlungen/Favoriten-Tabs, Warenkorb-Icon) werden durch FEAT-15/16/17/18 abgedeckt und sind hier **nicht** aufgeführt.
+
+### Abweichungen
+
+| ID | Bereich | Aktuell (Implementierung) | Wireframe-Vorgabe |
+|----|---------|--------------------------|-------------------|
+| UIR-6-1 | Layout | Desktop-first: `max-w-4xl mx-auto p-8`, zentrierter Content-Block | Mobile-first: volle Bildschirmbreite, kein äußeres Max-Width-Constraint |
+| UIR-6-2 | Seiten-Header | h1 "Dashboard" (links) + Nutzername + Standort + Rolle-Badge + Abmelden-Button | App-Titel "Snack Ease" zentriert in der Kopfzeile — kein Nutzername, kein Logout im Header |
+| UIR-6-3 | Guthaben-Bereich (BalanceCard) | Farbige Karte (grün/gelb/rot je Status) mit großer Zahl, Status-Dot, zwei Buttons (Aufladen / Monatspauschale), letztes Aufladedatum | Kompakte horizontale Leiste: Label "Guthaben" + Betrag, darunter blauer Fortschrittsbalken (Füllstand), Kreditkarten-Icon rechts (→ /profile/credit via FEAT-24) |
+
+### Anforderungen
+
+| ID | Anforderung | Prio | Hinweis |
+|----|-------------|------|---------|
+| UIR-REQ-6-1 | Layout auf Mobile-first umstellen: volle Breite, nur inneres Padding (kein `max-w-4xl`) | Must-Have | Gilt für `dashboard.vue` und alle Dashboard-Components |
+| UIR-REQ-6-2 | Header ersetzen: "Snack Ease" zentriert; Logout-Button, Nutzername und Rolle-Badge entfernen (Login-State ist per Tab-Bar und Profil-Seite erreichbar) | Must-Have | Abmelden-Funktion zieht in FEAT-21 (Admin Settings) bzw. Profil-Seite (FEAT-20) um |
+| UIR-REQ-6-3 | BalanceCard redesignen: kompakte horizontale Darstellung mit Guthaben-Betrag + blauem Fortschrittsbalken + Kreditkarten-Icon (navigiert zu /profile/credit) | Must-Have | Monatspauschale-Button-Verbleib mit Solution Architect klären; FEAT-24 muss implementiert sein |
+
+### Acceptance Criteria
+
+- [ ] UIR-AC-6-1: Dashboard-Layout nutzt volle Mobilbreite; kein Desktop-zentrierter Content-Block
+- [ ] UIR-AC-6-2: Header zeigt "Snack Ease" zentriert; kein Logout-Button, kein Nutzername im Header
+- [ ] UIR-AC-6-3: BalanceCard zeigt kompakten Guthaben-Betrag + Fortschrittsbalken + Kreditkarten-Icon; Klick auf Icon navigiert zu /profile/credit (FEAT-24)
+
+### Abhängigkeiten dieser UI Refresh Punkte
+
+- UIR-REQ-6-3 setzt FEAT-24 (Guthaben aufladen) voraus

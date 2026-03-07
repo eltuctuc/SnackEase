@@ -1181,3 +1181,34 @@ Test-Pfad: `tests/e2e/leaderboard.spec.ts`
 ## ✅ Production Ready (Re-Test 2026-03-05)
 
 Alle offenen Bugs behoben. Keine offenen Bugs mehr.
+
+---
+
+## UI Refresh
+
+> Abweichungen zwischen der aktuellen Implementierung (`src/pages/leaderboard.vue`) und dem Wireframe `resources/high-fidelity/leaderboard.png`.
+
+### Abweichungen
+
+| ID | Bereich | Aktuell (Implementierung) | Wireframe-Vorgabe |
+|----|---------|--------------------------|-------------------|
+| UIR-8-1 | Seitentitel | "Leaderboard" (h1, rechts im Header) | "Bestenliste" (zentriert) |
+| UIR-8-2 | Header-Layout | "← Dashboard" links + "Leaderboard" rechts + leerer Spacer | "Bestenliste" zentriert; kein Zurück-Button (Tab-Seite — wird durch FEAT-15 geregelt) |
+| UIR-8-3 | Top-3-Darstellung | Flache Liste ab Platz 1 — kein visueller Unterschied für die Plätze 1–3 | Podium: Platz 2 links (kleiner), Platz 1 Mitte (größer, prominent), Platz 3 rechts; Avatar-Placeholder + Name + Punkte sichtbar; Medaillen-Badges (Gold/Silber/Bronze) als Overlay |
+| UIR-8-4 | Listeneinträge ab Platz 4 | Rang-Nummer + Avatar + Name + Punkte | Identisch; visuell in Einklang mit Wireframe |
+
+### Anforderungen
+
+| ID | Anforderung | Prio | Hinweis |
+|----|-------------|------|---------|
+| UIR-REQ-8-1 | Seitentitel von "Leaderboard" auf "Bestenliste" umbenennen | Must-Have | Nur Text-Änderung in `leaderboard.vue` |
+| UIR-REQ-8-2 | Header zentrieren: "Bestenliste" als zentrierter h1; Zurück-Link entfernen | Should-Have | Zurück-Link-Entfernung ist Teil von FEAT-15; kann vorgezogen werden |
+| UIR-REQ-8-3 | Top-3-Podium implementieren: Platz 2 links, Platz 1 Mitte (größer), Platz 3 rechts; Avatar-Placeholder, Name, Punkte; Gold/Silber/Bronze Medaillen-Badge | Must-Have | Nur sichtbar wenn mind. 3 Einträge vorhanden; bei weniger Einträgen normale Liste |
+
+### Acceptance Criteria
+
+- [ ] UIR-AC-8-1: Seitentitel lautet "Bestenliste"
+- [ ] UIR-AC-8-2: Header-Titel ist zentriert
+- [ ] UIR-AC-8-3: Top-3 werden als visuelles Podium dargestellt (Platz 1 Mitte prominent, Platz 2 links, Platz 3 rechts) mit Medaillen-Badges
+- [ ] UIR-AC-8-4: Ab Platz 4 folgt die normale flache Liste
+- [ ] UIR-AC-8-5: Bei weniger als 3 Einträgen fällt das Podium weg, alle Einträge als normale Liste
