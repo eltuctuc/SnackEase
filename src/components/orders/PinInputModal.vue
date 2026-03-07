@@ -12,6 +12,7 @@
 -->
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 // ========================================
 // PROPS & EMITS
 // ========================================
@@ -75,14 +76,8 @@ watch(
   }
 )
 
-// ESC-Taste zum Schließen
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+// ESC-Taste zum Schließen (VueUse übernimmt Cleanup automatisch beim Unmount)
+useEventListener(document, 'keydown', handleKeydown)
 
 // ========================================
 // METHODS

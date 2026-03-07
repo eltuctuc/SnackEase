@@ -999,9 +999,110 @@ Kritische User-Flows:
 - **Countdown in OrderCard immer initialisieren:** Vue-Composable-Regeln verbieten bedingte Hook-Aufrufe. Der Countdown wird fuer alle Bestellungen initialisiert, im Template nur bei pending_pickup angezeigt.
 - **PurchaseSuccessModal ohne useCountdown Composable:** Einfaches setInterval genuegt — vermeidet doppelt gewrappte ComputedRef bei dynamischem Aufruf.
 - **Cron-Job mit SELECT FOR UPDATE:** Verhindert Race Conditions bei gleichzeitiger Abholung und automatischer Stornierung.
-- **PIN-Versuchszaehler im Frontend-State:** Laut Tech-Design ausreichend fuer Demo-App.
+- **PIN-Versuchszaehler:** Serverseitiges Rate Limiting (In-Memory-Map, max 3 Versuche, 429-Response) implementiert. Frontend-State bleibt als zusaetzliche UX-Schicht erhalten.
 
 ### Bekannte Einschraenkungen
 
 - Vue-Warnung onUnmounted in Unit-Tests ist erwartet (Composable ohne Component-Kontext). Kein Produktionsproblem.
 - Cron-Job laueft nur bei aktivem Server-Prozess. Bei Serverless/Vercel-Kaltstart wird er neu gestartet, was fuer MVP akzeptabel ist.
+
+---
+
+## QA Test Results
+
+**Tested:** 2026-03-07
+**App URL:** http://localhost:3000
+
+### Unit-Tests
+
+**Command:** `npm test -- --run`
+
+| Test-Suite | Tests | Passing | Failing | Hinweis |
+|------------|-------|---------|---------|---------|
+| useCountdown | 19 | 19 | 0 | Vue-Warnung onUnmounted erwartet (kein Produktionsproblem) |
+| useSearch | 22 | 16 | 0 | 6 skipped (geplant) |
+| useFormatter | 19 | 19 | 0 | |
+| useModal | 20 | 20 | 0 | |
+| useLocalStorage | 13 | 13 | 0 | |
+| useLeaderboard | 21 | 21 | 0 | |
+| AdminInfoBanner | 13 | 13 | 0 | |
+| credits Store | 13 | 9 | 0 | 4 skipped |
+| auth Store | 10 | 5 | 0 | 5 skipped |
+| purchase utils | 12 | 12 | 0 | |
+| credits constants | 15 | 15 | 0 | |
+| **GESAMT** | **177** | **162** | **0** | **15 skipped (geplant)** |
+
+**Status:** Alle Unit-Tests bestanden
+
+### Acceptance Criteria Status
+
+| AC | Beschreibung | Status | Notes |
+|----|-------------|--------|-------|
+| AC-1 | Bestellung mit Status "pending_pickup" nach Kauf | bestanden | purchases.post.ts setzt Status korrekt |
+| AC-2 | Bestaetigungsseite zeigt Standort, PIN, Countdown | bestanden | PurchaseSuccessModal.vue implementiert |
+| AC-3 | NFC-Button: Simuliert Abholung, Status "picked_up" | bestanden | NfcPickupAnimation + pickup API |
+| AC-4 | PIN-Eingabe: Nur richtige PIN fuehrt zu Abholung | bestanden | Backend prueft PIN korrekt |
+| AC-5 | Countdown zeigt verbleibende Zeit in "Xh Xmin" | bestanden | useCountdown Composable mit 19 Tests |
+| AC-6 | Nach 2 Stunden: Automatische Stornierung + Guthaben zurueck | bestanden | cronJobs.ts mit DB-Transaktion + Row-Level Lock |
+| AC-7 | Bestellungen-Seite: Alle Bestellungen (bereit/abgeholt/storniert) | bestanden | /orders mit Filter-Dropdown |
+| AC-8 | Erklaerungstext "Dies ist eine Demo-Simulation" sichtbar | bestanden | Beide Seiten (Modal + /orders) |
+
+### Edge Cases Status
+
+| EC | Beschreibung | Status | Notes |
+|----|-------------|--------|-------|
+| EC-1 | Falsche PIN: Fehlermeldung mit Versuchszaehler | bestanden | Max 3 Versuche, dann gesperrt |
+| EC-2 | Bestellung abgelaufen: Abholbuttons ausgeblendet | bestanden | OrderCard.vue prueft countdown.expired |
+| EC-3 | Race Condition NFC + Cron-Job | bestanden | SELECT FOR UPDATE in beiden Endpunkten |
+| EC-4 | Doppelklick auf NFC-Button | bestanden | Debounce via showNfcAnimation Guard |
+| EC-5 | Keine Bestellungen vorhanden | bestanden | Leerzustand mit CTA implementiert |
+
+### Accessibility (WCAG 2.1)
+
+- Farbkontrast > 4.5:1: Implementiert (Tailwind-Klassen: destructive, primary, yellow-800)
+- Tastatur-Navigation: focus:ring-2 focus:ring-primary an allen interaktiven Elementen
+- Focus States: Sichtbar an Buttons, Inputs, Modals
+- Touch-Targets > 44px: NFC/PIN-Buttons (py-2.5 = ~40px) — knapp unter 44px (Medium-Risiko)
+- Screen Reader: aria-live, role="dialog", aria-modal, aria-label, aria-labelledby implementiert
+- Reduced Motion: NfcPickupAnimation respektiert prefers-reduced-motion
+
+### Security
+
+- Auth-Checks: getCurrentUser() in allen Server-Routes vorhanden
+- Eigentuemerschaft: order.user_id === user.id geprueft in pickup.post.ts
+- Row-Level Locks: SELECT FOR UPDATE verhindert Race Conditions
+- Kein direkter DB-Zugriff aus Frontend/Stores
+- Rate Limiting: Serverseitiges In-Memory Rate Limiting in pickup.post.ts (max 3 Versuche, dann 429)
+
+### Tech Stack & Code Quality
+
+- Composition API + `<script setup>` verwendet: Alle neuen Komponenten und Stores
+- Kein `any` in TypeScript: Typ-Assertions mit `unknown` + narrowing verwendet
+- Kein direkter DB-Zugriff aus Stores/Components: Nur $fetch() aus Store
+- Drizzle ORM fuer alle Queries: Ja (ausser SELECT FOR UPDATE, da Drizzle das nicht unterstuetzt)
+- Server Routes haben Error Handling: try/catch + createError() in allen Routes
+- Keine N+1 Query Probleme: Single JOIN-Query in GET /api/orders
+- Direkter DOM-Zugriff: Behoben via useEventListener (VueUse) in PinInputModal.vue
+
+### Optimierungen
+
+- PurchaseSuccessModal hat eigene Countdown-Implementierung statt useCountdown-Composable zu verwenden (redundanter Code). Begruendung laut Developer: ComputedRef-Wrapping-Problem beim dynamischen Aufruf. Akzeptabel fuer MVP.
+- NfcPickupAnimation: Timeout-Cleanup implementiert (clearTimeout bei Unmount + isVisible-Wechsel)
+- CronJob: kein clearInterval beim Plugin-Teardown (kein Mechanismus in Nitro, akzeptabel)
+
+### Regression
+
+- Bestehende Features FEAT-7 (Kauf), FEAT-8 (Leaderboard), FEAT-12 (Bestandsverwaltung) getestet via Unit-Tests: Alle bestanden
+- Git Log bestaetigt: Keine Regressionen in bestehenden Test-Suites
+
+---
+
+## Behobene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| BUG-FEAT11-001 | /orders Route fehlt im globalen Auth-Middleware | High | Must Fix | Behoben (2026-03-07) |
+| BUG-FEAT11-003 | Kein serverseitiges Rate Limiting bei PIN-Brute-Force | High | Must Fix | Behoben (2026-03-07) |
+| BUG-FEAT11-002 | Backend akzeptiert nicht-numerische PINs | Medium | Should Fix | Behoben (2026-03-07) |
+| BUG-FEAT11-004 | NfcPickupAnimation setTimeout ohne Cleanup | Low | Nice to Fix | Behoben (2026-03-07) |
+| BUG-FEAT11-005 | PinInputModal verwendet direkten DOM-Zugriff | Low | Nice to Fix | Behoben (2026-03-07) |

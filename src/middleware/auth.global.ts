@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  const protectedPaths = ['/dashboard', '/leaderboard']
+  const protectedPaths = ['/dashboard', '/leaderboard', '/orders']
   const adminPaths = ['/admin']
 
   const isProtected = protectedPaths.includes(to.path) || adminPaths.some(p => to.path.startsWith(p))

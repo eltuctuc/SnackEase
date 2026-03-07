@@ -49,6 +49,15 @@ import { purchases } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 
+// ========================================
+// RATE LIMITING (BUG-FEAT11-003)
+// In-Memory-Map: key = "userId:orderId", value = Anzahl fehlgeschlagener PIN-Versuche
+// Max 3 Fehlversuche pro Bestellung, dann 429 Too Many Requests
+// ========================================
+
+const MAX_PIN_ATTEMPTS = 3
+const pinAttempts = new Map<string, number>()
+
 interface PickupRequest {
   method: 'nfc' | 'pin'
   pin?: string
@@ -92,10 +101,10 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
     })
   }
 
-  if (method === 'pin' && (!pin || typeof pin !== 'string' || pin.length !== 4)) {
+  if (method === 'pin' && (!pin || !/^\d{4}$/.test(pin))) {
     throw createError({
       statusCode: 400,
-      message: 'PIN muss genau 4 Zeichen lang sein',
+      message: 'PIN muss genau 4 Ziffern enthalten',
     })
   }
 
@@ -169,12 +178,28 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
 
       // PIN-Prüfung (nur bei pin-Methode)
       if (method === 'pin') {
+        const rateLimitKey = `${user.id}:${orderId}`
+        const attempts = pinAttempts.get(rateLimitKey) ?? 0
+
+        // Rate Limiting: Nach MAX_PIN_ATTEMPTS Fehlversuchen sperren
+        if (attempts >= MAX_PIN_ATTEMPTS) {
+          throw createError({
+            statusCode: 429,
+            message: `Zu viele falsche PIN-Versuche. Bitte lade die Seite neu.`,
+          })
+        }
+
         if (order.pickup_pin !== pin) {
+          // Fehlversuch zählen
+          pinAttempts.set(rateLimitKey, attempts + 1)
           throw createError({
             statusCode: 400,
             message: 'Falsche PIN',
           })
         }
+
+        // Erfolg: Rate-Limit-Eintrag löschen
+        pinAttempts.delete(rateLimitKey)
       }
 
       // Status auf picked_up setzen

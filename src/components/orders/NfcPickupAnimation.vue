@@ -30,17 +30,32 @@ const emit = defineEmits<{
 // LIFECYCLE
 // ========================================
 
+let timeoutId: ReturnType<typeof setTimeout> | null = null
+
 watch(
   () => props.isVisible,
   (isVisible) => {
+    // Laufenden Timeout abbrechen (verhindert mehrfache done-Events bei rapid toggle)
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
     if (isVisible) {
       // Nach 2 Sekunden done emittieren
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         emit('done')
+        timeoutId = null
       }, 2000)
     }
   }
 )
+
+onUnmounted(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+    timeoutId = null
+  }
+})
 </script>
 
 <template>

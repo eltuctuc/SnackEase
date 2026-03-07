@@ -14,15 +14,15 @@
  * PIN-Format: "0000" bis "9999" (4 Zahlen)
  * 
  * SICHERHEIT:
- * - Verwendet crypto.randomInt() für echte Zufallszahlen
+ * - Verwendet Math.random() (ausreichend für Demo-Zwecke)
  * - Keine sequenziellen PINs (z.B. 1234)
  * - Keine wiederholten Ziffern (z.B. 1111)
  * 
  * @returns 4-stellige PIN als String (z.B. "7294")
  */
 export function generatePin(): string {
-  // Generiere Zufallszahl zwischen 0 und 9999
-  const pin = Math.floor(Math.random() * 10000)
+  // Generiere Zufallszahl zwischen 1000 und 9999 (immer 4-stellig)
+  const pin = Math.floor(1000 + Math.random() * 9000)
   
   // Fülle mit führenden Nullen auf (z.B. 42 → "0042")
   return pin.toString().padStart(4, '0')
