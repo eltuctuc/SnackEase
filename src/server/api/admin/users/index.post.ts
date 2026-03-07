@@ -9,12 +9,17 @@ export default defineEventHandler(async (event) => {
   
   const body = await readBody(event);
   const { name, location, startCredits } = body;
-  
+
   if (!name) {
     throw createError({
       statusCode: 400,
       message: 'Name ist erforderlich',
     });
+  }
+
+  const credits = typeof startCredits === 'number' ? startCredits : 25;
+  if (credits < 0) {
+    throw createError({ statusCode: 400, message: 'Startguthaben kann nicht negativ sein' });
   }
   
   const email = `${name.toLowerCase().replace(/\s+/g, '.')}@demo.de`;
@@ -40,7 +45,7 @@ export default defineEventHandler(async (event) => {
   
   await db.insert(userCredits).values({
     userId: newUser[0].id,
-    balance: String(startCredits || 25),
+    balance: String(credits),
   });
   
   return { 

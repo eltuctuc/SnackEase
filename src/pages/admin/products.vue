@@ -173,12 +173,7 @@ const closeFormModal = () => {
   resetForm()
 }
 
-const handleImageSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-
-  if (!file) return
-
+const processImageFile = (file: File) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
     imageError.value = 'Nur JPG, PNG und WebP erlaubt'
@@ -200,13 +195,18 @@ const handleImageSelect = (event: Event) => {
   reader.readAsDataURL(file)
 }
 
+const handleImageSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  processImageFile(file)
+}
+
 const handleDrop = (event: DragEvent) => {
   event.preventDefault()
   const file = event.dataTransfer?.files?.[0]
   if (!file) return
-
-  const fakeEvent = { target: { files: [file] } } as unknown as Event
-  handleImageSelect({ target: { files: [file] } } as unknown as Event)
+  processImageFile(file)
 }
 
 const uploadImage = async (productId: number): Promise<string | null> => {
@@ -291,9 +291,10 @@ const handleSaveProduct = async () => {
       const imageUrl = await uploadImage(savedProductId)
       if (!imageUrl && imageFile.value) {
         // Bild-Upload fehlgeschlagen: Bei neuen Produkten Erstellung rückgängig machen (EC-3)
+        // BUG-FEAT10-008: Hard-Delete via ?rollback=true, damit inaktives Produkt wirklich entfernt wird
         if (!isEditMode.value) {
           try {
-            await $fetch(`/api/admin/products/${savedProductId}`, { method: 'DELETE' })
+            await $fetch(`/api/admin/products/${savedProductId}?rollback=true`, { method: 'DELETE' })
           } catch {
             // Rollback-Fehler ignorieren, Hauptfehlermeldung zeigen
           }

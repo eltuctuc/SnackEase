@@ -1,6 +1,6 @@
 import { db } from '~/server/db';
 import { products, productCategories, categories } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { requireAdmin } from '~/server/utils/auth';
 
 export default defineEventHandler(async (event) => {
@@ -42,7 +42,8 @@ export default defineEventHandler(async (event) => {
           categoryName: categories.name,
         })
         .from(productCategories)
-        .innerJoin(categories, eq(productCategories.categoryId, categories.id));
+        .innerJoin(categories, eq(productCategories.categoryId, categories.id))
+        .where(inArray(productCategories.productId, productIds));
 
       for (const link of categoryLinks) {
         if (!productCategoryMap[link.productId]) {

@@ -66,12 +66,14 @@ export default defineEventHandler(async (event) => {
       if (Object.keys(updateData).length > 0) {
         // Kategorie-Feld bei Kategorie-Änderung synchron halten
         if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+          const uniqueCategoryIds = [...new Set(categoryIds as number[])];
+
           const validCategories = await tx
             .select({ id: categories.id, name: categories.name })
             .from(categories)
-            .where(inArray(categories.id, categoryIds));
+            .where(inArray(categories.id, uniqueCategoryIds));
 
-          if (validCategories.length !== categoryIds.length) {
+          if (validCategories.length !== uniqueCategoryIds.length) {
             throw createError({ statusCode: 400, message: 'Eine oder mehrere Kategorien existieren nicht' });
           }
 
@@ -80,7 +82,7 @@ export default defineEventHandler(async (event) => {
           // Alte Verknüpfungen löschen und neue anlegen
           await tx.delete(productCategories).where(eq(productCategories.productId, id));
           await tx.insert(productCategories).values(
-            categoryIds.map((categoryId: number) => ({ productId: id, categoryId }))
+            uniqueCategoryIds.map((categoryId: number) => ({ productId: id, categoryId }))
           );
         }
 

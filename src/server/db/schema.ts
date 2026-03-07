@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, decimal, integer, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, decimal, integer, varchar, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -87,7 +87,9 @@ export const productCategories = pgTable('product_categories', {
   id: serial('id').primaryKey(),
   productId: integer('product_id').references(() => products.id).notNull(),
   categoryId: integer('category_id').references(() => categories.id).notNull(),
-});
+}, (table) => ({
+  productCategoryUnique: uniqueIndex('product_categories_product_id_category_id_unique').on(table.productId, table.categoryId),
+}));
 
 export type ProductCategory = typeof productCategories.$inferSelect;
 export type NewProductCategory = typeof productCategories.$inferInsert;

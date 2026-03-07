@@ -1200,10 +1200,12 @@ Wenn Admin das System nach einem Reset öffnet oder neu aufgesetzt wird:
 - OK Keine N+1 Query Probleme (Kategorien werden in einer zweiten Batch-Query geladen)
 - OK Kein localStorage/sessionStorage
 - OK Pinia Setup-Syntax (nicht Options-Syntax)
+- WARNUNG BUG-FEAT10-011: `products/index.get.ts` - `inArray` nicht importiert, WHERE-Filter auf productId fehlt in Kategorie-Query
 
 ### Optimierungen (identifizierte Potenziale)
 
-- Die Kategorien-Query in `products/index.get.ts` laedt alle `product_categories` ohne Filter - bei grosser Datenmenge ineffizient. Koennte mit WHERE productId IN (...) optimiert werden.
+- BUG-FEAT10-011: `products/index.get.ts` laedt alle `product_categories` ohne WHERE-Filter auf `productId` - bei grosser Datenmenge ineffizient. `inArray`-Import hinzufuegen und WHERE-Clause ergaenzen.
+- BUG-FEAT10-009: `handleDrop` in `products.vue` hat toten Code (Zeile 208) und moegliches Safari-Kompatibilitaetsproblem.
 - `openDeleteModal` in categories.vue hat zu viel Logik (API-Call + UI-State). Sollte in zwei getrennte Funktionen aufgeteilt werden.
 
 ### Regression
@@ -1217,7 +1219,7 @@ Wenn Admin das System nach einem Reset öffnet oder neu aufgesetzt wird:
 
 ## Offene Bugs
 
-Keine offenen Bugs.
+Keine offenen Bugs. Alle Bugs wurden behoben.
 
 ### Geschlossene Bugs (gefixt)
 
@@ -1230,14 +1232,20 @@ Keine offenen Bugs.
 | BUG-FEAT10-005 | isDeleting-State bleibt bei Fehler auf true – Produkt-Loeschbeschaltflaechebleibt dauerhaft deaktiviert | High | 2026-03-06 |
 | BUG-FEAT10-006 | Admin-Produktliste fehlt Kategorie-Filter (REQ-11 / UI-Spec 5.3) | Medium | 2026-03-06 |
 | BUG-FEAT10-007 | Stats-Karte "Mitarbeiter" zaehlt auch inaktive Mitarbeiter-Nutzer | Low | 2026-03-06 |
+| BUG-FEAT10-012 | Kein UNIQUE Constraint auf product_categories - Doppelte Verknuepfungen moeglich | High | 2026-03-07 |
+| BUG-FEAT10-010 | Nutzer-Erstellung erlaubt negatives oder Null-Startguthaben | Medium | 2026-03-07 |
+| BUG-FEAT10-008 | Produkt-Rollback bei fehlgeschlagenem Bild-Upload loescht nicht wirklich | Medium | 2026-03-07 |
+| BUG-FEAT10-009 | handleDrop in products.vue ruft handleImageSelect doppelt auf (toter Code, Drag&Drop Safari) | Medium | 2026-03-07 |
+| BUG-FEAT10-013 | Kein Schutz gegen parallele System-Reset Anfragen (EC-5) | Medium | 2026-03-07 |
+| BUG-FEAT10-011 | N+1 Query Problem in /api/admin/products (index.get.ts) - kein WHERE-Filter | Low | 2026-03-07 |
 
 ---
 
 ## Production-Ready Entscheidung
 
-**Status:** Production-Ready
+**Status:** Production-Ready (neu bewertet: 2026-03-07)
 
-**Begruendung:** BUG-FEAT10-001 bis 007 wurden alle gefixt. BUG-FEAT10-005 (isDeleting-State) war bereits durch den finally-Block in der bestehenden Implementierung korrekt behandelt. BUG-FEAT10-006 (Kategorie-Filter) wurde durch ein neues Dropdown in der Filter-Leiste implementiert. BUG-FEAT10-007 (inaktive Nutzer in Stats) wurde durch Ergaenzung von `isActive = true` in der activeUsers-Query gefixt.
+**Begruendung:** Alle 13 bekannten Bugs (BUG-FEAT10-001 bis BUG-FEAT10-013) wurden behoben. Der UNIQUE Constraint auf product_categories ist in der DB angelegt. Alle Server-side Validierungen sind vollstaendig.
 
 **Empfehlung UX Expert:** Nicht notwendig
 

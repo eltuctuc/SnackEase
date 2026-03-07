@@ -31,6 +31,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Mindestens eine Kategorie ist erforderlich' });
   }
 
+  const uniqueCategoryIds = [...new Set(categoryIds as number[])];
+
   const priceFloat = parseFloat(price);
   if (isNaN(priceFloat) || priceFloat <= 0) {
     throw createError({ statusCode: 400, message: 'Ungültiger Preis' });
@@ -41,9 +43,9 @@ export default defineEventHandler(async (event) => {
     const validCategories = await db
       .select({ id: categories.id, name: categories.name })
       .from(categories)
-      .where(inArray(categories.id, categoryIds));
+      .where(inArray(categories.id, uniqueCategoryIds));
 
-    if (validCategories.length !== categoryIds.length) {
+    if (validCategories.length !== uniqueCategoryIds.length) {
       throw createError({ statusCode: 400, message: 'Eine oder mehrere Kategorien existieren nicht' });
     }
 
@@ -72,7 +74,7 @@ export default defineEventHandler(async (event) => {
 
       // Kategorie-Verknüpfungen anlegen
       await tx.insert(productCategories).values(
-        categoryIds.map((categoryId: number) => ({
+        uniqueCategoryIds.map((categoryId: number) => ({
           productId: newProduct!.id,
           categoryId,
         }))
