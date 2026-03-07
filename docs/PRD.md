@@ -223,6 +223,7 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
 | FEAT-14 | Angebote & Rabatte | Admin kann zeitlich begrenzte Rabatte (% oder EUR) pro Produkt erstellen; automatische Aktivierung nach Datum; Angebotspreis fuer User sichtbar | Planned |
+| FEAT-19 | Erweiterte Suche | Volltext-Echtzeit-Suche auf /search mit Debouncing; Filter-Chips fuer Kategorie, Verfuegbarkeit, Preisbereich, Vegan/Glutenfrei; Sortierung nach Relevanz/Preis; Produktkarten mit Warenkorb-Button und Favoriten-Icon | Planned |
 
 ### Release 6: Future
 
@@ -255,8 +256,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 2.4
+- **Version:** 2.5
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
 - **Letzte Änderung:** 2026-03-07
-- **Änderungen:** FEAT-14 Angebote & Rabatte hinzugefügt
+- **Änderungen:** FEAT-19 Erweiterte Suche hinzugefügt
