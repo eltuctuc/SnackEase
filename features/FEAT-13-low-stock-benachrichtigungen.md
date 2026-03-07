@@ -1,6 +1,6 @@
 # FEAT-13: Low-Stock-Benachrichtigungen
 
-## Status: ✅ Production Ready
+## Status: ✅ Implementiert
 
 ## Abhängigkeiten
 - Benötigt: FEAT-5 (Admin-Basis) - für Admin-Zugriff

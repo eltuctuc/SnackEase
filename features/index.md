@@ -18,7 +18,7 @@
 | FEAT-10 | Erweitertes Admin-Dashboard | ✅ Implementiert | Nutzer/Produkte/Kategorien/Statistiken |
 | FEAT-11 | Bestellabholung am Automaten | ✅ Implementiert | NFC/PIN-Simulation, 2h Abholfrist |
 | FEAT-12 | Bestandsverwaltung | ✅ Implementiert | Produktbestände im Automaten verwalten |
-| FEAT-13 | Low-Stock-Benachrichtigungen | 🔵 Geplant | Admin-Benachrichtigungen bei niedrigem Bestand |
+| FEAT-13 | Low-Stock-Benachrichtigungen | ✅ Implementiert | Admin-Benachrichtigungen bei niedrigem Bestand |
 
 ## Nächste freie Nummer
 

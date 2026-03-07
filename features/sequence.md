@@ -18,7 +18,7 @@
 | 12 | Leaderboard | FEAT-8 | ✅ Implementiert | FEAT-7 |
 | 13 | Bestandsverwaltung | FEAT-12 | ✅ Implementiert | FEAT-5, FEAT-6, FEAT-10 |
 | 14 | Bestellabholung am Automaten | FEAT-11 | ✅ Implementiert | FEAT-2, FEAT-7, FEAT-12 |
-| 15 | Low-Stock-Benachrichtigungen | FEAT-13 | 📋 Geplant | FEAT-5, FEAT-12 |
+| 15 | Low-Stock-Benachrichtigungen | FEAT-13 | ✅ Implementiert | FEAT-5, FEAT-12 |
 
 ## Bereits umgesetzte Features
 
@@ -36,10 +36,11 @@
 - ✅ FEAT-8: Leaderboard
 - ✅ FEAT-12: Bestandsverwaltung
 - ✅ FEAT-11: Bestellabholung am Automaten
+- ✅ FEAT-13: Low-Stock-Benachrichtigungen
 
 ## Offene Features (nach Reihenfolge)
 
-1. FEAT-13: Low-Stock-Benachrichtigungen
+Keine offenen Features.
 
 ## Hinweis zu Abweichungen
 
