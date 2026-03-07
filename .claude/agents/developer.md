@@ -81,6 +81,11 @@ git ls-files src/types/
 - Fehler mit `createError({ statusCode: 400, message: '...' })` werfen
 - Auth-Check in geschützten Routes via `getCookie(event, 'auth_token')`
 
+### Icons
+- **Teenyicons 1.0** ist die einzige Icon-Library (`teenyicons` npm package)
+- Icons als SVG direkt aus dem Package einbinden: `node_modules/teenyicons/outline/[name].svg`
+- Keine anderen Icon-Libraries verwenden (keine Heroicons, Lucide, FontAwesome etc.)
+
 ### Tailwind CSS
 - Kein Inline-Style außer für dynamische Werte die Tailwind nicht kann
 - Design-System aus `resources/snack-ease-theme/` respektieren
