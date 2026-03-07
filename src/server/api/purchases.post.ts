@@ -136,70 +136,64 @@ export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
     }
 
     // ========================================
-    // SCHRITT 5: Bestand prüfen (FEAT-12)
+    // SCHRITT 5: PIN und Bonuspunkte generieren
+    // (Bestandsprüfung erfolgt atomar in der Transaktion — BUG-FEAT12-001)
     // ========================================
-    
-    const currentStock = product.stock ?? 0
-    
-    if (currentStock <= 0) {
-      return {
-        success: false,
-        error: 'Produkt nicht verfügbar',
-        stockQuantity: 0,
-      }
-    }
 
-    // ========================================
-    // SCHRITT 6: PIN und Bonuspunkte generieren
-    // ========================================
-    
     const pickupPin = generatePin()
     const bonusPoints = calculateBonusPoints(product.category)
-    
+
     // Ablaufzeitpunkt: 2 Stunden nach Kauf
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 2)
 
     // ========================================
-    // SCHRITT 7: Atomare Transaktion
+    // SCHRITT 6: Atomare Transaktion mit Row-Level Lock
     // ========================================
-    
+
     /**
-     * ✅ FIXED (BUG-FEAT7-001): Atomare Transaktion implementiert
-     * 
-     * Alle DB-Operationen laufen jetzt in einer Transaktion:
-     * - Bei Erfolg: Alle Änderungen werden committed
-     * - Bei Fehler: Automatisches Rollback ALLER Operationen
-     * 
-     * Vorteile:
-     * - Keine Race Conditions mehr (Row-Level Locks)
-     * - Kein Guthaben-Verlust bei DB-Fehlern
-     * - ACID-Garantien (Atomicity, Consistency, Isolation, Durability)
-     * 
-     * @see BUG-FEAT7-001 - Dokumentation des Problems und der Lösung
+     * ✅ FIXED (BUG-FEAT12-001): Bestandsprüfung atomar mit Row-Level Lock
+     *
+     * Der Bestandscheck ist jetzt INNERHALB der Transaktion mit SELECT FOR UPDATE.
+     * Dadurch wird verhindert, dass zwei parallele Käufe bei stock=1 beide
+     * den Check bestehen und stock auf -1 setzen.
+     *
+     * Ablauf:
+     * 1. SELECT ... FOR UPDATE sperrt die Zeile exklusiv
+     * 2. Bestandsprüfung innerhalb der Transaktion
+     * 3. Bei Fehler: automatisches Rollback
      */
-    
+
     const newBalance = currentBalance - productPrice
 
-    // Atomare Transaktion: Alle Operationen oder keine
+    // Atomare Transaktion mit Row-Level Lock: Alle Operationen oder keine
     const { purchase } = await db.transaction(async (tx) => {
-      // 7a. Guthaben abziehen
+      // 6a. Produkt-Zeile sperren und Bestand prüfen (Row-Level Lock, BUG-FEAT12-001)
+      const lockedRows = await tx.execute(
+        sql`SELECT stock FROM products WHERE id = ${productId} FOR UPDATE`
+      )
+      const lockedStock = (lockedRows.rows[0] as { stock: number } | undefined)?.stock ?? 0
+
+      if (lockedStock <= 0) {
+        throw createError({ statusCode: 400, message: 'Produkt nicht verfügbar' })
+      }
+
+      // 6b. Guthaben abziehen
       await tx.update(userCredits)
-        .set({ 
+        .set({
           balance: newBalance.toFixed(2),
           updatedAt: new Date(),
         })
         .where(eq(userCredits.userId, user.id))
 
-      // 7b. Bestand reduzieren (FEAT-12)
-      // Mit Row-Level Lock: Verhindert parallele Käufe bei stock=1
+      // 6c. Bestand reduzieren (FEAT-12)
       await tx.update(products)
-        .set({ 
+        .set({
           stock: sql`${products.stock} - 1`,
         })
         .where(eq(products.id, productId))
 
-      // 7c. Kauf speichern
+      // 6d. Kauf speichern
       const purchaseResults = await tx.insert(purchases).values({
         userId: user.id,
         productId: product.id,
@@ -213,7 +207,7 @@ export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
 
       const purchase = purchaseResults[0]
 
-      // 7d. Transaction-Log erstellen
+      // 6e. Transaction-Log erstellen
       await tx.insert(creditTransactions).values({
         userId: user.id,
         amount: `-${productPrice.toFixed(2)}`,

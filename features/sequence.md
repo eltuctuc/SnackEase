@@ -13,11 +13,12 @@
 | 7 | Admin Basis | FEAT-5 | ✅ Implementiert | FEAT-1 |
 | 8 | Produktkatalog | FEAT-6 | ✅ Implementiert | FEAT-4 (Guthaben für Käufe) |
 | 9 | Admin ohne Guthaben | FEAT-9 | ✅ Implementiert | FEAT-4 (Admin sieht kein Guthaben) |
-| 10 | One-Touch-Kauf | FEAT-7 | 📋 Geplant | FEAT-4, FEAT-6 |
-| 11 | Bestandsverwaltung | FEAT-12 | 📋 Geplant | FEAT-5, FEAT-6, FEAT-10 |
-| 12 | Bestellabholung am Automaten | FEAT-11 | 📋 Geplant | FEAT-2, FEAT-7, FEAT-12 |
-| 13 | Low-Stock-Benachrichtigungen | FEAT-13 | 📋 Geplant | FEAT-5, FEAT-12 |
-| 14 | Leaderboard | FEAT-8 | 📋 Geplant | FEAT-7 (Käufe für Rangliste) |
+| 10 | One-Touch-Kauf | FEAT-7 | ✅ Implementiert | FEAT-4, FEAT-6 |
+| 11 | Erweitertes Admin-Dashboard | FEAT-10 | ✅ Implementiert | FEAT-5, FEAT-6 |
+| 12 | Leaderboard | FEAT-8 | ✅ Implementiert | FEAT-7 |
+| 13 | Bestandsverwaltung | FEAT-12 | ✅ Implementiert | FEAT-5, FEAT-6, FEAT-10 |
+| 14 | Bestellabholung am Automaten | FEAT-11 | 📋 Geplant | FEAT-2, FEAT-7, FEAT-12 |
+| 15 | Low-Stock-Benachrichtigungen | FEAT-13 | 📋 Geplant | FEAT-5, FEAT-12 |
 
 ## Bereits umgesetzte Features
 
@@ -30,14 +31,15 @@
 - ✅ FEAT-5: Admin Basis
 - ✅ FEAT-6: Produktkatalog
 - ✅ FEAT-9: Admin ohne Guthaben
+- ✅ FEAT-7: One-Touch-Kauf
+- ✅ FEAT-10: Erweitertes Admin-Dashboard
+- ✅ FEAT-8: Leaderboard
+- ✅ FEAT-12: Bestandsverwaltung
 
 ## Offene Features (nach Reihenfolge)
 
-1. FEAT-7: One-Touch-Kauf
-3. FEAT-12: Bestandsverwaltung
-4. FEAT-11: Bestellabholung am Automaten
-5. FEAT-13: Low-Stock-Benachrichtigungen
-6. FEAT-8: Leaderboard
+1. FEAT-11: Bestellabholung am Automaten
+2. FEAT-13: Low-Stock-Benachrichtigungen
 
 ## Hinweis zu Abweichungen
 

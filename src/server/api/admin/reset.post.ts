@@ -1,5 +1,5 @@
 import { db } from '~/server/db';
-import { userCredits, creditTransactions, purchases } from '~/server/db/schema';
+import { userCredits, creditTransactions, purchases, products } from '~/server/db/schema';
 import { sql } from 'drizzle-orm';
 import { requireAdmin } from '~/server/utils/auth';
 
@@ -26,6 +26,9 @@ export default defineEventHandler(async (event) => {
 
       // Guthaben aller Nutzer auf 25 € zurücksetzen
       await tx.update(userCredits).set({ balance: sql`25.00` }).execute();
+
+      // FEAT-12 (EC-5): Bestand aller Produkte auf Standard-Wert (10) zurücksetzen
+      await tx.update(products).set({ stock: 10 }).execute();
     });
 
     return { success: true, message: 'System-Reset erfolgreich durchgeführt' };
