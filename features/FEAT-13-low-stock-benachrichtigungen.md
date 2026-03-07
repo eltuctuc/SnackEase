@@ -1,6 +1,6 @@
 # FEAT-13: Low-Stock-Benachrichtigungen
 
-## Status: 🟢 Implemented
+## Status: ✅ Production Ready
 
 ## Abhängigkeiten
 - Benötigt: FEAT-5 (Admin-Basis) - für Admin-Zugriff
@@ -1121,6 +1121,8 @@ Dateipfad: `tests/e2e/feat-13-notifications.spec.ts`
 
 **Status: Production Ready** (alle Bugs behoben 2026-03-07)
 
-**Begruendung:** Alle 4 Bugs (BUG-FEAT13-001 bis BUG-FEAT13-004) wurden behoben. Der UNIQUE-Constraint auf product_id ist in der DB migriert, Touch-Targets sind WCAG-konform, direkter DOM-Zugriff wurde durch Vue-Patterns ersetzt, doppelter API-Call eliminiert.
+**Abschliessende QA-Verifikation:** 2026-03-07 — alle 4 Bug-Fixes bestaetigt, 190/190 Unit-Tests gruen (12 Test-Suiten), kein neuer Regression-Fehler gefunden.
+
+**Begruendung:** Alle 4 Bugs (BUG-FEAT13-001 bis BUG-FEAT13-004) wurden behoben. Der UNIQUE-Constraint auf product_id ist in schema.ts gesetzt, onConflictDoNothing() in purchases.post.ts implementiert, Touch-Targets in NotificationDropdownItem.vue sind min-h-[44px], direkter DOM-Zugriff durch Vue-Ref in AdminNav.vue ersetzt, doppelter API-Call in notifications.vue eliminiert.
 
 **Empfehlung UX Expert:** Nicht noetig. Die gefundenen Bugs sind technisch-funktionaler Natur. Die UX-Vorgaben wurden vollstaendig umgesetzt.
