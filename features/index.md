@@ -12,13 +12,13 @@
 | FEAT-4 | Demo Guthaben | ✅ Implementiert | Guthaben anzeigen, aufladen, Monatspauschale |
 | FEAT-5 | Admin Basis | ✅ Implementiert | System-Reset, Nutzer-Verwaltung |
 | FEAT-6 | Produktkatalog | ✅ Implementiert | Produktgrid mit Kategorien, Suche, Details |
-| FEAT-7 | One-Touch-Kauf | 📋 Geplant | |
-| FEAT-8 | Leaderboard | 📋 Geplant | |
-| FEAT-9 | Admin ohne Guthaben | 📋 Geplant | Admin sieht kein eigenes Guthaben |
-| FEAT-10 | Erweitertes Admin-Dashboard | 📋 Geplant | Nutzer/Produkte/Kategorien/Statistiken |
-| FEAT-11 | Bestellabholung am Automaten | 📋 Geplant | NFC/PIN-Simulation, 2h Abholfrist |
-| FEAT-12 | Bestandsverwaltung | 📋 Geplant | Produktbestände im Automaten verwalten |
-| FEAT-13 | Low-Stock-Benachrichtigungen | 📋 Geplant | Admin-Benachrichtigungen bei niedrigem Bestand |
+| FEAT-7 | One-Touch-Kauf | ✅ Implementiert | One-Touch Kauf mit PIN, Bonuspunkte |
+| FEAT-8 | Leaderboard | ✅ Implementiert | Rangliste nach Bonuspunkten |
+| FEAT-9 | Admin ohne Guthaben | ✅ Implementiert | Admin sieht kein eigenes Guthaben |
+| FEAT-10 | Erweitertes Admin-Dashboard | ✅ Implementiert | Nutzer/Produkte/Kategorien/Statistiken |
+| FEAT-11 | Bestellabholung am Automaten | 🔵 Geplant | NFC/PIN-Simulation, 2h Abholfrist |
+| FEAT-12 | Bestandsverwaltung | ✅ Implementiert | Produktbestände im Automaten verwalten |
+| FEAT-13 | Low-Stock-Benachrichtigungen | 🔵 Geplant | Admin-Benachrichtigungen bei niedrigem Bestand |
 
 ## Nächste freie Nummer
 
