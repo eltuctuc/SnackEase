@@ -1007,3 +1007,120 @@ Dateipfad: `tests/e2e/feat-13-notifications.spec.ts`
 
 - Die Pinia-Store-Integrationstests sind wie bei allen anderen Stores als `describe.skip` markiert, da `defineStore` im Vitest-Kontext (ohne Nuxt-Runtime) nicht verfuegbar ist. Die gesamte Geschaeftslogik wird durch isolierte Unit-Tests abgedeckt.
 - E-Mail-Benachrichtigungen (REQ-5, Nice-to-Have) sind nicht implementiert — wie in der Feature-Spec definiert.
+
+---
+
+## Behobene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| BUG-FEAT13-001 | Fehlender UNIQUE-Constraint auf productId in low_stock_notifications | High | Should Fix | Behoben |
+| BUG-FEAT13-002 | Touch-Targets in NotificationDropdownItem unter WCAG-Minimum (36px statt 44px) | Medium | Should Fix | Behoben |
+| BUG-FEAT13-003 | Direkter document.querySelector-Zugriff in AdminNav statt Vue-Ref | Low | Nice to Fix | Behoben |
+| BUG-FEAT13-004 | Doppelter API-Call beim Aufruf von /admin/notifications | Low | Nice to Fix | Behoben |
+
+---
+
+## QA Test Results
+
+**Tested:** 2026-03-07
+**App URL:** http://localhost:3000
+**QA Engineer:** QA Engineer Agent
+
+### Unit-Tests
+
+**Command:** `npm test -- --run`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| notifications.test.ts | 32 | 28 | 0 | 4 |
+| useFormatter.test.ts | 19 | 19 | 0 | 0 |
+| useCountdown.test.ts | 19 | 19 | 0 | 0 |
+| useSearch.test.ts | 28 | 22 | 0 | 6 |
+| useLocalStorage.test.ts | 13 | 13 | 0 | 0 |
+| useModal.test.ts | 20 | 20 | 0 | 0 |
+| AdminInfoBanner.test.ts | 13 | 13 | 0 | 0 |
+| purchase.test.ts | 12 | 12 | 0 | 0 |
+| useLeaderboard.test.ts | 21 | 21 | 0 | 0 |
+| credits.test.ts | 17 | 13 | 0 | 4 |
+| auth.test.ts | 15 | 10 | 0 | 5 |
+| constants/credits.test.ts | 15 | 15 | 0 | 0 |
+| **GESAMT** | **209** | **190** | **0** | **19** |
+
+**Status:** Alle Unit-Tests bestanden (19 Skipped sind bekannt: Store-Integration-Tests erfordern Nuxt-Runtime)
+
+### Acceptance Criteria Status
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1: Bei Bestand <=3 wird Benachrichtigung erstellt | Bestanden | Korrekt implementiert in purchases.post.ts |
+| AC-2: Badge im Admin-Header zeigt ungelesene Warnungen | Bestanden | NotificationBadge mit aria-label korrekt implementiert |
+| AC-3: /admin/notifications listet alle Low-Stock-Produkte | Bestanden | Vollstaendige Seite mit Filter und Leerzustand vorhanden |
+| AC-4: "Bestand auffuellen" leitet zu /admin/inventory | Bestanden | Korrekte NuxtLink-Links in NotificationCard und DropdownItem |
+| AC-5: Nach Auffuellen >3 Stueck verschwindet Warnung automatisch | Bestanden | Auto-Loeschung in inventory PATCH implementiert |
+| AC-6: "Gelesen" markieren aktualisiert Badge-Zaehler | Bestanden | Store-Update und API-Call korrekt |
+| AC-7: E-Mail bei Low-Stock (Nice-to-Have) | Nicht implementiert | Bewusst ausgelassen gemaess Spec (REQ-5: Nice-to-Have) |
+
+### Edge Cases Status
+
+| EC | Status | Notes |
+|----|--------|-------|
+| EC-1: Mehrere Kaeufe gleichzeitig — nur eine Warnung | Bestanden | UNIQUE-Constraint auf product_id + onConflictDoNothing() behebt Race Condition (BUG-FEAT13-001 behoben) |
+| EC-2: Bestand faellt von 5 auf 0 — nur eine Warnung | Bestanden | Gleiche Behoben wie EC-1 durch UNIQUE-Constraint (BUG-FEAT13-001 behoben) |
+| EC-3: Nach Auffuellen + erneutem Unterschreiten neue Warnung | Bestanden | Korrekt: DELETE bei Auffuellen, neues INSERT beim naechsten Kauf |
+| EC-4: "Gelesen", dann weiterer Kauf bei Bestand <=3 | Bestanden | Bestehende Warnung bleibt, keine neue (korrekt) |
+| EC-5: Bestand bei 3, "gelesen", Bestand auf 2 | Bestanden | Keine neue Warnung, da Eintrag noch existiert |
+| EC-7: Benachrichtigung schlaegt fehl — Kauf nicht zurueck | Bestanden | try/catch um Notification-Block, Kauf bleibt gueltig |
+
+### Accessibility (WCAG 2.1 AA)
+
+- Farbkontrast: Weiss auf Rot (Badge) und Weiss auf Rot-600 — ausreichend
+- Tastatur-Navigation: Escape-Key schliesst Dropdown, Fokus kehrt zu Badge-Button zurueck
+- Focus States: Standard-Browser-Focus sichtbar, Buttons haben cursor-pointer
+- Touch-Targets Badge: min-w/h-[44px] — korrekt
+- Touch-Targets NotificationCard (Vollseite): min-h-[44px] — korrekt
+- Touch-Targets NotificationDropdownItem (Dropdown): min-h-[44px] — korrekt (BUG-FEAT13-002 behoben)
+- Screen Reader: aria-labels, aria-live, role="dialog", aria-modal vorhanden
+- Zeitangaben in `<time>`-Element: implementiert
+- Schweregrad durch Text UND Farbe: "Kritisch" / "Niedrig" Label vorhanden
+
+### Security
+
+- Alle 3 Notification-Endpoints nutzen `requireAdmin` — korrekt
+- Inventory-PATCH-Endpoint nutzt `requireAdmin` — unveraendert korrekt
+- Purchases-Endpoint hat Admin-Guard (Admins koennen nicht kaufen) — unveraendert
+- Integer-Validierung in read.post.ts (isNaN-Check) — korrekt
+- Kein SQL-Injection-Risiko (Drizzle ORM, keine Raw SQL in Notifications)
+
+### Tech Stack und Code-Qualitaet
+
+- Composition API + `<script setup>` in allen neuen Komponenten: Ja
+- Kein `any` in TypeScript: Ja (nur `unknown` + Cast-Pattern wie im Rest des Projekts)
+- Pinia Store mit Setup-Syntax: Ja
+- Kein direkter DB-Zugriff aus Stores/Components: Ja
+- Drizzle ORM fuer alle Queries: Ja (kein Raw SQL in Notifications-Routes)
+- Server Routes haben try/catch mit createError(): Ja
+- Auth-Checks in allen Admin-Routes: Ja
+- Direkter document-Zugriff (Anti-Pattern): Nein — behoben: Vue-Ref in AdminNav.vue, useEventListener in NotificationDropdown.vue (BUG-FEAT13-003 behoben)
+
+### Optimierungspotenzial
+
+1. ~~Doppelter API-Call beim Laden von /admin/notifications (BUG-FEAT13-004)~~ — behoben
+2. ~~Direkter DOM-Zugriff via document.querySelector in AdminNav.vue (BUG-FEAT13-003)~~ — behoben
+3. read-all.post.ts: Zwei separate Queries (SELECT dann UPDATE) — koennte als Single UPDATE optimiert werden
+4. Benachrichtigungs-Liste auf /admin/notifications hat kein semantisches `<ul>`/`<ol>` Markup — nur ein `<div class="space-y-4">`
+
+### Regression
+
+- FEAT-7 (One-Touch-Kauf): Kauftransaktion unveraendert, Low-Stock-Check laeuft nach der Transaktion — keine Regression
+- FEAT-12 (Bestandsverwaltung): Inventory-PATCH erweitert um Auto-Loeschung (laeuft nach Transaktion in separatem try/catch) — keine Regression der Kern-Funktionalitaet
+
+---
+
+## Produktions-Empfehlung
+
+**Status: Production Ready** (alle Bugs behoben 2026-03-07)
+
+**Begruendung:** Alle 4 Bugs (BUG-FEAT13-001 bis BUG-FEAT13-004) wurden behoben. Der UNIQUE-Constraint auf product_id ist in der DB migriert, Touch-Targets sind WCAG-konform, direkter DOM-Zugriff wurde durch Vue-Patterns ersetzt, doppelter API-Call eliminiert.
+
+**Empfehlung UX Expert:** Nicht noetig. Die gefundenen Bugs sind technisch-funktionaler Natur. Die UX-Vorgaben wurden vollstaendig umgesetzt.

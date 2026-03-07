@@ -68,7 +68,7 @@ const isoDate = computed(() => props.notification.createdAt ?? '')
     <div class="flex items-center gap-2">
       <NuxtLink
         to="/admin/inventory"
-        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors min-h-[36px]"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors min-h-[44px]"
         :aria-label="`Bestand für ${notification.productName} auffüllen`"
       >
         Bestand auffüllen
@@ -77,7 +77,7 @@ const isoDate = computed(() => props.notification.createdAt ?? '')
         v-if="!notification.isRead"
         type="button"
         :disabled="isMarkingRead"
-        class="inline-flex items-center px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent transition-colors min-h-[36px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        class="inline-flex items-center px-2.5 py-1.5 text-xs border border-border rounded-md hover:bg-accent transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         :aria-label="`${notification.productName} als gelesen markieren`"
         @click="emit('markRead', notification.id)"
       >

@@ -26,7 +26,11 @@ onMounted(async () => {
     await router.push('/login')
     return
   }
-  await notificationsStore.fetchNotifications()
+  // BUG-FEAT13-004: Kein doppelter API-Call — AdminNav hat bereits geladen und Polling gestartet.
+  // Nur laden wenn der Store noch leer ist (z.B. Direktaufruf ohne AdminNav-Init).
+  if (notificationsStore.notifications.length === 0) {
+    await notificationsStore.fetchNotifications()
+  }
 })
 
 // ========================================

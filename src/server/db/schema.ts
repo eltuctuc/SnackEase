@@ -147,7 +147,10 @@ export const lowStockNotifications = pgTable('low_stock_notifications', {
   isRead: boolean('is_read').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   readAt: timestamp('read_at'),
-});
+}, (table) => ({
+  // BUG-FEAT13-001: UNIQUE-Constraint verhindert Duplikate bei Race Conditions
+  productIdUnique: uniqueIndex('low_stock_notifications_product_id_unique').on(table.productId),
+}));
 
 export type LowStockNotification = typeof lowStockNotifications.$inferSelect;
 export type NewLowStockNotification = typeof lowStockNotifications.$inferInsert;

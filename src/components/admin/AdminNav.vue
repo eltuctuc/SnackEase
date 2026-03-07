@@ -33,6 +33,8 @@ const handleLogout = async () => {
 // Dropdown-Zustand
 const dropdownOpen = ref(false)
 const badgeButtonRef = ref<HTMLElement | null>(null)
+// BUG-FEAT13-003: Vue-Ref statt document.querySelector für den Dropdown-Wrapper
+const dropdownWrapperRef = ref<HTMLElement | null>(null)
 
 function openDropdown() {
   dropdownOpen.value = true
@@ -49,8 +51,11 @@ function closeDropdown() {
 // Dropdown schliessen bei Klick außerhalb
 function handleOutsideClick(event: MouseEvent) {
   const target = event.target as Node
-  const dropdown = document.querySelector('[role="dialog"][aria-label="Benachrichtigungen"]')
-  if (dropdown && !dropdown.contains(target) && !badgeButtonRef.value?.contains(target)) {
+  if (
+    dropdownWrapperRef.value &&
+    !dropdownWrapperRef.value.contains(target) &&
+    !badgeButtonRef.value?.contains(target)
+  ) {
     dropdownOpen.value = false
   }
 }
@@ -117,10 +122,12 @@ onUnmounted(() => {
                 @click="openDropdown"
               />
             </div>
-            <NotificationDropdown
-              v-if="dropdownOpen"
-              @close="closeDropdown"
-            />
+            <div ref="dropdownWrapperRef">
+              <NotificationDropdown
+                v-if="dropdownOpen"
+                @close="closeDropdown"
+              />
+            </div>
           </div>
 
           <span v-if="authStore.user" class="text-sm text-muted-foreground">

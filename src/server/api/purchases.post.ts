@@ -239,19 +239,15 @@ export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
       const updatedStock = stockRows[0]?.stock ?? 0
 
       if (updatedStock <= 3) {
-        // Prüfe ob bereits eine Warnung für dieses Produkt existiert (EC-1, EC-2)
-        const existingNotification = await db
-          .select({ id: lowStockNotifications.id })
-          .from(lowStockNotifications)
-          .where(eq(lowStockNotifications.productId, productId))
-          .limit(1)
-
-        if (existingNotification.length === 0) {
-          await db.insert(lowStockNotifications).values({
+        // BUG-FEAT13-001: onConflictDoNothing() nutzt UNIQUE-Constraint auf product_id.
+        // Bei Race Conditions (parallele Käufe) entsteht so nur EINE Warnung pro Produkt —
+        // kein vorheriger SELECT-Check nötig, der anfällig für TOCTOU-Races wäre.
+        await db.insert(lowStockNotifications)
+          .values({
             productId,
             stockQuantity: updatedStock,
           })
-        }
+          .onConflictDoNothing()
       }
     } catch (notificationError: unknown) {
       // Benachrichtigungs-Fehler nicht an den Nutzer weitergeben (EC-7)

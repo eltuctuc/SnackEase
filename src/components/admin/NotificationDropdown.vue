@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import NotificationDropdownItem from '~/components/admin/NotificationDropdownItem.vue'
 import { useNotificationsStore } from '~/stores/notifications'
 
@@ -13,19 +14,12 @@ const markReadIds = ref<Set<number>>(new Set())
 const actionError = ref<string | null>(null)
 const actionSuccess = ref<string | null>(null)
 
-// Keyboard: Escape schließt das Dropdown
-function handleKeydown(event: KeyboardEvent) {
+// BUG-FEAT13-003: useEventListener statt direktem document.addEventListener —
+// SSR-sicher und entfernt den Listener automatisch beim Unmount
+useEventListener(document, 'keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     emit('close')
   }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
 })
 
 async function handleMarkRead(id: number) {
