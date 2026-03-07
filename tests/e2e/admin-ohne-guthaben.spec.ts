@@ -29,7 +29,7 @@ async function loginAsAdmin(page: import('@playwright/test').Page) {
     await page.fill('input[type="password"]', 'admin123')
   }
   await page.click('button[type="submit"]')
-  await page.waitForURL('/dashboard', { timeout: 10000 })
+  await page.waitForURL('/admin', { timeout: 10000 })
 }
 
 /**
@@ -50,48 +50,46 @@ async function loginAsMitarbeiter(page: import('@playwright/test').Page) {
 
 test.describe('FEAT-9: Admin ohne Guthaben', () => {
   test.describe('Admin-Dashboard', () => {
-    test('Admin sieht AdminInfoBanner statt BalanceCard', async ({ page }) => {
+    test('Admin wird nach Login zu /admin weitergeleitet (kein /dashboard-Zugang)', async ({ page }) => {
       await loginAsAdmin(page)
 
-      // AdminInfoBanner muss sichtbar sein
-      await expect(page.locator('text=Admin-Modus aktiv')).toBeVisible({ timeout: 5000 })
+      // Admin landet auf /admin, nicht auf /dashboard
+      await expect(page).toHaveURL(/\/admin/)
 
-      // BalanceCard darf NICHT sichtbar sein (kein "Guthaben" Label + Euro-Betrag)
-      await expect(page.locator('text=Guthaben').first()).not.toBeVisible()
+      // Keine BalanceCard sichtbar
+      await expect(page.locator('[role="status"]')).not.toBeVisible()
     })
 
     test('Admin sieht keinen Guthaben-Betrag in Euro', async ({ page }) => {
       await loginAsAdmin(page)
 
-      // Kein Guthaben-Betrag (BalanceCard zeigt z.B. "25.50 €")
-      // Der AdminInfoBanner zeigt keinen Euro-Betrag
+      // Kein Guthaben-Betrag auf der Admin-Seite
       const balanceCard = page.locator('[role="status"]')
       await expect(balanceCard).not.toBeVisible()
     })
 
-    test('Admin sieht Erklaerungstext ueber fehlendes Guthaben', async ({ page }) => {
+    test('Admin wird von /dashboard zu /admin weitergeleitet (REQ-37)', async ({ page }) => {
       await loginAsAdmin(page)
 
-      await expect(page.locator('text=kein persoenliches Guthaben')).toBeVisible({ timeout: 5000 })
+      // Direktes Aufrufen von /dashboard muss zu /admin weiterleiten
+      await page.goto('/dashboard')
+      await page.waitForURL('/admin', { timeout: 10000 })
+      await expect(page).toHaveURL(/\/admin/)
     })
 
-    test('Admin sieht CTA-Link zum Admin-Bereich im Banner', async ({ page }) => {
+    test('Admin sieht Admin-Panel mit Systemuebersicht', async ({ page }) => {
       await loginAsAdmin(page)
 
-      await expect(page.locator('text=Zum Admin-Bereich')).toBeVisible({ timeout: 5000 })
+      await expect(page.locator('h1')).toBeVisible({ timeout: 5000 })
     })
   })
 
   test.describe('Admin-Navigation', () => {
-    test('Admin-Link "Zum Admin-Bereich" navigiert zu /admin', async ({ page }) => {
+    test('Admin sieht Admin-Navigation auf /admin', async ({ page }) => {
       await loginAsAdmin(page)
 
-      // Auf den CTA-Link im AdminInfoBanner klicken
-      const adminLink = page.locator('a[href="/admin"]').first()
-      await expect(adminLink).toBeVisible({ timeout: 5000 })
-      await adminLink.click()
-
-      await page.waitForURL('/admin', { timeout: 10000 })
+      // Admin-Nav muss sichtbar sein
+      await expect(page.locator('nav, [role="navigation"]').first()).toBeVisible({ timeout: 5000 })
       await expect(page).toHaveURL(/\/admin/)
     })
   })
