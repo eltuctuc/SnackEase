@@ -78,10 +78,10 @@ const handleCreateUser = async () => {
   createSuccessMsg.value = null
 
   try {
-    const result = await $fetch('/api/admin/users', {
+    const result = await $fetch<{ user: { email: string } }>('/api/admin/users', {
       method: 'POST',
       body: newUser.value,
-    }) as { user: { email: string } }
+    })
 
     const generatedEmail = result.user.email
     createSuccessMsg.value = `Nutzer angelegt - Login: ${generatedEmail} / demo123`
@@ -115,7 +115,7 @@ const handleEditUser = async () => {
   editError.value = null
 
   try {
-    await $fetch(`/api/admin/users/${editingUser.value.id}`, {
+    await $fetch(`/api/admin/users/${editingUser.value.id}` as string, {
       method: 'PATCH',
       body: editForm.value,
     })
@@ -136,7 +136,7 @@ const closeEditModal = () => {
 
 const toggleUser = async (userId: number) => {
   try {
-    await $fetch(`/api/admin/users/${userId}/toggle`, { method: 'POST' })
+    await $fetch(`/api/admin/users/${userId}/toggle` as string, { method: 'POST' })
     await fetchUsers()
   } catch (e: unknown) {
     error.value = (e as { message?: string }).message || 'Fehler beim Ändern des Nutzer-Status'
@@ -164,7 +164,7 @@ const handleAssignCredit = async () => {
   creditSuccessMsg.value = null
 
   try {
-    await $fetch(`/api/admin/users/${creditUserId.value}/credit`, {
+    await $fetch(`/api/admin/users/${creditUserId.value}/credit` as string, {
       method: 'POST',
       body: { amount: creditAmount.value, note: creditNote.value || undefined },
     })

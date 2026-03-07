@@ -89,7 +89,7 @@ const handleSaveCategory = async () => {
 
   try {
     if (isEditMode.value && editingCategory.value) {
-      await $fetch(`/api/admin/categories/${editingCategory.value.id}`, {
+      await $fetch(`/api/admin/categories/${editingCategory.value.id}` as string, {
         method: 'PATCH',
         body: {
           name: categoryForm.value.name.trim(),
@@ -119,7 +119,7 @@ const handleSaveCategory = async () => {
 
 const toggleCategory = async (category: AdminCategory) => {
   try {
-    await $fetch(`/api/admin/categories/${category.id}/toggle`, { method: 'POST' })
+    await $fetch(`/api/admin/categories/${category.id}/toggle` as string, { method: 'POST' })
     successMsg.value = category.isActive ? 'Kategorie deaktiviert' : 'Kategorie aktiviert'
     await fetchCategories()
   } catch (e: unknown) {
@@ -137,9 +137,9 @@ const openDeleteModal = async (category: AdminCategory) => {
   if (category.productCount > 0) {
     isLoadingDeleteInfo.value = true
     try {
-      const data = await $fetch(`/api/admin/categories/${category.id}/deletion-check`) as {
+      const data = await $fetch<{
         productsNeedingReassignment: Array<{ id: number; name: string }>
-      }
+      }>(`/api/admin/categories/${category.id}/deletion-check` as string)
       productsNeedingReassign.value = data.productsNeedingReassignment.map(p => ({
         id: p.id,
         name: p.name,
@@ -172,7 +172,7 @@ const handleDeleteCategory = async () => {
       newCategoryId: p.newCategoryId!,
     }))
 
-    await $fetch(`/api/admin/categories/${deletingCategory.value.id}`, {
+    await $fetch(`/api/admin/categories/${deletingCategory.value.id}` as string, {
       method: 'DELETE',
       body: { productReassignments },
     })

@@ -61,10 +61,10 @@ describe('useSearch', () => {
 
     it('übergibt aktuelle Query und Filter-Werte', () => {
       const onSearch = vi.fn()
-      const { query, filter, search } = useSearch({ 
+      const { search } = useSearch({
         initialQuery: 'Apfel',
         initialFilter: 'obst',
-        onSearch 
+        onSearch
       })
       
       search()
@@ -122,9 +122,9 @@ describe('useSearch', () => {
 
     it('kombiniert Filter und Query korrekt', () => {
       const onSearch = vi.fn()
-      const { query, setFilter } = useSearch({ 
+      const { setFilter } = useSearch({
         initialQuery: 'Apfel',
-        onSearch 
+        onSearch
       })
       
       setFilter('obst')

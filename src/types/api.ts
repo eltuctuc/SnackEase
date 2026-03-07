@@ -6,7 +6,6 @@
  */
 
 import type { User } from './user'
-import type { Product } from './product'
 
 /**
  * Response-Struktur für Credits-Balance-Abfrage

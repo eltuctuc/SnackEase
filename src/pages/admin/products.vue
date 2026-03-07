@@ -219,10 +219,10 @@ const uploadImage = async (productId: number): Promise<string | null> => {
     const formData = new FormData()
     formData.append('image', imageFile.value)
 
-    const result = await $fetch(`/api/admin/products/${productId}/image`, {
-      method: 'POST',
-      body: formData,
-    }) as { imageUrl: string }
+    const result = await $fetch<{ imageUrl: string }>(
+      `/api/admin/products/${productId}/image` as string,
+      { method: 'POST', body: formData }
+    )
 
     return result.imageUrl
   } catch (e: unknown) {
@@ -273,16 +273,16 @@ const handleSaveProduct = async () => {
     let savedProductId: number
 
     if (isEditMode.value && editingProductId.value) {
-      await $fetch(`/api/admin/products/${editingProductId.value}`, {
+      await $fetch(`/api/admin/products/${editingProductId.value}` as string, {
         method: 'PATCH',
         body: payload,
       })
       savedProductId = editingProductId.value
     } else {
-      const result = await $fetch('/api/admin/products', {
+      const result = await $fetch<{ product: AdminProduct }>('/api/admin/products', {
         method: 'POST',
         body: payload,
-      }) as { product: AdminProduct }
+      })
       savedProductId = result.product.id
     }
 
@@ -294,7 +294,7 @@ const handleSaveProduct = async () => {
         // BUG-FEAT10-008: Hard-Delete via ?rollback=true, damit inaktives Produkt wirklich entfernt wird
         if (!isEditMode.value) {
           try {
-            await $fetch(`/api/admin/products/${savedProductId}?rollback=true`, { method: 'DELETE' })
+            await $fetch(`/api/admin/products/${savedProductId}?rollback=true` as string, { method: 'DELETE' })
           } catch {
             // Rollback-Fehler ignorieren, Hauptfehlermeldung zeigen
           }
@@ -318,7 +318,7 @@ const handleSaveProduct = async () => {
 
 const toggleProductStatus = async (product: AdminProduct) => {
   try {
-    await $fetch(`/api/admin/products/${product.id}`, {
+    await $fetch(`/api/admin/products/${product.id}` as string, {
       method: 'PATCH',
       body: { isActive: !product.isActive },
     })
@@ -339,7 +339,7 @@ const handleDeleteProduct = async () => {
   isDeleting.value = true
 
   try {
-    await $fetch(`/api/admin/products/${deletingProduct.value.id}`, { method: 'DELETE' })
+    await $fetch(`/api/admin/products/${deletingProduct.value.id}` as string, { method: 'DELETE' })
     successMsg.value = `Produkt "${deletingProduct.value.name}" wurde deaktiviert`
     showDeleteModal.value = false
     deletingProduct.value = null
