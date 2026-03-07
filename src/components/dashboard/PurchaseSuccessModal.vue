@@ -1,28 +1,26 @@
 <!--
-  PurchaseSuccessModal - Bestätigung nach erfolgreichem Kauf (FEAT-7)
-  
+  PurchaseSuccessModal - Bestätigung nach erfolgreichem Kauf (FEAT-7 + FEAT-11)
+
   Diese Komponente:
   - Zeigt Kauf-Bestätigung mit PIN
-  - Zeigt Countdown bis Ablauf (2 Stunden)
-  - Zeigt Standort und Abholoptionen (FEAT-11)
+  - Zeigt Countdown bis Ablauf (via useCountdown Composable)
+  - Zeigt Standort und Abholoptionen (FEAT-11 — NFC + PIN aktiviert)
   - Zeigt Bonuspunkte
-  
+  - Öffnet NfcPickupAnimation bei NFC-Klick
+  - Öffnet PinInputModal bei PIN-Klick
+
   @component
 -->
 
 <script setup lang="ts">
 import type { PurchaseWithProduct } from '~/types'
+import NfcPickupAnimation from '~/components/orders/NfcPickupAnimation.vue'
+import PinInputModal from '~/components/orders/PinInputModal.vue'
 
 // ========================================
 // PROPS & EMITS
 // ========================================
 
-/**
- * Props für PurchaseSuccessModal
- * 
- * @property isOpen - Ob Modal geöffnet ist
- * @property purchase - Kauf-Objekt mit allen Details
- */
 interface Props {
   isOpen: boolean
   purchase: PurchaseWithProduct | null
@@ -30,11 +28,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-/**
- * Events die diese Komponente emitted
- * 
- * @event close - Modal schließen
- */
 const emit = defineEmits<{
   close: []
 }>()
@@ -44,6 +37,9 @@ const emit = defineEmits<{
 // ========================================
 
 const { formatPrice } = useFormatter()
+const purchasesStore = usePurchasesStore()
+const creditsStore = useCreditsStore()
+const authStore = useAuthStore()
 
 // ========================================
 // REACTIVE STATE
@@ -52,48 +48,54 @@ const { formatPrice } = useFormatter()
 /** Ref zum Close-Button für Focus-Management */
 const closeButtonRef = ref<HTMLButtonElement | null>(null)
 
-/** Verbleibende Zeit bis Ablauf (dynamisch) */
-const timeRemaining = ref('')
+/** Ob NFC-Animation sichtbar ist */
+const showNfcAnimation = ref(false)
+
+/** Ob PIN-Modal offen ist */
+const showPinModal = ref(false)
+
+/** Fehlermeldung im PIN-Modal */
+const pinModalError = ref<string | null>(null)
+
+/** Anzahl falscher PIN-Versuche */
+const pinAttempts = ref(0)
+
+const MAX_PIN_ATTEMPTS = 3
 
 // ========================================
-// COMPUTED
+// COUNTDOWN
 // ========================================
 
 /**
- * Berechnet verbleibende Zeit bis expiresAt
- * 
- * @returns String wie "1h 45min" oder "23min"
+ * Einfache Countdown-Berechnung (ohne Composable, da Composable ein fixes Date braucht
+ * und das Purchase sich nach Modal-Öffnung nicht ändert).
+ *
+ * Aktualisiert sich jede Minute für die Anzeige.
  */
-function calculateTimeRemaining() {
+const now = ref(new Date())
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Formatierter Countdown-Text für Anzeige
+ */
+const timeRemaining = computed(() => {
   if (!props.purchase) return ''
 
-  const now = new Date()
-  const expiresAt = new Date(props.purchase.expiresAt)
-  const diffMs = expiresAt.getTime() - now.getTime()
+  const diffMs = new Date(props.purchase.expiresAt).getTime() - now.value.getTime()
 
-  if (diffMs <= 0) {
-    return 'Abgelaufen'
-  }
+  if (diffMs <= 0) return 'Abgelaufen'
 
   const diffMinutes = Math.floor(diffMs / 1000 / 60)
   const hours = Math.floor(diffMinutes / 60)
   const minutes = diffMinutes % 60
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}min`
-  }
-
+  if (hours > 0) return `${hours}h ${minutes}min`
   return `${minutes}min`
-}
+})
 
 // ========================================
 // LIFECYCLE
 // ========================================
-
-/**
- * Countdown aktualisieren (jede Minute)
- */
-let countdownInterval: NodeJS.Timeout | null = null
 
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen && props.purchase) {
@@ -102,14 +104,20 @@ watch(() => props.isOpen, (isOpen) => {
       closeButtonRef.value?.focus()
     })
 
-    // Countdown starten
-    timeRemaining.value = calculateTimeRemaining()
-    
+    // State zurücksetzen
+    showNfcAnimation.value = false
+    showPinModal.value = false
+    pinModalError.value = null
+    pinAttempts.value = 0
+
+    // Countdown-Interval starten (jede Minute)
+    now.value = new Date()
+    if (countdownInterval) clearInterval(countdownInterval)
     countdownInterval = setInterval(() => {
-      timeRemaining.value = calculateTimeRemaining()
-    }, 60000) // Alle 60 Sekunden aktualisieren
+      now.value = new Date()
+    }, 60000)
   } else {
-    // Countdown stoppen
+    // Countdown-Interval stoppen
     if (countdownInterval) {
       clearInterval(countdownInterval)
       countdownInterval = null
@@ -117,7 +125,6 @@ watch(() => props.isOpen, (isOpen) => {
   }
 })
 
-// Cleanup bei Component-Unmount
 onUnmounted(() => {
   if (countdownInterval) {
     clearInterval(countdownInterval)
@@ -125,14 +132,93 @@ onUnmounted(() => {
 })
 
 // ========================================
+// COMPUTED
+// ========================================
+
+/** Ob gerade eine Abholung läuft */
+const isCurrentlyPickingUp = computed(
+  () => showNfcAnimation.value || purchasesStore.isPickingUp
+)
+
+/** Ist der PIN gesperrt (max Versuche) */
+const isPinLocked = computed(() => pinAttempts.value >= MAX_PIN_ATTEMPTS)
+
+// ========================================
 // METHODS
 // ========================================
 
-/**
- * Modal schließen
- */
 function handleClose() {
   emit('close')
+}
+
+// --- NFC-Abholung ---
+
+function handleNfcClick() {
+  if (isCurrentlyPickingUp.value || !props.purchase) return
+  showNfcAnimation.value = true
+}
+
+async function handleNfcAnimationDone() {
+  showNfcAnimation.value = false
+
+  if (!props.purchase) return
+
+  const result = await purchasesStore.pickupOrder(props.purchase.id, 'nfc')
+
+  if (result.success) {
+    // Guthaben aktualisieren
+    if (!authStore.isAdmin) {
+      await creditsStore.fetchBalance()
+    }
+    // Modal schließen nach kurzer Pause (UX)
+    await nextTick()
+    emit('close')
+  }
+}
+
+// --- PIN-Abholung ---
+
+function handlePinClick() {
+  if (isCurrentlyPickingUp.value || !props.purchase) return
+  showPinModal.value = true
+  pinModalError.value = null
+  pinAttempts.value = 0
+}
+
+async function handlePinConfirm(pin: string) {
+  if (!props.purchase) return
+
+  const result = await purchasesStore.pickupOrder(props.purchase.id, 'pin', pin)
+
+  if (result.success) {
+    showPinModal.value = false
+    pinModalError.value = null
+    pinAttempts.value = 0
+
+    // Guthaben aktualisieren
+    if (!authStore.isAdmin) {
+      await creditsStore.fetchBalance()
+    }
+
+    // Modal schließen
+    await nextTick()
+    emit('close')
+  } else {
+    pinAttempts.value++
+    const verbleibend = MAX_PIN_ATTEMPTS - pinAttempts.value
+
+    if (pinAttempts.value >= MAX_PIN_ATTEMPTS) {
+      pinModalError.value = 'Maximale Versuche erreicht. Bitte lade die Seite neu.'
+    } else {
+      pinModalError.value = `PIN falsch. Noch ${verbleibend} Versuch${verbleibend === 1 ? '' : 'e'}.`
+    }
+  }
+}
+
+function handlePinCancel() {
+  showPinModal.value = false
+  pinModalError.value = null
+  pinAttempts.value = 0
 }
 </script>
 
@@ -165,7 +251,7 @@ function handleClose() {
           <button
             ref="closeButtonRef"
             @click="handleClose"
-            class="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground rounded focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Modal schließen"
             data-testid="modal-close-button"
           >
@@ -191,7 +277,7 @@ function handleClose() {
                   class="w-full h-full object-cover rounded-lg"
                 />
               </div>
-              
+
               <!-- Produktdetails -->
               <div class="flex-1">
                 <h3 class="font-medium text-foreground">{{ purchase.productName }}</h3>
@@ -214,13 +300,13 @@ function handleClose() {
           </div>
 
           <!-- Standort -->
-          <div class="mb-4">
+          <div class="mb-3">
             <p class="text-sm text-muted-foreground mb-1">📍 Abholort:</p>
             <p class="font-medium text-foreground">{{ purchase.pickupLocation }}</p>
           </div>
 
           <!-- Countdown -->
-          <div class="mb-6">
+          <div class="mb-5">
             <p class="text-sm text-muted-foreground mb-1">⏱️ Gültig bis:</p>
             <p class="font-medium text-foreground">
               {{ new Date(purchase.expiresAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) }} Uhr
@@ -228,29 +314,80 @@ function handleClose() {
             </p>
           </div>
 
-          <!-- Abholoptionen (FEAT-11 Vorbereitung) -->
-          <div class="space-y-2">
+          <!-- Abholoptionen -->
+          <div class="space-y-2 mb-4">
+            <!-- NFC-Button (primär) -->
             <button
-              class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
-              disabled
+              @click="handleNfcClick"
+              :disabled="isCurrentlyPickingUp"
+              :class="[
+                'w-full py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary',
+                isCurrentlyPickingUp
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'bg-primary text-white hover:bg-primary/90',
+              ]"
+              data-testid="modal-nfc-button"
+              aria-label="Mit NFC abholen"
             >
-              📲 Mit NFC abholen (kommt bald)
+              <span v-if="isCurrentlyPickingUp">Wird abgeholt...</span>
+              <span v-else>📲 Mit NFC abholen</span>
             </button>
-            
+
+            <!-- PIN-Button (sekundär) -->
             <button
-              class="w-full py-3 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
-              disabled
+              @click="handlePinClick"
+              :disabled="isCurrentlyPickingUp"
+              :class="[
+                'w-full py-3 rounded-lg font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-primary',
+                isCurrentlyPickingUp
+                  ? 'border-input bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'border-input bg-background text-foreground hover:bg-muted',
+              ]"
+              data-testid="modal-pin-button"
+              aria-label="PIN am Automaten eingeben"
             >
               🔢 PIN am Automaten eingeben
             </button>
           </div>
 
-          <!-- Info-Text -->
-          <p class="text-xs text-muted-foreground text-center mt-4">
-            Hinweis: Die Abholung am Automaten wird in einem späteren Update verfügbar sein (FEAT-11).
-          </p>
+          <!-- Link zu Bestellungen -->
+          <div class="text-center mb-4">
+            <NuxtLink
+              to="/orders"
+              class="text-sm text-primary hover:underline"
+              @click="handleClose"
+              data-testid="orders-link"
+            >
+              Zu meinen Bestellungen →
+            </NuxtLink>
+          </div>
+
+          <!-- Demo-Hinweis -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-xs text-blue-800">
+              <span class="font-medium">Demo-Hinweis:</span>
+              Dies ist eine Simulation. Klicke "Mit NFC abholen" um den Abholprozess zu simulieren,
+              oder gib deine PIN ein.
+            </p>
+          </div>
         </div>
       </div>
     </Transition>
+
+    <!-- NFC-Animation (Fullscreen) -->
+    <NfcPickupAnimation
+      :is-visible="showNfcAnimation"
+      @done="handleNfcAnimationDone"
+    />
+
+    <!-- PIN-Modal -->
+    <PinInputModal
+      :is-open="showPinModal"
+      :error-message="pinModalError ?? undefined"
+      :is-locked="isPinLocked"
+      :is-loading="purchasesStore.isPickingUp"
+      @confirm="handlePinConfirm"
+      @cancel="handlePinCancel"
+    />
   </Teleport>
 </template>

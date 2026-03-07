@@ -1,18 +1,22 @@
 /**
  * Purchases Store - Verwaltung des One-Touch Kaufprozesses (FEAT-7)
- * 
+ * und Bestellabholung (FEAT-11)
+ *
  * @description
  * Dieser Store verwaltet:
  * - Kauf-Prozess (purchase Action)
- * - Aktive Käufe (status='pending_pickup')
+ * - Alle Bestellungen des Users (allOrders)
+ * - Abholungs-Prozess (pickupOrder)
  * - Loading- und Error-States
  * - Integration mit Credits Store (Guthaben-Update)
- * 
+ *
  * Verwendet Composition API mit setup-Syntax (Best Practice).
  * Alle DB-Operationen erfolgen über Server API Routes (kein direkter DB-Zugriff).
- * 
+ *
  * @see src/types/purchase.ts für Type-Definitionen
  * @see src/server/api/purchases.post.ts für Backend-Logik
+ * @see src/server/api/orders/index.get.ts für Bestellungen laden
+ * @see src/server/api/orders/[id]/pickup.post.ts für Abholung
  */
 
 import type { PurchaseWithProduct, PurchaseResponse } from '~/types'
@@ -21,46 +25,43 @@ export const usePurchasesStore = defineStore('purchases', () => {
   // ========================================
   // STATE - Reactive Properties
   // ========================================
-  
-  /** Liste aller aktiven Käufe (pending_pickup) */
-  const activePurchases = ref<PurchaseWithProduct[]>([])
-  
+
+  /** Liste aller Bestellungen des Users (alle Stati) */
+  const allOrders = ref<PurchaseWithProduct[]>([])
+
   /** Letzter erfolgreicher Kauf (für Success-Modal) */
   const lastPurchase = ref<PurchaseWithProduct | null>(null)
-  
+
   /** Loading-State für UI-Feedback während API-Calls */
   const isLoading = ref(false)
-  
+
   /** Error-State für Fehleranzeige in UI */
   const error = ref<string | null>(null)
+
+  /** Loading-State speziell für Abholungsvorgang */
+  const isPickingUp = ref(false)
+
+  /** Fehler bei der Abholung (z.B. falsche PIN) */
+  const pickupError = ref<string | null>(null)
+
+  // ========================================
+  // COMPUTED - Derived State
+  // ========================================
+
+  /** Aktive Bestellungen (pending_pickup) */
+  const activePurchases = computed(() =>
+    allOrders.value.filter((o) => o.status === 'pending_pickup')
+  )
 
   // ========================================
   // ACTIONS - API Calls
   // ========================================
-  
+
   /**
    * Kauft ein Produkt (One-Touch)
-   * 
+   *
    * @param productId - ID des zu kaufenden Produkts
    * @returns Promise mit PurchaseResponse (success + purchase | error)
-   * 
-   * @description
-   * Führt den Kauf-Prozess durch:
-   * 1. API-Call zu POST /api/purchases
-   * 2. Bei Erfolg:
-   *    - Speichert Purchase in lastPurchase (für Modal)
-   *    - Aktualisiert Credits-Store (neues Guthaben)
-   *    - Returned { success: true, purchase, newBalance }
-   * 3. Bei Fehler:
-   *    - Setzt error-State (für Toast)
-   *    - Returned { success: false, error }
-   * 
-   * Integration mit anderen Stores:
-   * - useCreditsStore: Guthaben wird automatisch aktualisiert
-   * - useProductsStore: Optional, könnte Bestand aktualisieren (FEAT-12)
-   * 
-   * @see src/server/api/purchases.post.ts
-   * @see src/components/dashboard/PurchaseButton.vue für Usage
    */
   async function purchase(productId: number): Promise<PurchaseResponse> {
     isLoading.value = true
@@ -75,11 +76,14 @@ export const usePurchasesStore = defineStore('purchases', () => {
       if (data.success) {
         // Erfolgreicher Kauf
         lastPurchase.value = data.purchase
-        
+
+        // Neue Bestellung vorne in allOrders einfügen
+        allOrders.value = [data.purchase, ...allOrders.value]
+
         // Credits-Store aktualisieren (Guthaben wurde abgezogen)
         const creditsStore = useCreditsStore()
         creditsStore.balance = data.newBalance
-        
+
         return data
       } else {
         // Fehler vom Backend (nicht genug Guthaben, etc.)
@@ -87,11 +91,10 @@ export const usePurchasesStore = defineStore('purchases', () => {
         return data
       }
     } catch (err: unknown) {
-      // Netzwerk-Fehler oder Server-Fehler
       const e = err as { data?: { message?: string }; message?: string }
       const errorMessage = e.data?.message || e.message || 'Fehler beim Kauf'
       error.value = errorMessage
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -102,32 +105,89 @@ export const usePurchasesStore = defineStore('purchases', () => {
   }
 
   /**
-   * Lädt alle aktiven Käufe des Users
-   * 
+   * Lädt alle Bestellungen des eingeloggten Users
+   *
    * @description
-   * Für FEAT-11 (Bestellabholung):
-   * - Zeigt Liste aller "pending_pickup" Käufe
-   * - Mit PIN, Countdown, Standort
-   * 
-   * Aktuell nicht benötigt für FEAT-7 MVP,
-   * aber vorbereitet für spätere Erweiterung.
+   * Ruft GET /api/orders auf und füllt allOrders (alle Stati).
+   * Implementiert FEAT-11 (ersetzt den alten fetchActivePurchases-Stub).
+   *
+   * @see src/server/api/orders/index.get.ts
    */
-  async function fetchActivePurchases() {
+  async function fetchOrders(): Promise<void> {
     isLoading.value = true
     error.value = null
 
     try {
-      // TODO: GET /api/purchases Endpunkt erstellen (FEAT-11)
-      // const data = await $fetch<PurchaseWithProduct[]>('/api/purchases')
-      // activePurchases.value = data
-      
-      // Placeholder für MVP
-      activePurchases.value = []
+      const data = await $fetch<{ orders: PurchaseWithProduct[] }>('/api/orders')
+      allOrders.value = data.orders
     } catch (err: unknown) {
-      const e = err as { message?: string }
-      error.value = e.message || 'Fehler beim Laden der Käufe'
+      const e = err as { data?: { message?: string }; message?: string }
+      error.value = e.data?.message || e.message || 'Fehler beim Laden der Bestellungen'
     } finally {
       isLoading.value = false
+    }
+  }
+
+  /**
+   * Holt eine Bestellung ab (NFC oder PIN)
+   *
+   * @param id - Bestell-ID
+   * @param method - Abholmethode: "nfc" oder "pin"
+   * @param pin - PIN (nur bei method="pin" erforderlich)
+   * @returns Promise mit Erfolgs-Status
+   *
+   * @description
+   * Bei Erfolg:
+   * - Status in allOrders auf "picked_up" setzen
+   * - pickedUpAt aktualisieren
+   *
+   * Bei Fehler (z.B. falsche PIN):
+   * - pickupError wird gesetzt
+   * - Status bleibt unverändert
+   *
+   * @see src/server/api/orders/[id]/pickup.post.ts
+   */
+  async function pickupOrder(
+    id: number,
+    method: 'nfc' | 'pin',
+    pin?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    isPickingUp.value = true
+    pickupError.value = null
+
+    try {
+      const body: { method: string; pin?: string } = { method }
+      if (method === 'pin' && pin) {
+        body.pin = pin
+      }
+
+      const data = await $fetch<{ success: true; order: { id: number; status: string; pickedUpAt: string } }>(
+        `/api/orders/${id}/pickup`,
+        {
+          method: 'POST',
+          body,
+        }
+      )
+
+      // Bestellung in allOrders aktualisieren
+      const index = allOrders.value.findIndex((o) => o.id === id)
+      if (index !== -1) {
+        allOrders.value[index] = {
+          ...allOrders.value[index],
+          status: 'picked_up',
+          pickedUpAt: data.order.pickedUpAt,
+        }
+      }
+
+      return { success: true }
+    } catch (err: unknown) {
+      const e = err as { data?: { message?: string }; message?: string }
+      const errorMessage = e.data?.message || e.message || 'Fehler bei der Abholung'
+      pickupError.value = errorMessage
+
+      return { success: false, error: errorMessage }
+    } finally {
+      isPickingUp.value = false
     }
   }
 
@@ -138,20 +198,32 @@ export const usePurchasesStore = defineStore('purchases', () => {
     lastPurchase.value = null
   }
 
+  /**
+   * Setzt pickupError zurück
+   */
+  function clearPickupError() {
+    pickupError.value = null
+  }
+
   // ========================================
   // RETURN - Public API
   // ========================================
-  
+
   return {
     // State
+    allOrders,
     activePurchases,
     lastPurchase,
     isLoading,
     error,
-    
+    isPickingUp,
+    pickupError,
+
     // Actions
     purchase,
-    fetchActivePurchases,
+    fetchOrders,
+    pickupOrder,
     clearLastPurchase,
+    clearPickupError,
   }
 })
