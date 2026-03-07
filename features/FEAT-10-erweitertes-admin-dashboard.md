@@ -1197,15 +1197,12 @@ Wenn Admin das System nach einem Reset öffnet oder neu aufgesetzt wird:
 - OK Kein direkter DB-Zugriff aus Stores/Components
 - OK Drizzle ORM fuer alle Queries
 - OK Server Routes haben try/catch mit createError()
-- OK Keine N+1 Query Probleme (Kategorien werden in einer zweiten Batch-Query geladen)
+- OK Keine N+1 Query Probleme (Kategorien werden mit inArray WHERE-Filter in einer zweiten Batch-Query geladen)
 - OK Kein localStorage/sessionStorage
 - OK Pinia Setup-Syntax (nicht Options-Syntax)
-- WARNUNG BUG-FEAT10-011: `products/index.get.ts` - `inArray` nicht importiert, WHERE-Filter auf productId fehlt in Kategorie-Query
 
 ### Optimierungen (identifizierte Potenziale)
 
-- BUG-FEAT10-011: `products/index.get.ts` laedt alle `product_categories` ohne WHERE-Filter auf `productId` - bei grosser Datenmenge ineffizient. `inArray`-Import hinzufuegen und WHERE-Clause ergaenzen.
-- BUG-FEAT10-009: `handleDrop` in `products.vue` hat toten Code (Zeile 208) und moegliches Safari-Kompatibilitaetsproblem.
 - `openDeleteModal` in categories.vue hat zu viel Logik (API-Call + UI-State). Sollte in zwei getrennte Funktionen aufgeteilt werden.
 
 ### Regression
