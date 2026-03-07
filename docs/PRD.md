@@ -218,14 +218,37 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | STAT-02 | Ausgaben-Statistik | Bereits ausgegebene Beträge | ⏳ Offen |
 | STAT-04 | Nährwert-Zusammenfassung | Zucker, Fett, Kalorien, Eiweiß | ⏳ Offen |
 
-### Release 5: Angebote & Erweiterungen
+### Release 5: Navigation & Warenkorb
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| FEAT-15 | App-Navigationsstruktur | Bottom-Tab-Bar fuer Mitarbeiter (5 Tabs) und Admin (6 Tabs); fixierter Header; Desktop-Sidebar; ersetzt AdminNav.vue und alle Zurueck-Buttons | Planned |
+| FEAT-16 | Warenkorb-System | Produkte in Warenkorb legen, Mengen anpassen, Vorbestellung aufgeben; Guthaben-Abzug erst bei Abholung; localStorage-Persistenz | Planned |
+
+### Release 6: Angebote, Empfehlungen & Suche
 
 | ID | Feature | Beschreibung | Status |
 |----|---------|--------------|--------|
 | FEAT-14 | Angebote & Rabatte | Admin kann zeitlich begrenzte Rabatte (% oder EUR) pro Produkt erstellen; automatische Aktivierung nach Datum; Angebotspreis fuer User sichtbar | Planned |
-| FEAT-19 | Erweiterte Suche | Volltext-Echtzeit-Suche auf /search mit Debouncing; Filter-Chips fuer Kategorie, Verfuegbarkeit, Preisbereich, Vegan/Glutenfrei; Sortierung nach Relevanz/Preis; Produktkarten mit Warenkorb-Button und Favoriten-Icon | Planned |
+| FEAT-17 | Angebote-Querslider | Horizontaler Querslider auf dem Dashboard zeigt aktive Angebote; Produktbild, Angebotspreis, Rabatt-Badge; "In den Warenkorb"-Button direkt auf der Karte | Planned |
+| FEAT-18 | Empfehlungen & Favoriten | Produktempfehlungen (aggregierte Top-10 fuer alle sichtbar) und private Favoriten-Listen (max. 10); Tab-Umschalter auf Dashboard | Planned |
+| FEAT-19 | Erweiterte Suche | Volltext-Echtzeit-Suche auf /search mit Debouncing; Filter-Chips fuer Kategorie, Verfuegbarkeit, Preisbereich, Vegan/Glutenfrei; Sortierung nach Relevanz/Preis | Planned |
 
-### Release 6: Future
+### Release 7: Profil, Admin-Einstellungen & Bestand
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| FEAT-20 | Profil-Seite | Stammdaten, Zeitraum-Statistiken (Ausgaben, Bestellungen, Lieblingsprodukt, Gesundheits-Score 1-10), Bestellverlauf, Logout | Planned |
+| FEAT-21 | Admin Einstellungsseite | /admin/settings mit System-Reset, Guthaben-Reset, Logout; loest Reset-Funktionen aus Admin-Index aus | Planned |
+| FEAT-22 | Konfigurierbarer Nachbestellschwellwert | `products.stockThreshold` (default 3) ersetzt Hard-Code; konfigurierbar in Produktverwaltung und Bestandsverwaltung | Planned |
+
+### Release 8: Leaderboard-Erweiterung
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| FEAT-23 | Leaderboard-Erweiterung (Punktesystem) | Neuer "Gesamt-Punkte"-Tab im Leaderboard; Punkte pro abgeholtem Produkt (Basis +10, Vegan/Gesund +3, Protein +2, Angebot +2); Boni pro Bestellung (Schnelligkeit +5, Streak +20%); Empfehlungs-Bonus +5; Punkte-Aufschluesselung auf Profil-Seite | Planned |
+
+### Release 9: Future
 
 | ID | Feature | Beschreibung |
 |----|---------|--------------|
@@ -256,8 +279,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 2.5
+- **Version:** 2.6
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
 - **Letzte Änderung:** 2026-03-07
-- **Änderungen:** FEAT-19 Erweiterte Suche hinzugefügt
+- **Änderungen:** FEAT-15 bis FEAT-23 eingetragen (Navigation, Warenkorb, Angebote, Slider, Empfehlungen, Suche, Profil, Admin-Einstellungen, Nachbestellschwellwert, Leaderboard-Erweiterung)
