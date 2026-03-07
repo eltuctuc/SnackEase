@@ -5,6 +5,14 @@
 ## Abhängigkeiten
 - Keine direkten Abhängigkeiten (erstes Feature beim App-Start)
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Splashscreen | `resources/high-fidelity/splashscreen.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review. Fehlt ein Wireframe fuer einen Screen, muss vor der Umsetzung die Informationsarchitektur, das Navigationskonzept und die Darstellung mit dem User geklaert werden.
+
 ## 1. Overview
 
 **Beschreibung:** Begrüßungsbildschirm beim Start der App mit Logo und Ladeanimation. Lädt alle Programmdaten (Styles, Komponenten, Layouts) vor, damit die App danach flüssig läuft.

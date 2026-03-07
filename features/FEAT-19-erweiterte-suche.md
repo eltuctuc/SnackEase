@@ -7,6 +7,14 @@
 - Benoetigt: FEAT-16 (Warenkorb-System) - "In den Warenkorb"-Button auf Produktkarten
 - Benoetigt: FEAT-18 (Empfehlungen & Favoriten) - Favoriten-Icon auf Produktkarten
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Suche (/search) | `resources/high-fidelity/suche.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review. Fehlt ein Wireframe fuer einen Screen, muss vor der Umsetzung die Informationsarchitektur, das Navigationskonzept und die Darstellung mit dem User geklaert werden.
+
 ---
 
 ## 1. Uebersicht

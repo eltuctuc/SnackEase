@@ -2,6 +2,17 @@
 
 ## Status: 🔴 In QA — Bugs gefunden (NOT Production Ready)
 
+## Architektur-Aenderung (FEAT-15)
+
+Mit FEAT-15 entfaellt `/admin/inventory` als eigenstaendige Seite und Tab. Die Bestandsverwaltungs-Funktionen werden in `/admin/products` integriert:
+
+- Bestandsmenge (stock) ist in der Produktliste sichtbar
+- Sortierung nach Bestand moeglich (um Produkte unterhalb des Schwellwerts zu identifizieren)
+- Bestand pro Produkt direkt in der Produktliste auffuellbar (kein Bulk-Update-Modal mehr noetig)
+- Farbliche Kennzeichnung bei niedrigem Bestand bleibt erhalten (<=3 Stück = rot)
+
+Die bestehenden API-Endpoints (`GET /api/admin/inventory`, `PATCH /api/admin/inventory`) bleiben unveraendert erhalten und werden weiterhin genutzt. Nur die UI-Einstiegspunkte aendern sich.
+
 ## Abhängigkeiten
 - Benötigt: FEAT-5 (Admin-Basis) - für Admin-Zugriff
 - Benötigt: FEAT-6 (Produktkatalog) - für Produktinformationen

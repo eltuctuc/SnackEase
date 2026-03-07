@@ -6,11 +6,30 @@
 - Benoetigt: FEAT-15 (App-Navigationsstruktur) - /profile-Route und Tab-Bar-Navigation muessen existieren
 - Benoetigt: FEAT-16 (Warenkorb-System) - purchase_items-Struktur fuer abgeholte Bestellungen im Verlauf
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Profil (/profile) | `resources/high-fidelity/profil.png` |
+| Guthaben aufladen | `resources/high-fidelity/credit.png` |
+| Zahlungsmethode waehlen | `resources/high-fidelity/payment.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review.
+
+> Wireframe und Spec wurden zusammengefuehrt: Die Profil-Seite enthaelt alle Elemente aus beiden Quellen (Bonuspunkte-Chart, erweiterte Einkaufsstatistiken, Gesundheitsscore, Lieblingsprodukt, Bestellverlauf, Avatar-Platzhalter, Guthaben-Icon).
+
+> "Guthaben aufladen" (credit.png) und "Zahlungsmethode" (payment.png) sind in FEAT-24 spezifiziert. Das Guthaben-Icon im Profil-Header navigiert zu FEAT-24.
+
 ---
 
 ## 1. Uebersicht
 
-**Beschreibung:** Die /profile-Seite (bisher leerer Platzhalter aus FEAT-15) erhaelt ihren vollstaendigen Inhalt. Mitarbeiter sehen dort ihre persoenlichen Stammdaten (Name, Standort, aktuelles Guthaben) im Nur-Lese-Modus, interaktive Statistiken mit einem Zeitraum-Filter (7 Tage / 30 Tage / 90 Tage / Alle Zeit), einen chronologischen Bestellverlauf aller abgeholten Bestellungen sowie einen Logout-Button. Die Statistiken umfassen Gesamtausgaben, Anzahl der Bestellungen, das meistgekaufte Lieblingsprodukt und einen Gesundheits-Score von 1-10. Der Gesundheits-Score wird serverseitig auf Basis von Kalorien, Zucker, Fett und Boni fuer vegane oder glutenfreie Produkte berechnet. Ein hoehrer Score bedeutet gesuneder Einkauf.
+**Beschreibung:** Die /profile-Seite erhaelt ihren vollstaendigen Inhalt. Mitarbeiter sehen dort:
+- **Profil-Header:** Avatar-Platzhalter, Name (readonly), aktuelles Guthaben mit Kreditkarten-Icon (fuehrt zu FEAT-24: Guthaben aufladen)
+- **Bonuspunkte-Sektion:** Balkendiagramm der gesammelten Bonuspunkte mit Woche/Monat/Jahr-Umschalter + "Verlauf"-Link
+- **Einkaufsstatistiken:** Gesamt-Einkaufsanzahl, Kaeufe in den letzten 7 Tagen, Datum letzter Kauf, Ausgaben nach Woche/Monat/Jahr + "Kaufhistorie"-Link
+- **Erweiterte Stats:** Lieblingsprodukt (meistgekauftes Produkt), Gesundheits-Score (1-10, serverseitig berechnet aus Naehrwerten + Boni fuer vegane/glutenfreie Produkte)
+- **Logout-Button** am Ende der Seite
 
 **Ziel:** Mitarbeitern eine persoenliche Uebersicht ueber ihr Kaufverhalten, ihre Ausgaben und ihre Ernaehrungsgewohnheiten bieten.
 
@@ -20,7 +39,9 @@
 
 | ID | Story | Rolle | Prioritaet |
 |----|-------|-------|------------|
-| US-1 | Als Mitarbeiter moechte ich auf /profile meinen Namen, meinen Standort und mein aktuelles Guthaben sehen, damit ich meine Account-Daten im Blick habe | Mitarbeiter | Must-Have |
+| US-1 | Als Mitarbeiter moechte ich auf /profile meinen Avatar, meinen Namen und mein aktuelles Guthaben sehen, damit ich meine Account-Daten im Blick habe | Mitarbeiter | Must-Have |
+| US-1b | Als Mitarbeiter moechte ich ueber das Kreditkarten-Icon neben meinem Guthaben zur "Guthaben aufladen"-Seite navigieren koennen | Mitarbeiter | Must-Have |
+| US-1c | Als Mitarbeiter moechte ich meine gesammelten Bonuspunkte als Balkendiagramm sehen (aufgeteilt nach Woche/Monat/Jahr), damit ich meinen Fortschritt verfolgen kann | Mitarbeiter | Must-Have |
 | US-2 | Als Mitarbeiter moechte ich meine Gesamtausgaben im gewaehlten Zeitraum sehen, damit ich weiss, wie viel ich fuer Snacks ausgegeben habe | Mitarbeiter | Must-Have |
 | US-3 | Als Mitarbeiter moechte ich sehen, wie viele Bestellungen ich im gewaehlten Zeitraum abgeholt habe, damit ich mein Kaufverhalten einschaetzen kann | Mitarbeiter | Must-Have |
 | US-4 | Als Mitarbeiter moechte ich mein Lieblingsprodukt (meistgekauftes Produkt) im gewaehlten Zeitraum sehen, damit ich erkenne, was ich am haeufigsten kaufe | Mitarbeiter | Must-Have |
@@ -38,10 +59,19 @@
 
 | ID | Anforderung | Prioritaet |
 |----|-------------|------------|
-| REQ-1 | Der obere Bereich der Seite zeigt den Namen des eingeloggten Mitarbeiters | Must-Have |
-| REQ-2 | Der Standort des Mitarbeiters (Berlin oder Nuernberg) wird angezeigt | Must-Have |
-| REQ-3 | Das aktuelle Guthaben des Mitarbeiters wird angezeigt (in Euro, z.B. "12,50 Euro") | Must-Have |
-| REQ-4 | Die Stammdaten sind ausschliesslich lesend — es gibt keine Bearbeitungsfunktion | Must-Have |
+| REQ-1 | Der obere Bereich der Seite zeigt einen Avatar-Platzhalter (Bild-Icon) und den Namen des eingeloggten Mitarbeiters | Must-Have |
+| REQ-2 | Das aktuelle Guthaben des Mitarbeiters wird neben einem Kreditkarten-Icon angezeigt (in Euro, z.B. "6,00 €") | Must-Have |
+| REQ-3 | Ein Tap auf das Kreditkarten-Icon navigiert zur Route /profile/credit (Guthaben aufladen, FEAT-24) | Must-Have |
+| REQ-4 | Die Stammdaten sind ausschliesslich lesend — es gibt keine Bearbeitungsfunktion in FEAT-20 | Must-Have |
+
+### 3.1b Bonuspunkte-Sektion
+
+| ID | Anforderung | Prioritaet |
+|----|-------------|------------|
+| REQ-4a | Unterhalb des Profil-Headers befindet sich eine "Bonuspunkte"-Sektion mit einem Zeitraum-Umschalter: "Woche", "Monat", "Jahr" | Must-Have |
+| REQ-4b | Die Sektion zeigt ein Balkendiagramm der gesammelten Bonuspunkte im gewaehlten Zeitraum (bei "Woche": 7 Tagesbalken; "Monat": Wochenbalken; "Jahr": Monatsbalken) | Must-Have |
+| REQ-4c | Rechts neben "Bonuspunkte" befindet sich ein "Verlauf"-Link (fuehrt zur Kaufhistorie — identisch mit dem "Kaufhistorie"-Link in den Einkaufsstatistiken) | Must-Have |
+| REQ-4d | Der aktuell aktive Zeitraum-Tab ist visuell hervorgehoben | Must-Have |
 
 ### 3.2 Zeitraum-Filter
 
@@ -52,18 +82,18 @@
 | REQ-7 | Ein Wechsel des Zeitraums aktualisiert sowohl die Statistiken als auch den Bestellverlauf gleichzeitig | Must-Have |
 | REQ-8 | Der aktuell aktive Zeitraum ist visuell hervorgehoben (z.B. ausgefuellter Hintergrund) | Must-Have |
 
-### 3.3 Statistiken
+### 3.3 Einkaufsstatistiken
 
 | ID | Anforderung | Prioritaet |
 |----|-------------|------------|
-| REQ-9 | Die Statistik-Sektion zeigt vier Kennzahlen: Ausgaben gesamt, Anzahl Bestellungen, Lieblingsprodukt, Gesundheits-Score | Must-Have |
-| REQ-10 | "Ausgaben gesamt": Summe aller Kaufpreise der abgeholten Bestellungen (status = picked_up) im gewaehlten Zeitraum, in Euro mit zwei Nachkommastellen | Must-Have |
-| REQ-11 | "Anzahl Bestellungen": Gesamtanzahl der abgeholten Bestellungen (status = picked_up) im gewaehlten Zeitraum | Must-Have |
-| REQ-12 | "Lieblingsprodukt": das Produkt mit der hoechsten Bestellhaeufigkeit (Anzahl Vorkommen in purchase_items) im gewaehlten Zeitraum; bei Gleichstand wird alphabetisch das erste Produkt angezeigt | Must-Have |
-| REQ-13 | Hat der Mitarbeiter im gewaehlten Zeitraum keine Bestellungen, wird fuer das Lieblingsprodukt "Noch keine Bestellungen" angezeigt | Must-Have |
-| REQ-14 | "Gesundheits-Score": ganzzahliger Wert von 1 bis 10; serverseitig berechnet aus den Naehrwerten (calories, sugar, fat) und Boni fuer vegane/glutenfreie Produkte der abgeholten Bestellungen im gewaehlten Zeitraum; hoeher = gesuender | Must-Have |
-| REQ-15 | Hat der Mitarbeiter im gewaehlten Zeitraum keine Bestellungen, wird der Gesundheits-Score nicht berechnet und stattdessen ein Hinweis angezeigt (z.B. "Noch kein Score") | Must-Have |
-| REQ-16 | Alle vier Statistiken werden gleichzeitig in einem API-Call abgerufen (ein Endpunkt fuer alle Profil-Statistiken des eingeloggten Nutzers) | Must-Have |
+| REQ-9 | Die Einkaufs-Sektion zeigt eine Kennzahlen-Uebersicht und rechts daneben einen "Kaufhistorie"-Link | Must-Have |
+| REQ-10 | Kennzahlen (immer sichtbar, zeitraeume-unabhaengig): Gesamt-Einkaufsanzahl (alle abgeholten Bestellungen aller Zeiten), Anzahl Einkauefe in den letzten 7 Tagen, Datum des letzten Einkaufs (DD.MM.YYYY) | Must-Have |
+| REQ-11 | Ausgaben nach Zeitraum (immer alle drei gleichzeitig sichtbar): Ausgaben diese Woche (€), Ausgaben diesen Monat (€), Ausgaben dieses Jahr (€) | Must-Have |
+| REQ-12 | "Lieblingsprodukt": das Produkt mit der hoechsten Bestellhaeufigkeit (alle Zeiten); bei Gleichstand alphabetisch das erste | Must-Have |
+| REQ-13 | Hat der Mitarbeiter noch keine Bestellungen, wird "Noch keine Einkauefe" angezeigt | Must-Have |
+| REQ-14 | "Gesundheits-Score": ganzzahliger Wert von 1 bis 10; serverseitig berechnet aus den Naehrwerten (calories, sugar, fat) und Boni fuer vegane/glutenfreie Produkte aller abgeholten Bestellungen; hoeher = gesuender | Must-Have |
+| REQ-15 | Hat der Mitarbeiter noch keine Bestellungen, wird der Gesundheits-Score nicht berechnet und "Noch kein Score" angezeigt | Must-Have |
+| REQ-16 | Alle Statistiken und Bonuspunkte-Daten werden in einem API-Call abgerufen | Must-Have |
 
 ### 3.4 Bestellverlauf
 
@@ -252,8 +282,9 @@ Die genaue Formel obliegt dem Solution Architect. Die fachlichen Anforderungen s
 
 | Thema | Begruendung |
 |-------|-------------|
-| Profil-Daten bearbeiten (Name, Passwort) | Explizit ausgeschlossen — Profil-Seite ist rein lesend |
-| Profilbild / Avatar | Out of Scope fuer MVP |
+| Profil-Daten bearbeiten (Name, Passwort) | Explizit ausgeschlossen in FEAT-20 — Profil-Seite ist rein lesend |
+| Guthaben aufladen + Zahlungsmethode | FEAT-24 |
+| Profilbild hochladen / Avatar aendern | Out of Scope fuer MVP — Avatar wird als Platzhalter angezeigt |
 | Push-Benachrichtigungen oder Erinnerungen | Eigenes Feature |
 | Export der Bestellhistorie (PDF/CSV) | Out of Scope fuer MVP |
 | Pagination des Bestellverlaufs (genaue Umsetzung) | Entscheidung obliegt Solution Architect (EC-3) |

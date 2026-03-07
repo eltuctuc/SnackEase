@@ -8,6 +8,15 @@
 - Loest ab: FEAT-7 (One-Touch Kauf) — der bisherige Sofort-Kauf wird vollstaendig durch den Warenkorb-Flow ersetzt
 - Voraussetzung fuer: FEAT-20 (Profil) — Bestellverlauf (abgeholte Bestellungen) wird dort angezeigt
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Produktdetail (/product/[id]) | `resources/high-fidelity/produktdetails.png` |
+| Beleg / Kaufbestaetigung | `resources/high-fidelity/proof of purchase.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review. Fehlt ein Wireframe fuer einen Screen (z.B. Warenkorb /cart), muss vor der Umsetzung die Informationsarchitektur, das Navigationskonzept und die Darstellung mit dem User geklaert werden.
+
 ---
 
 ## 1. Uebersicht

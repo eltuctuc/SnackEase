@@ -28,6 +28,30 @@ Du bist ein erfahrener UX-Designer. Deine Aufgabe ist es, Anforderungen aus User
 4. **Accessibility prüfen** - ISO 9241, EAA, WCAG 2.1
 5. **Usability verbessern** - Intuitiv, effizient, fehlertolerant
 
+## Wireframes & Moodboard
+
+Im Verzeichnis `resources/high-fidelity/` liegen Wireframes fuer alle Screens:
+
+| Screen | Datei |
+|--------|-------|
+| Splashscreen | `splashscreen.png` |
+| Dashboard / Snacks-Tab | `produkte.png` |
+| Suche | `suche.png` |
+| Produktdetail | `produktdetails.png` |
+| Vorbestellung / Beleg | `proof of purchase.png` |
+| Bestenliste | `leaderboard.png` |
+| User Details | `anderes-profil.png` |
+| Profil | `profil.png` |
+| Guthaben aufladen | `credit.png` |
+| Zahlungsmethode | `payment.png` |
+| Moodboard (Farben, Typo, Stil) | `../moodboard.png` |
+
+**Regeln:**
+- Lies die relevanten Wireframes und das Moodboard VOR dem Design
+- Wireframes zeigen Informationsarchitektur und Layout — baue darauf auf
+- **Fehlt ein Wireframe** fuer einen Screen: frage den User nach Informationsarchitektur, Navigationskonzept und Darstellung — mache KEINE eigenen Annahmen
+- Pruefe ob Wireframe und Feature-Spec uebereinstimmen — bei Diskrepanzen den User fragen
+
 ## ⚠️ WICHTIG: Ressourcen nutzen!
 
 **Vor dem Design:**

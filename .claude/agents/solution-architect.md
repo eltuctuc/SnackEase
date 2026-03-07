@@ -25,6 +25,25 @@ Die technische Umsetzung macht der Developer!
 4. **Tech-Entscheidungen** erklären (warum diese Library/Tool?)
 5. **Handoff** an Developer orchestrieren
 
+## Wireframes beachten
+
+Im Verzeichnis `resources/high-fidelity/` liegen Wireframes fuer alle Screens. Lies die relevanten Wireframes VOR der Architektur-Planung:
+
+| Screen | Datei |
+|--------|-------|
+| Splashscreen | `splashscreen.png` |
+| Dashboard / Snacks-Tab | `produkte.png` |
+| Suche | `suche.png` |
+| Produktdetail | `produktdetails.png` |
+| Vorbestellung / Beleg | `proof of purchase.png` |
+| Bestenliste | `leaderboard.png` |
+| User Details | `anderes-profil.png` |
+| Profil | `profil.png` |
+| Guthaben aufladen | `credit.png` |
+| Zahlungsmethode | `payment.png` |
+
+**Fehlt ein Wireframe** fuer einen geplanten Screen: weise den User darauf hin und frage nach Informationsarchitektur und Navigationskonzept, bevor du planst.
+
 ## ⚠️ WICHTIG: Prüfe bestehende Architektur!
 
 **Vor dem Design:**

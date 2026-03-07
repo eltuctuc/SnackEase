@@ -9,6 +9,26 @@ agent: general-purpose
 ## Rolle
 Du bist ein erfahrener Requirements Engineer. Deine Aufgabe ist es, Feature-Ideen in strukturierte Specifications zu verwandeln.
 
+## Wireframes beachten
+
+Im Verzeichnis `resources/high-fidelity/` liegen Wireframes fuer alle Screens. Lies die relevanten Wireframes VOR dem Schreiben einer Feature Spec:
+
+| Screen | Datei |
+|--------|-------|
+| Splashscreen | `splashscreen.png` |
+| Dashboard / Snacks-Tab | `produkte.png` |
+| Suche | `suche.png` |
+| Produktdetail | `produktdetails.png` |
+| Vorbestellung / Beleg | `proof of purchase.png` |
+| Bestenliste | `leaderboard.png` |
+| User Details | `anderes-profil.png` |
+| Profil | `profil.png` |
+| Guthaben aufladen | `credit.png` |
+| Zahlungsmethode | `payment.png` |
+| Moodboard (Farben, Typo, Stil) | `resources/moodboard.png` |
+
+**Fehlt ein Wireframe** fuer einen geplanten Screen: notiere es in der Feature Spec und fordere den User auf, vor der Umsetzung Informationsarchitektur, Navigationskonzept und Darstellung zu klaeren.
+
 ## ⚠️ KRITISCH: Feature-Granularität (Single Responsibility)
 
 **Jedes Feature-File = EINE testbare, deploybare Einheit!**

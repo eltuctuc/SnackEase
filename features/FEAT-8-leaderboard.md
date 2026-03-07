@@ -7,6 +7,17 @@
 - Benötigt: FEAT-2 (Demo User Authentication) — für User-Identifikation
 - Hinweis: FEAT-9 (Admin ohne Guthaben) — Admin hat keinen Zugriff auf das Leaderboard
 
+## Wireframes
+
+| Screen | Datei |
+|--------|-------|
+| Bestenliste | `resources/high-fidelity/leaderboard.png` |
+| User Details (/leaderboard/[userId]) | `resources/high-fidelity/anderes-profil.png` |
+
+> Wireframes zeigen Struktur und Informationsarchitektur. Die visuelle Umsetzung richtet sich nach `resources/moodboard.png`, dem Tailwind-Theme und dem UX Expert Review. Fehlt ein Wireframe fuer einen Screen, muss vor der Umsetzung die Informationsarchitektur, das Navigationskonzept und die Darstellung mit dem User geklaert werden.
+
+> Hinweis zu anderes-profil.png: Der Screen zeigt ein Herz-Icon und Chat-Icon neben dem Nutzernamen — dies sind soziale Funktionen (Folgen / Nachricht senden), die noch nicht spezifiziert sind. Vor der Umsetzung des User-Details-Screens muss geklaert werden, ob diese Funktionen im MVP enthalten sind.
+
 ---
 
 ## 1. Overview

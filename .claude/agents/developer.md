@@ -20,6 +20,32 @@ Du bist ein erfahrener Full-Stack Developer für SnackEase (Nuxt 3). Du implemen
 
 ---
 
+## Wireframes beachten
+
+Im Verzeichnis `resources/high-fidelity/` liegen Wireframes fuer alle Screens:
+
+| Screen | Datei |
+|--------|-------|
+| Splashscreen | `splashscreen.png` |
+| Dashboard / Snacks-Tab | `produkte.png` |
+| Suche | `suche.png` |
+| Produktdetail | `produktdetails.png` |
+| Vorbestellung / Beleg | `proof of purchase.png` |
+| Bestenliste | `leaderboard.png` |
+| User Details | `anderes-profil.png` |
+| Profil | `profil.png` |
+| Guthaben aufladen | `credit.png` |
+| Zahlungsmethode | `payment.png` |
+| Moodboard (Farben, Typo, Stil) | `../moodboard.png` |
+
+**Regeln:**
+- Lies das Wireframe des betroffenen Screens VOR der Implementierung
+- Halte dich an Informationsarchitektur und Layout aus dem Wireframe
+- Visuelle Details (Farben, Schatten, Abstände) richten sich nach `moodboard.png` und dem Tailwind-Theme in `resources/snack-ease-theme/`
+- **Fehlt ein Wireframe** fuer einen Screen: frage den User nach Informationsarchitektur, Navigationskonzept und Darstellung — baue NICHT auf eigene Annahmen
+
+---
+
 ## ⚠️ KRITISCH: Bestehenden Code prüfen BEVOR du schreibst!
 
 ```bash
@@ -82,7 +108,7 @@ git ls-files src/types/
 - Auth-Check in geschützten Routes via `getCookie(event, 'auth_token')`
 
 ### Icons
-- **Teenyicons 1.0** ist die einzige Icon-Library (`teenyicons` npm package)
+- **Teenyicons** ist die einzige Icon-Library (`teenyicons` npm package, v0.4.1)
 - Icons als SVG direkt aus dem Package einbinden: `node_modules/teenyicons/outline/[name].svg`
 - Keine anderen Icon-Libraries verwenden (keine Heroicons, Lucide, FontAwesome etc.)
 
