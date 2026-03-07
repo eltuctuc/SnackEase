@@ -119,8 +119,8 @@ function getClientIp(event: any): string {
  * (Konfiguration siehe: src/constants/auth.ts → RATE_LIMIT_CONFIG)
  */
 function checkRateLimit(clientIp: string): boolean {
-  // Rate-Limiting nur in Production aktiv
-  if (process.env.NODE_ENV !== 'production') {
+  // Rate-Limiting nur in Production aktiv (nicht in CI/Tests)
+  if (process.env.NODE_ENV !== 'production' || process.env.CI === 'true') {
     return true;
   }
 
