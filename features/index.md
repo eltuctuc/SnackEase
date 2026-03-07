@@ -16,7 +16,7 @@
 | FEAT-8 | Leaderboard | ✅ Implementiert | Rangliste nach Bonuspunkten |
 | FEAT-9 | Admin ohne Guthaben | ✅ Implementiert | Admin sieht kein eigenes Guthaben |
 | FEAT-10 | Erweitertes Admin-Dashboard | ✅ Implementiert | Nutzer/Produkte/Kategorien/Statistiken |
-| FEAT-11 | Bestellabholung am Automaten | 🔵 Geplant | NFC/PIN-Simulation, 2h Abholfrist |
+| FEAT-11 | Bestellabholung am Automaten | ✅ Implementiert | NFC/PIN-Simulation, 2h Abholfrist |
 | FEAT-12 | Bestandsverwaltung | ✅ Implementiert | Produktbestände im Automaten verwalten |
 | FEAT-13 | Low-Stock-Benachrichtigungen | 🔵 Geplant | Admin-Benachrichtigungen bei niedrigem Bestand |
 
