@@ -54,6 +54,9 @@ const { formatPrice } = useFormatter()
 /** Loading-State für Button-Animation */
 const isLoading = ref(false)
 
+/** Inline-Fehlermeldung statt Browser-Alert */
+const inlineError = ref<string | null>(null)
+
 // ========================================
 // COMPUTED
 // ========================================
@@ -141,6 +144,7 @@ async function handlePurchase() {
   if (isLoading.value) return
 
   isLoading.value = true
+  inlineError.value = null
 
   try {
     const result = await purchasesStore.purchase(props.product.id)
@@ -149,37 +153,42 @@ async function handlePurchase() {
       // Erfolg: Modal öffnen
       emit('purchaseSuccess')
     } else {
-      // Fehler: Toast anzeigen
-      showErrorToast(result.error)
+      // Fehler: Inline anzeigen
+      inlineError.value = result.error || 'Kauf fehlgeschlagen.'
+      setTimeout(() => { inlineError.value = null }, 5000)
     }
   } catch (err) {
     // Netzwerk-Fehler
-    showErrorToast('Verbindungsfehler. Bitte erneut versuchen.')
+    inlineError.value = 'Verbindungsfehler. Bitte erneut versuchen.'
+    setTimeout(() => { inlineError.value = null }, 5000)
   } finally {
     isLoading.value = false
   }
-}
-
-/**
- * Zeigt Fehler-Toast
- * 
- * @param message - Fehlermeldung
- */
-function showErrorToast(message: string) {
-  // TODO: Toast-Notification-System integrieren
-  // Für MVP: Browser-Alert (kann später durch toast-Library ersetzt werden)
-  alert(`❌ ${message}`)
 }
 </script>
 
 <template>
   <div class="mt-3">
-    <!-- Low-Stock-Warnung (FEAT-12) -->
+    <!-- Bestandsanzeige (FEAT-12) -->
     <div
-      v-if="isLowStock"
-      class="text-xs text-yellow-600 mb-1 font-medium"
+      v-if="!isInStock"
+      class="text-xs text-red-600 mb-1 font-medium"
+      aria-live="polite"
     >
-      ⚠️ Nur noch {{ product.stock }} Stück verfügbar
+      Ausverkauft
+    </div>
+    <div
+      v-else-if="isLowStock"
+      class="text-xs text-yellow-600 mb-1 font-medium"
+      aria-live="polite"
+    >
+      Nur noch {{ product.stock }} Stück verfügbar
+    </div>
+    <div
+      v-else
+      class="text-xs text-green-600 mb-1 font-medium"
+    >
+      {{ product.stock }} Stück verfügbar
     </div>
 
     <!-- Kaufen-Button -->
@@ -187,23 +196,37 @@ function showErrorToast(message: string) {
       @click="handlePurchase"
       :disabled="isDisabled"
       :class="[
-        'w-full py-2 px-4 rounded-lg font-medium transition-all text-sm',
+        'w-full py-2 px-4 rounded-lg font-medium transition-all text-sm inline-flex items-center justify-center gap-2',
+        isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
         buttonClass
       ]"
       :aria-label="`${product.name} für ${formatPrice(product.price)} Euro kaufen`"
+      :aria-busy="isLoading"
     >
-      <!-- Loading-Spinner -->
-      <span v-if="isLoading" class="inline-block animate-spin mr-2">⏳</span>
-      
+      <!-- Loading-Spinner (SVG statt Emoji) -->
+      <svg v-if="isLoading" class="animate-spin w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
       {{ buttonText }}
     </button>
+
+    <!-- Inline-Fehlermeldung -->
+    <div
+      v-if="inlineError"
+      role="alert"
+      aria-live="assertive"
+      class="mt-1 text-xs text-red-600 font-medium text-center"
+    >
+      {{ inlineError }}
+    </div>
 
     <!-- Bonuspunkte-Hinweis -->
     <div
       v-if="isInStock && canAfford"
       class="text-xs text-muted-foreground mt-1 text-center"
     >
-      🏆 Bonuspunkte sammeln
+      Bonuspunkte sammeln
     </div>
   </div>
 </template>

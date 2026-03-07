@@ -7,6 +7,7 @@ const navItems = [
   { label: 'Nutzer', path: '/admin/users' },
   { label: 'Produkte', path: '/admin/products' },
   { label: 'Kategorien', path: '/admin/categories' },
+  { label: 'Bestand', path: '/admin/inventory' },
 ]
 
 const isActive = (path: string) => {
@@ -57,7 +58,8 @@ const handleLogout = async () => {
           </span>
           <button
             @click="handleLogout"
-            class="py-1.5 px-3 text-sm border border-border text-muted-foreground rounded-md hover:bg-accent hover:text-foreground transition-colors"
+            class="py-1.5 px-3 text-sm border border-border text-muted-foreground rounded-md hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Als Admin abmelden"
           >
             Abmelden
           </button>
