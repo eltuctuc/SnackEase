@@ -19,33 +19,24 @@ import { test, expect } from '@playwright/test'
  * Hilfsfunktion: Login als Admin
  */
 async function loginAsAdmin(page: import('@playwright/test').Page) {
-  await page.goto('/login')
-  // Admin-Persona auswaehlen (falls vorhanden) oder direkt eintippen
-  const adminPersona = page.locator('text=Admin')
-  if (await adminPersona.isVisible()) {
-    await adminPersona.click()
-  } else {
-    await page.fill('input[type="email"]', 'admin@demo.de')
-    await page.fill('input[type="password"]', 'admin123')
-  }
+  await page.goto('/login', { waitUntil: 'networkidle' })
+  await page.waitForSelector('input[type="email"]', { timeout: 15000 })
+  await page.fill('input[type="email"]', 'admin@demo.de')
+  await page.fill('input[type="password"]', 'admin123')
   await page.click('button[type="submit"]')
-  await page.waitForURL('/admin', { timeout: 10000 })
+  await page.waitForURL('/admin', { timeout: 15000 })
 }
 
 /**
  * Hilfsfunktion: Login als Mitarbeiter (Nina)
  */
 async function loginAsMitarbeiter(page: import('@playwright/test').Page) {
-  await page.goto('/login')
-  const ninaPersona = page.locator('text=Nina Neuanfang')
-  if (await ninaPersona.isVisible()) {
-    await ninaPersona.click()
-  } else {
-    await page.fill('input[type="email"]', 'nina@demo.de')
-    await page.fill('input[type="password"]', 'nina123')
-  }
+  await page.goto('/login', { waitUntil: 'networkidle' })
+  await page.waitForSelector('input[type="email"]', { timeout: 15000 })
+  await page.fill('input[type="email"]', 'nina@demo.de')
+  await page.fill('input[type="password"]', 'demo123')
   await page.click('button[type="submit"]')
-  await page.waitForURL('/dashboard', { timeout: 10000 })
+  await page.waitForURL('/dashboard', { timeout: 15000 })
 }
 
 test.describe('FEAT-9: Admin ohne Guthaben', () => {

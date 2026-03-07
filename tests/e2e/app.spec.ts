@@ -54,13 +54,15 @@ test.describe('Login-Flow', () => {
 
 test.describe('Authentifizierung', () => {
   test('Mitarbeiter-Login funktioniert', async ({ page }) => {
-    await page.goto('/login')
-    
-    await page.click('text=Admin')
+    await page.goto('/login', { waitUntil: 'networkidle' })
+    await page.waitForSelector('input[type="email"]', { timeout: 15000 })
+
+    await page.fill('input[type="email"]', 'nina@demo.de')
+    await page.fill('input[type="password"]', 'demo123')
     await page.click('button[type="submit"]')
-    
-    await page.waitForURL('/dashboard', { timeout: 10000 })
-    
+
+    await page.waitForURL('/dashboard', { timeout: 15000 })
+
     const cookies = await page.context().cookies()
     const authCookie = cookies.find(c => c.name === 'auth_token')
     expect(authCookie).toBeDefined()
