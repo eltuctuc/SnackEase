@@ -218,7 +218,13 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | STAT-02 | Ausgaben-Statistik | Bereits ausgegebene Beträge | ⏳ Offen |
 | STAT-04 | Nährwert-Zusammenfassung | Zucker, Fett, Kalorien, Eiweiß | ⏳ Offen |
 
-### Release 5: Future
+### Release 5: Angebote & Erweiterungen
+
+| ID | Feature | Beschreibung | Status |
+|----|---------|--------------|--------|
+| FEAT-14 | Angebote & Rabatte | Admin kann zeitlich begrenzte Rabatte (% oder EUR) pro Produkt erstellen; automatische Aktivierung nach Datum; Angebotspreis fuer User sichtbar | Planned |
+
+### Release 6: Future
 
 | ID | Feature | Beschreibung |
 |----|---------|--------------|
@@ -227,6 +233,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 | SUP-01 | Kundensupport | Kontakt über App |
 | SUP-02 | Feedback | Verbesserungsvorschläge |
 | - | Gruppenbestellungen | Team-Bestellungen |
+| - | Mehrere Angebote pro Produkt | Zeitlich versetzte Angebote (FEAT-14 Future Scope) |
+| - | Wochentag-Angebote | Produkte nur an bestimmten Wochentagen im Angebot (FEAT-14 Future Scope) |
 
 ---
 
@@ -247,8 +255,8 @@ Eine Employee Snack Kiosk App, die eine gesunde, bequeme und köstliche Erfahrun
 
 ## Version
 
-- **Version:** 2.3
+- **Version:** 2.4
 - **Status:** Draft
 - **Erstellt:** 2026-02-24
-- **Letzte Änderung:** 2026-03-04
-- **Änderungen:** FEAT-10 Erweitertes Admin-Dashboard hinzugefügt
+- **Letzte Änderung:** 2026-03-07
+- **Änderungen:** FEAT-14 Angebote & Rabatte hinzugefügt
