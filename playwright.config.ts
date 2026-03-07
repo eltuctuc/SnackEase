@@ -72,7 +72,7 @@ export default defineConfig({
 
   // Webserver starten für Tests
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'node .output/server/index.mjs' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
