@@ -133,33 +133,21 @@ const openDeleteModal = async (category: AdminCategory) => {
   productsNeedingReassign.value = []
   showDeleteModal.value = true
 
-  // Prüfen ob Produkte neu zugeordnet werden müssen
+  // Prüfen welche Produkte neu zugeordnet werden müssen (ohne zu löschen)
   if (category.productCount > 0) {
     isLoadingDeleteInfo.value = true
     try {
-      // Versuche zu löschen ohne Neuzuweisungen um betroffene Produkte zu ermitteln
-      await $fetch(`/api/admin/categories/${category.id}`, {
-        method: 'DELETE',
-        body: { productReassignments: [] },
-      })
-      // Wenn kein Fehler: Alle Produkte haben andere Kategorien, direkt löschen möglich
-      showDeleteModal.value = false
-      successMsg.value = `Kategorie "${category.name}" gelöscht`
-      await fetchCategories()
-    } catch (e: unknown) {
-      const err = e as { data?: { productsNeedingReassignment?: Array<{ id: number; name: string }> }; message?: string }
-      if (err.data?.productsNeedingReassignment) {
-        // Produkte die neu zugeordnet werden müssen
-        productsNeedingReassign.value = err.data.productsNeedingReassignment.map(p => ({
-          id: p.id,
-          name: p.name,
-          newCategoryId: null,
-        }))
-        // Andere Kategorien als Optionen (ohne die zu löschende)
-        reassignCategoryOptions.value = categories.value.filter(c => c.id !== category.id)
-      } else {
-        deleteError.value = err.message || 'Fehler beim Vorbereiten der Löschung'
+      const data = await $fetch(`/api/admin/categories/${category.id}/deletion-check`) as {
+        productsNeedingReassignment: Array<{ id: number; name: string }>
       }
+      productsNeedingReassign.value = data.productsNeedingReassignment.map(p => ({
+        id: p.id,
+        name: p.name,
+        newCategoryId: null,
+      }))
+      reassignCategoryOptions.value = categories.value.filter(c => c.id !== category.id)
+    } catch (e: unknown) {
+      deleteError.value = (e as { message?: string }).message || 'Fehler beim Vorbereiten der Löschung'
     } finally {
       isLoadingDeleteInfo.value = false
     }
@@ -419,41 +407,50 @@ onMounted(async () => {
             <p class="text-muted-foreground text-sm">Prüfe betroffene Produkte...</p>
           </div>
 
-          <!-- Produkte die neu zugeordnet werden müssen -->
-          <div v-else-if="productsNeedingReassign.length > 0">
-            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p class="text-yellow-800 text-sm font-medium">
-                {{ productsNeedingReassign.length }} Produkt(e) haben nur diese Kategorie und müssen neu zugeordnet werden:
+          <div v-else>
+            <!-- Produkte die neu zugeordnet werden müssen -->
+            <div v-if="productsNeedingReassign.length > 0">
+              <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-yellow-800 text-sm font-medium">
+                  {{ productsNeedingReassign.length }} Produkt(e) haben nur diese Kategorie und müssen neu zugeordnet werden:
+                </p>
+              </div>
+
+              <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                <div
+                  v-for="product in productsNeedingReassign"
+                  :key="product.id"
+                  class="flex items-center gap-3 p-3 border rounded-lg"
+                >
+                  <span class="text-red-500 font-bold text-lg flex-shrink-0">!</span>
+                  <span class="text-sm font-medium flex-1">{{ product.name }}</span>
+                  <select
+                    v-model="product.newCategoryId"
+                    class="px-2 py-1 border rounded text-sm focus:ring-1 focus:ring-primary focus:border-primary"
+                  >
+                    <option :value="null" disabled>Neue Kategorie...</option>
+                    <option
+                      v-for="cat in reassignCategoryOptions"
+                      :key="cat.id"
+                      :value="cat.id"
+                    >
+                      {{ cat.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <p class="text-xs text-muted-foreground mb-4">
+                Bitte weisen Sie allen markierten Produkten eine neue Kategorie zu, bevor Sie löschen.
               </p>
             </div>
 
-            <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
-              <div
-                v-for="product in productsNeedingReassign"
-                :key="product.id"
-                class="flex items-center gap-3 p-3 border rounded-lg"
-              >
-                <span class="text-red-500 font-bold text-lg flex-shrink-0">!</span>
-                <span class="text-sm font-medium flex-1">{{ product.name }}</span>
-                <select
-                  v-model="product.newCategoryId"
-                  class="px-2 py-1 border rounded text-sm focus:ring-1 focus:ring-primary focus:border-primary"
-                >
-                  <option :value="null" disabled>Neue Kategorie...</option>
-                  <option
-                    v-for="cat in reassignCategoryOptions"
-                    :key="cat.id"
-                    :value="cat.id"
-                  >
-                    {{ cat.name }}
-                  </option>
-                </select>
-              </div>
+            <!-- Bestätigung wenn keine Neuzuordnung nötig -->
+            <div v-else class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-red-800 text-sm">
+                Kategorie <strong>{{ deletingCategory?.name }}</strong> wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
             </div>
-
-            <p class="text-xs text-muted-foreground mb-4">
-              Bitte weisen Sie allen markierten Produkten eine neue Kategorie zu, bevor Sie löschen.
-            </p>
           </div>
 
           <div v-if="deleteError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -464,13 +461,14 @@ onMounted(async () => {
             <button @click="closeDeleteModal" class="flex-1 py-2.5 border border-border text-foreground rounded-lg font-medium hover:bg-accent transition-colors text-sm">
               Abbrechen
             </button>
+            <!-- Confirm-Button immer sichtbar (außer während Ladevorgang) -->
             <button
-              v-if="productsNeedingReassign.length > 0"
+              v-if="!isLoadingDeleteInfo"
               @click="handleDeleteCategory"
-              :disabled="!canDelete || isDeleting"
+              :disabled="(productsNeedingReassign.length > 0 && !canDelete) || isDeleting"
               class="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              {{ isDeleting ? 'Wird gelöscht...' : 'Löschen und neu zuordnen' }}
+              {{ isDeleting ? 'Wird gelöscht...' : productsNeedingReassign.length > 0 ? 'Löschen und neu zuordnen' : 'Löschen bestätigen' }}
             </button>
           </div>
         </div>
