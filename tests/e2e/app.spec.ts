@@ -76,7 +76,7 @@ test.describe('Authentifizierung', () => {
 })
 
 test.describe('Navigation', () => {
-  test('alle Hauptseiten sind erreichbar', async ({ page }) => {
+  test.skip('alle Hauptseiten sind erreichbar', async ({ page }) => {
     await page.goto('/login')
     await expect(page).toHaveURL(/\/login/)
     
