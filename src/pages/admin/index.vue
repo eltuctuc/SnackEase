@@ -120,10 +120,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background">
-    <AdminNav />
-
-    <div class="max-w-7xl mx-auto px-6 py-8">
+  <div>
+    <div class="max-w-7xl mx-auto px-4 md:px-6 py-8">
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-foreground">Dashboard</h1>
         <p class="text-sm text-muted-foreground mt-1">Systemübersicht und Reset-Funktionen</p>

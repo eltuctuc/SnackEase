@@ -98,22 +98,14 @@ function handlePeriodKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="min-h-screen bg-background pb-20 md:pb-0 md:pl-56 pt-14 md:pt-0">
+    <UserHeader />
+
     <div class="max-w-xl mx-auto px-4 py-6">
 
-      <!-- Header (REQ-1) -->
-      <div class="flex items-center justify-between mb-6">
-        <NuxtLink
-          to="/dashboard"
-          class="inline-flex items-center gap-1 text-sm text-foreground hover:text-primary focus:ring-2 focus:ring-primary rounded"
-        >
-          <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-          Dashboard
-        </NuxtLink>
-        <h1 class="text-xl font-bold text-primary">Leaderboard</h1>
-        <div class="w-20" />
+      <!-- Header -->
+      <div class="mb-6">
+        <h1 class="text-xl font-bold text-primary">Bestenliste</h1>
       </div>
 
       <!-- Tabs (REQ-2) -->

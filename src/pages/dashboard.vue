@@ -1,18 +1,18 @@
 <!--
   Dashboard - Hauptseite für Mitarbeiter & Admins
-  
+
   Diese Seite orchestriert die Haupt-Components:
   - BalanceCard: Guthaben-Anzeige mit Auflade-Buttons
   - ProductGrid: Produktkatalog mit Suche und Filtern
   - RechargeModal: Modal für Guthaben-Aufladung
   - ProductDetailModal: Modal für Produkt-Details
-  
+
   REFACTORING: Die meiste UI-Logik wurde in wiederverwendbare
   Components extrahiert. Diese Seite kümmert sich nur noch um:
   - State-Management (Stores)
   - Event-Handling zwischen Components
   - Routing und Auth
-  
+
   @page
 -->
 
@@ -30,7 +30,7 @@ import ProductDetailModal from '~/components/dashboard/ProductDetailModal.vue'
 
 /**
  * useModal für Recharge-Modal
- * 
+ *
  * Verwaltet Show/Hide-State und Keyboard-Handling (ESC)
  */
 const {
@@ -41,7 +41,7 @@ const {
 
 /**
  * useModal für Product-Detail-Modal
- * 
+ *
  * Verwaltet Show/Hide-State und Keyboard-Handling (ESC)
  */
 const {
@@ -75,7 +75,7 @@ const pageReady = ref(false)
 
 /**
  * Verfügbare Produkt-Kategorien mit Icons
- * 
+ *
  * Diese werden als Filter-Buttons über dem Produktkatalog angezeigt.
  * Die Kategorie 'alle' zeigt alle Produkte ohne Filter.
  */
@@ -95,18 +95,18 @@ const categories: ProductCategoryOption[] = [
 
 /**
  * Component-Mounted-Hook
- * 
+ *
  * @description
  * Initialisiert die Dashboard-Seite beim Laden:
- * 
+ *
  * 1. Auth-Check:
  *    - Prüft ob User eingeloggt ist (via Cookie)
  *    - Leitet zu /login weiter falls nicht authentifiziert
- * 
+ *
  * 2. Daten laden:
  *    - Guthaben-Stand abrufen (GET /api/credits/balance)
  *    - Produkt-Katalog laden (GET /api/products)
- * 
+ *
  * WICHTIG: Keyboard-Events werden jetzt von Components selbst gehandelt
  */
 onMounted(async () => {
@@ -132,29 +132,12 @@ onMounted(async () => {
 })
 
 // ========================================
-// EVENT HANDLERS - Auth & Navigation
-// ========================================
-
-/**
- * Meldet den User ab und leitet zum Login weiter
- * 
- * @description
- * Ruft den Store-Action auf, der:
- * - Session-Cookie löscht
- * - Store-State zurücksetzt
- * - Zur Login-Page navigiert
- */
-const logout = () => {
-  authStore.logout()
-}
-
-// ========================================
 // EVENT HANDLERS - Balance Card
 // ========================================
 
 /**
  * Schließt das Recharge-Modal und resettet Error
- * 
+ *
  * @description
  * Erweitert den useModal close() mit zusätzlichem Error-Reset.
  */
@@ -165,9 +148,9 @@ const handleCloseRechargeModal = () => {
 
 /**
  * Führt Guthaben-Aufladung durch
- * 
+ *
  * @param amount - Auflade-Betrag ('10' | '25' | '50')
- * 
+ *
  * @description
  * Wird von RechargeModal getriggert wenn User auf "Jetzt aufladen" klickt.
  * Ruft Store-Action auf die den API-Call macht.
@@ -178,7 +161,7 @@ const handleRecharge = async (amount: string) => {
 
 /**
  * Löst Monatspauschale-Abruf aus
- * 
+ *
  * @description
  * Mitarbeiter können einmal pro Monat 25€ Pauschale abrufen.
  * Backend prüft ob User bereits in diesem Monat abgerufen hat.
@@ -201,14 +184,14 @@ const dismissBalanceError = () => {
 
 /**
  * Führt Produkt-Suche aus
- * 
+ *
  * @param query - Suchbegriff
- * 
+ *
  * @description
  * Wird getriggert durch:
  * - Enter-Taste im Suchfeld
  * - Klick auf "Suchen"-Button
- * 
+ *
  * BUG-FEAT6-001 Fix: Bei aktiver Suche wird Kategorie auf "alle" zurückgesetzt,
  * damit kategorie-übergreifend gesucht wird (wie Amazon/eBay Standard).
  */
@@ -225,7 +208,7 @@ const handleSearch = (query: string) => {
 
 /**
  * Setzt Kategorie-Filter und lädt gefilterte Produkte
- * 
+ *
  * @param category - Kategorie-ID (z.B. 'obst', 'shakes', 'alle')
  */
 const handleCategorySelect = (category: string) => {
@@ -235,9 +218,9 @@ const handleCategorySelect = (category: string) => {
 
 /**
  * Öffnet Produkt-Detail-Modal
- * 
+ *
  * @param product - Angeklicktes Produkt
- * 
+ *
  * @description
  * - Setzt selectedProduct
  * - Öffnet Modal via useModal
@@ -249,7 +232,7 @@ const handleProductClick = (product: Product) => {
 
 /**
  * Schließt Produkt-Detail-Modal
- * 
+ *
  * @description
  * Erweitert den useModal close() mit Product-Reset.
  */
@@ -257,168 +240,96 @@ const handleCloseProductDetailModal = () => {
   closeProductDetailModal()
   selectedProductDetail.value = null
 }
-
-// ========================================
-// COMPUTED PROPERTIES - Derived State
-// ========================================
-
-/**
- * Zeigt Admin-Link nur für Admin-User
- * 
- * @description
- * Bestimmt ob der "Admin-Bereich"-Link angezeigt wird.
- * Nur Admins haben Zugriff auf /admin Routes.
- */
-const showAdminLink = computed(() => {
-  return authStore.user?.role === 'admin'
-})
 </script>
 
 <template>
-  <div class="min-h-screen bg-background p-8">
-    <div class="max-w-4xl mx-auto">
-      <!-- Header mit User-Info -->
-      <div class="flex justify-between items-center mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-primary">Dashboard</h1>
-          <p v-if="authStore.user" class="text-sm text-muted-foreground mt-1">
-            Angemeldet als {{ authStore.user.name }} 
-            <span v-if="authStore.user.location">({{ authStore.user.location }})</span>
-            <span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-              {{ authStore.user.role }}
-            </span>
-          </p>
+  <div class="max-w-4xl mx-auto p-4 md:p-8">
+    <!-- Lade-Skeleton bis alle Daten bereit sind (verhindert Flash von Default-Werten) -->
+    <template v-if="!pageReady">
+      <div class="grid gap-6 mb-8">
+        <!-- Admin-Skeleton: Neutraler Info-Banner ohne Buttons -->
+        <div v-if="authStore.isAdmin" class="rounded-lg p-6 border-2 bg-blue-50 border-blue-200 animate-pulse">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-300"></div>
+            <div class="flex-1">
+              <div class="h-4 bg-blue-300 rounded w-32 mb-2"></div>
+              <div class="h-3 bg-blue-200 rounded w-48"></div>
+            </div>
+          </div>
         </div>
-        
-        <button 
-          @click="logout"
-          class="py-2 px-4 border border-primary text-primary rounded-lg font-medium hover:bg-primary/10 transition-colors"
-        >
-          Abmelden
-        </button>
+
+        <!-- Mitarbeiter-Skeleton: BalanceCard mit Buttons -->
+        <div v-else class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="h-3 bg-gray-300 rounded w-16 mb-2"></div>
+              <div class="h-10 bg-gray-300 rounded w-28"></div>
+            </div>
+            <div class="w-4 h-4 rounded-full bg-gray-300"></div>
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+            <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
+          </div>
+        </div>
       </div>
-      
-      <!-- Admin-Link -->
-      <NuxtLink
-        v-if="showAdminLink"
-        to="/admin"
-        class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4"
-      >
-        → Admin-Bereich
-      </NuxtLink>
-
-      <!-- Leaderboard-Link (nur für Mitarbeiter, FEAT-8 US-1 / REQ-1) -->
-      <NuxtLink
-        v-if="!showAdminLink"
-        to="/leaderboard"
-        class="inline-flex items-center gap-1 text-sm text-foreground hover:text-primary mb-4 ml-4"
-      >
-        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
-        </svg>
-        Leaderboard
-      </NuxtLink>
-
-      <!-- Bestellungen-Link (nur für Mitarbeiter, FEAT-11) -->
-      <NuxtLink
-        v-if="!showAdminLink"
-        to="/orders"
-        class="inline-flex items-center gap-1 text-sm text-foreground hover:text-primary mb-4 ml-4"
-        data-testid="orders-nav-link"
-      >
-        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-        </svg>
-        Meine Bestellungen
-      </NuxtLink>
-
-      <!-- Lade-Skeleton bis alle Daten bereit sind (verhindert Flash von Default-Werten) -->
-      <template v-if="!pageReady">
-        <div class="grid gap-6 mb-8">
-          <!-- Admin-Skeleton: Neutraler Info-Banner ohne Buttons (BUG-FEAT9-002 Fix) -->
-          <div v-if="authStore.isAdmin" class="rounded-lg p-6 border-2 bg-blue-50 border-blue-200 animate-pulse">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-blue-300"></div>
-              <div class="flex-1">
-                <div class="h-4 bg-blue-300 rounded w-32 mb-2"></div>
-                <div class="h-3 bg-blue-200 rounded w-48"></div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Mitarbeiter-Skeleton: BalanceCard mit Buttons -->
-          <div v-else class="rounded-lg p-6 border-2 bg-gray-100 border-gray-200 animate-pulse">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <div class="h-3 bg-gray-300 rounded w-16 mb-2"></div>
-                <div class="h-10 bg-gray-300 rounded w-28"></div>
-              </div>
-              <div class="w-4 h-4 rounded-full bg-gray-300"></div>
-            </div>
-            <div class="flex gap-3">
-              <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
-              <div class="flex-1 h-12 bg-gray-300 rounded-lg"></div>
-            </div>
-          </div>
+      <div class="rounded-lg border bg-gray-50 p-8 animate-pulse">
+        <div class="h-4 bg-gray-300 rounded w-1/4 mb-6"></div>
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div v-for="i in 6" :key="i" class="h-32 bg-gray-200 rounded-lg"></div>
         </div>
-        <div class="rounded-lg border bg-gray-50 p-8 animate-pulse">
-          <div class="h-4 bg-gray-300 rounded w-1/4 mb-6"></div>
-          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div v-for="i in 6" :key="i" class="h-32 bg-gray-200 rounded-lg"></div>
-          </div>
-        </div>
-      </template>
+      </div>
+    </template>
 
-      <!-- Echte Inhalte erst wenn alle Daten geladen sind -->
-      <template v-else>
-        <!-- Balance-Bereich: AdminInfoBanner fuer Admin, BalanceCard fuer Mitarbeiter -->
-        <div class="grid gap-6 mb-8">
-          <!-- Admin: zeigt Info-Banner statt Guthaben-Karte -->
-          <AdminInfoBanner v-if="authStore.isAdmin" />
+    <!-- Echte Inhalte erst wenn alle Daten geladen sind -->
+    <template v-else>
+      <!-- Balance-Bereich: AdminInfoBanner fuer Admin, BalanceCard fuer Mitarbeiter -->
+      <div class="grid gap-6 mb-8">
+        <!-- Admin: zeigt Info-Banner statt Guthaben-Karte -->
+        <AdminInfoBanner v-if="authStore.isAdmin" />
 
-          <!-- Mitarbeiter: zeigt Guthaben-Karte mit allen Aktionen -->
-          <BalanceCard
-            v-else
-            :balance="creditsStore.balance"
-            :balance-status="creditsStore.balanceStatus"
-            :last-recharged-at="creditsStore.lastRechargedAt"
-            :is-loading="creditsStore.isLoading"
-            :error="creditsStore.error"
-            @open-recharge-modal="openRechargeModal"
-            @request-monthly="handleMonthly"
-            @dismiss-error="dismissBalanceError"
-          />
-        </div>
-
-        <!-- Product Grid Component -->
-        <ProductGrid
-          :products="productsStore.products"
-          :categories="categories"
-          :selected-category="productsStore.selectedCategory"
-          :is-loading="productsStore.isLoading"
-          :error="productsStore.error"
-          @select-category="handleCategorySelect"
-          @search="handleSearch"
-          @product-click="handleProductClick"
+        <!-- Mitarbeiter: zeigt Guthaben-Karte mit allen Aktionen -->
+        <BalanceCard
+          v-else
+          :balance="creditsStore.balance"
+          :balance-status="creditsStore.balanceStatus"
+          :last-recharged-at="creditsStore.lastRechargedAt"
+          :is-loading="creditsStore.isLoading"
+          :error="creditsStore.error"
+          @open-recharge-modal="openRechargeModal"
+          @request-monthly="handleMonthly"
+          @dismiss-error="dismissBalanceError"
         />
-      </template>
-    </div>
+      </div>
 
-    <!-- Recharge Modal Component -->
-    <RechargeModal
-      :show="showRechargeModal"
-      :is-loading="creditsStore.isLoading"
-      :error="creditsStore.error"
-      @close="handleCloseRechargeModal"
-      @recharge="handleRecharge"
-      @dismiss-error="dismissBalanceError"
-    />
-
-    <!-- Product Detail Modal Component -->
-    <ProductDetailModal
-      :show="showProductDetail"
-      :product="selectedProductDetail"
-      @close="handleCloseProductDetailModal"
-    />
+      <!-- Product Grid Component -->
+      <ProductGrid
+        :products="productsStore.products"
+        :categories="categories"
+        :selected-category="productsStore.selectedCategory"
+        :is-loading="productsStore.isLoading"
+        :error="productsStore.error"
+        @select-category="handleCategorySelect"
+        @search="handleSearch"
+        @product-click="handleProductClick"
+      />
+    </template>
   </div>
+
+  <!-- Recharge Modal Component -->
+  <RechargeModal
+    :show="showRechargeModal"
+    :is-loading="creditsStore.isLoading"
+    :error="creditsStore.error"
+    @close="handleCloseRechargeModal"
+    @recharge="handleRecharge"
+    @dismiss-error="dismissBalanceError"
+  />
+
+  <!-- Product Detail Modal Component -->
+  <ProductDetailModal
+    :show="showProductDetail"
+    :product="selectedProductDetail"
+    @close="handleCloseProductDetailModal"
+  />
 </template>

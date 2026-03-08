@@ -182,24 +182,16 @@ function handlePinCancel() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="min-h-screen bg-background pb-20 md:pb-0 md:pl-56 pt-14 md:pt-0">
+    <UserHeader />
+
     <div class="max-w-2xl mx-auto px-4 py-8">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-foreground">Meine Bestellungen</h1>
-          <p v-if="pendingCount > 0" class="text-sm text-muted-foreground mt-1">
-            {{ pendingCount }} Bestellung{{ pendingCount === 1 ? '' : 'en' }} bereit zur Abholung
-          </p>
-        </div>
-
-        <!-- Zurück zum Dashboard -->
-        <NuxtLink
-          to="/dashboard"
-          class="text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
-          ← Dashboard
-        </NuxtLink>
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-foreground">Meine Bestellungen</h1>
+        <p v-if="pendingCount > 0" class="text-sm text-muted-foreground mt-1">
+          {{ pendingCount }} Bestellung{{ pendingCount === 1 ? '' : 'en' }} bereit zur Abholung
+        </p>
       </div>
 
       <!-- Demo-Hinweis -->

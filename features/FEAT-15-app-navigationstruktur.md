@@ -1,6 +1,43 @@
 ig# FEAT-15: App-Navigationstruktur
 
-## Status: Planned
+## Status: 🟢 Implemented
+
+## Implementation Notes
+
+**Status:** 🟢 Implemented
+**Developer:** Developer Agent
+**Datum:** 2026-03-08
+
+### Geänderte/Neue Dateien
+- `src/components/navigation/UserTabBar.vue` — Bottom-Tab-Bar für Mitarbeiter (Mobile)
+- `src/components/navigation/AdminTabBar.vue` — Bottom-Tab-Bar für Admins (Mobile)
+- `src/components/navigation/UserSidebar.vue` — Sidebar für Mitarbeiter (Desktop)
+- `src/components/navigation/AdminSidebar.vue` — Sidebar für Admins (Desktop)
+- `src/components/navigation/UserHeader.vue` — Header für Mitarbeiter (App-Name + Warenkorb-Icon)
+- `src/components/navigation/AdminHeader.vue` — Header für Admins (Seitentitel + Glocke)
+- `src/layouts/default.vue` — Layout mit dynamischer Sidebar/Header/TabBar je nach Route
+- `src/stores/cart.ts` — Cart Store für Warenkorb-Badge (Platzhalter für FEAT-16)
+- `src/pages/search.vue` — Platzhalter-Seite für Suche
+- `src/pages/profile.vue` — Platzhalter-Seite für Profil
+- `src/pages/cart.vue` — Platzhalter-Seite für Warenkorb
+- `src/pages/product/[id].vue` — Produktdetail-Seite mit Platzhalter-Struktur
+- `src/pages/leaderboard/[userId].vue` — Platzhalter für User-Details
+- `src/pages/admin/settings.vue` — Platzhalter für Admin-Einstellungen
+- `src/middleware/auth.global.ts` — Protected Paths erweitert um /search, /profile, /cart, /product
+- `src/components/admin/AdminNav.vue` — entfernt
+- `src/components/leaderboard/LeaderboardEntry.vue` — Klick navigiert zu /leaderboard/[userId]
+
+### Wichtige Entscheidungen
+- Layout wird in `src/layouts/default.vue` zentralisiert - Sidebar (Desktop) wird dort gerendert, Header/TabBar (Mobile) ebenfalls
+- Breakpoint bei 768px (md) - ab dort Sidebar statt TabBar
+- Warenkorb-Badge zeigt keine Zahl bei 0 (kein Badge)
+- Alle Admin-Seiten verwenden jetzt AdminHeader/AdminTabBar statt AdminNav
+- Alle User-Seiten verwenden UserHeader/UserTabBar
+
+### Bekannte Einschränkungen
+- Platzhalter-Seiten zeigen nur Hinweistext (Inhalte folgen in späteren Features)
+- Cart Store ist ein Platzhalter (API-Calls folgen in FEAT-16)
+- Bestand-Verwaltung in /admin/products integriert (nicht als separater Tab)
 
 ## Abhaengigkeiten
 - Benoetigt: FEAT-0 (SSR-Auth) - fuer serverseitiges Session-Handling und initiale Weiterleitung

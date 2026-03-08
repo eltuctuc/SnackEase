@@ -8,18 +8,25 @@ defineProps<{
   /** Welcher Wert wird angezeigt? */
   valueType: 'mostPurchased' | 'healthiest'
 }>()
+
+const router = useRouter()
+
+function handleClick() {
+  router.push(`/leaderboard/${entry.id}`)
+}
 </script>
 
 <template>
   <li
     :aria-label="`Rang ${entry.rank}: ${entry.name}, ${entry.location}, ${valueType === 'mostPurchased' ? entry.totalPurchases + ' Käufe' : entry.healthPoints + ' Punkte'}`"
     :aria-current="isOwn ? 'true' : undefined"
-    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors motion-safe:transition-colors"
+    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors motion-safe:transition-colors cursor-pointer hover:bg-accent"
     :class="[
       isOwn
         ? 'bg-blue-50 border-l-4 border-green-500'
         : 'bg-white border border-gray-100'
     ]"
+    @click="handleClick"
   >
     <!-- Rang / Trophy-Icon -->
     <div class="flex-shrink-0 w-8 text-center">
