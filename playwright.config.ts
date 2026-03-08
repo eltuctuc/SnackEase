@@ -31,13 +31,16 @@ export default defineConfig({
   use: {
     // Base URL für Tests
     baseURL: 'http://localhost:3000',
-    
+
+    // Mobile Viewport (App zeigt Header/TabBar bei < 768px)
+    viewport: { width: 375, height: 667 },
+
     // Screenshots bei Fehlern
     screenshot: 'only-on-failure',
-    
+
     // Traces bei Fehlern
     trace: 'on-first-retry',
-    
+
     // Video nur bei Fehlern
     video: 'retain-on-failure',
   },
@@ -46,7 +49,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Pixel 5'] },
     },
 
     // Optional: Weitere Browser
