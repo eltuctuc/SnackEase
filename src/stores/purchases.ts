@@ -19,15 +19,15 @@
  * @see src/server/api/orders/[id]/pickup.post.ts für Abholung
  */
 
-import type { PurchaseWithProduct, PurchaseResponse } from '~/types'
+import type { PurchaseWithProduct, PurchaseResponse, Order } from '~/types'
 
 export const usePurchasesStore = defineStore('purchases', () => {
   // ========================================
   // STATE - Reactive Properties
   // ========================================
 
-  /** Liste aller Bestellungen des Users (alle Stati) */
-  const allOrders = ref<PurchaseWithProduct[]>([])
+  /** Liste aller Bestellungen des Users (alle Stati) - FEAT-16: Order mit items */
+  const allOrders = ref<Order[]>([])
 
   /** Letzter erfolgreicher Kauf (für Success-Modal) */
   const lastPurchase = ref<PurchaseWithProduct | null>(null)
@@ -74,11 +74,11 @@ export const usePurchasesStore = defineStore('purchases', () => {
       })
 
       if (data.success) {
-        // Erfolgreicher Kauf
+        // Erfolgreicher Kauf (FEAT-7 One-Touch - veraltet, wird für Abwärtskompatibilität behalten)
         lastPurchase.value = data.purchase
 
-        // Neue Bestellung vorne in allOrders einfügen
-        allOrders.value = [data.purchase, ...allOrders.value]
+        // Hinweis: allOrders wird hier nicht aktualisiert - FEAT-16 (Warenkorb) nutzt checkout in orders.vue
+        // Neue Bestellungen werden über fetchOrders() geladen
 
         // Credits-Store aktualisieren (Guthaben wurde abgezogen)
         const creditsStore = useCreditsStore()
@@ -118,8 +118,9 @@ export const usePurchasesStore = defineStore('purchases', () => {
     error.value = null
 
     try {
-      const data = await $fetch<{ orders: PurchaseWithProduct[] }>('/api/orders')
-      allOrders.value = data.orders
+      const data = await $fetch<{ orders: Order[] }>('/api/orders')
+      // API returns Order[] with items, cast to Order type
+      allOrders.value = data.orders as unknown as Order[]
     } catch (err: unknown) {
       const e = err as { data?: { message?: string }; message?: string }
       error.value = e.data?.message || e.message || 'Fehler beim Laden der Bestellungen'

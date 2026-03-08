@@ -1,7 +1,8 @@
 import { db } from '~/server/db';
-import { products, productCategories, categories } from '~/server/db/schema';
+import { products, productCategories, categories, productOffers } from '~/server/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { requireAdmin } from '~/server/utils/auth';
+import { isOfferCurrentlyActive, calculateDiscountedPrice } from '~/server/utils/offers';
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
@@ -53,9 +54,48 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // FEAT-14: Aktive Angebote für alle Produkte in einem Query laden
+    let offersMap = new Map<number, {
+      id: number
+      discountType: string
+      discountValue: string
+      discountedPrice: string
+      startsAt: string
+      expiresAt: string
+    }>()
+
+    if (productIds.length > 0) {
+      const offers = await db
+        .select()
+        .from(productOffers)
+        .where(inArray(productOffers.productId, productIds))
+
+      for (const offer of offers) {
+        if (isOfferCurrentlyActive(offer)) {
+          const product = allProducts.find(p => p.id === offer.productId)
+          if (product) {
+            const discountedPrice = calculateDiscountedPrice(
+              parseFloat(product.price),
+              offer.discountType as 'percent' | 'absolute',
+              parseFloat(offer.discountValue),
+            )
+            offersMap.set(offer.productId, {
+              id: offer.id,
+              discountType: offer.discountType,
+              discountValue: offer.discountValue,
+              discountedPrice: discountedPrice.toFixed(2),
+              startsAt: offer.startsAt.toISOString(),
+              expiresAt: offer.expiresAt.toISOString(),
+            })
+          }
+        }
+      }
+    }
+
     const result = allProducts.map(p => ({
       ...p,
       categories: productCategoryMap[p.id] || [],
+      activeOffer: offersMap.get(p.id) ?? null,
     }));
 
     return result;

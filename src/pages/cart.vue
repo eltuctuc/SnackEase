@@ -26,12 +26,12 @@ onMounted(async () => {
 const totalPrice = computed(() => cartStore.totalPrice)
 
 // Guthaben
-const currentBalance = computed(() => creditsStore.balance)
+const currentBalance = computed(() => creditsStore.balanceNumeric)
 
 // Warnung wenn Guthaben möglicherweise nicht ausreicht
 const showInsufficientFundsWarning = computed(() => {
   if (currentBalance.value === null) return false
-  return totalPrice.value > parseFloat(currentBalance.value.toString())
+  return totalPrice.value > currentBalance.value
 })
 
 // Checkout-Funktion

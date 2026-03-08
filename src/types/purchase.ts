@@ -73,3 +73,37 @@ export type PurchaseResponse = PurchaseSuccessResponse | PurchaseErrorResponse
 export interface PurchaseRequest {
   productId: number
 }
+
+/**
+ * Einzelnes Produkt in einer Bestellung (aus purchase_items)
+ */
+export interface OrderItem {
+  productId: number
+  productName: string
+  quantity: number
+  unitPrice: string
+  imageUrl: string | null
+}
+
+/**
+ * Bestellung mit mehreren Produkten (FEAT-16 Warenkorb)
+ *
+ * Wird von GET /api/orders zurückgegeben
+ */
+export interface Order {
+  id: number
+  userId: number
+  totalPrice: string | null
+  status: PurchaseStatus
+  pickupPin: string
+  pickupLocation: string
+  expiresAt: string
+  pickedUpAt: string | null
+  cancelledAt: string | null
+  createdAt: string
+  items: OrderItem[]
+  // Legacy single-product fields (for backward compatibility with FEAT-7)
+  productName?: string
+  productImageUrl?: string | null
+  price?: string | number
+}

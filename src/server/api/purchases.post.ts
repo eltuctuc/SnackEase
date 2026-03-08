@@ -45,7 +45,7 @@
 
 import { db } from '~/server/db'
 import { products, purchases, purchaseItems, lowStockNotifications, productOffers } from '~/server/db/schema'
-import { eq, sql, and } from 'drizzle-orm'
+import { eq, sql, and, inArray } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 import { generatePin } from '~/server/utils/purchase'
 import { calculateDiscountedPrice, isOfferCurrentlyActive } from '~/server/utils/offers'
@@ -121,6 +121,18 @@ export default defineEventHandler(async (event) => {
     // Produkt-Map für schnellen Zugriff
     const productMap = new Map(productResults.map(p => [p.id, p]))
 
+    // FEAT-14: Alle Angebote für die relevanten Produkt-IDs in einem einzigen Query laden
+    const allOfferRows = await db
+      .select()
+      .from(productOffers)
+      .where(inArray(productOffers.productId, productIds))
+
+    const offerMap = new Map(
+      allOfferRows
+        .filter(o => isOfferCurrentlyActive(o))
+        .map(o => [o.productId, o])
+    )
+
     // Gesamtpreis berechnen
     let totalPrice = 0
     const orderItems: {
@@ -139,20 +151,15 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      // FEAT-14: Aktives Angebot für dieses Produkt prüfen
+      // FEAT-14: Aktives Angebot aus der vorgeladenen Map holen
       let unitPrice = parseFloat(product.price.toString())
 
-      const offerRows = await db
-        .select()
-        .from(productOffers)
-        .where(eq(productOffers.productId, item.productId))
-        .limit(1)
-
-      if (offerRows.length > 0 && isOfferCurrentlyActive(offerRows[0])) {
+      const offer = offerMap.get(item.productId)
+      if (offer) {
         unitPrice = calculateDiscountedPrice(
           unitPrice,
-          offerRows[0].discountType as 'percent' | 'absolute',
-          parseFloat(offerRows[0].discountValue),
+          offer.discountType as 'percent' | 'absolute',
+          parseFloat(offer.discountValue),
         )
       }
       totalPrice += unitPrice * item.quantity

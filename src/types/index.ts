@@ -48,7 +48,9 @@ export type {
   PurchaseSuccessResponse,
   PurchaseErrorResponse,
   PurchaseResponse,
-  PurchaseRequest
+  PurchaseRequest,
+  Order,
+  OrderItem
 } from './purchase'
 
 // API-Types

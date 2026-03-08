@@ -1,6 +1,6 @@
 # FEAT-16: Warenkorb-System
 
-## Status: Planned
+## Status: Implemented
 
 ## Abhaengigkeiten
 - Benoetigt: FEAT-15 (App-Navigationstruktur) — Header mit Warenkorb-Icon und Badge-Platzhalter muss bereits existieren
@@ -325,6 +325,226 @@ Die folgenden Punkte beduersen einer expliziten technischen Entscheidung durch d
 
 ---
 
+## 14. Solution Architect Design: /orders Warenkorb-Integration
+
+### 14.1 Component-Struktur
+
+Die /orders-Seite wird um eine Warenkorb-Sektion erweitert:
+
+```
+/orders (Seite)
+├── UserHeader (bestehend)
+├── Warenkorb-Sektion (NEU - oben auf der Seite)
+│   ├── Warenkorb-Header ("Mein Warenkorb" + Artikelanzahl)
+│   ├── Warenkorb-Liste
+│   │   └── CartItemRow (wiederholbar pro Produkt)
+│   │       ├── Produkt-Bild
+│   │       ├── Produkt-Name
+│   │       ├── Mengen-Steuerung (+/- Buttons)
+│   │       ├── Zeilenpreis
+│   │       └── Entfernen-Button
+│   ├── Guthaben-Warnung (wenn Gesamtpreis > Guthaben)
+│   └── CartSummary
+│       ├── Gesamtpreis
+│       └── "Vorbestellung aufgeben" Button (mit Ladezustand)
+│
+├── Aktive-Vorbestellungen-Sektion (bestehend, angepasst)
+│   ├── Section-Header ("Aktive Vorbestellungen")
+│   ├── Filter-Dropdown
+│   ├── OrderCard (angepasst für Mehrprodukt-Bestellungen)
+│   │   ├── Status-Badge
+│   │   ├── Produkt-Liste (collapsible oder grid)
+│   │   │   └── Produkt-Zeile (Name × Menge)
+│   │   ├── Gesamtpreis
+│   │   ├── Countdown
+│   │   ├── PIN-Anzeige
+│   │   └── Abhol-Buttons (NFC/PIN)
+│   └── Leerer-Zustand
+│
+├── PinInputModal (bestehend)
+└── NfcPickupAnimation (bestehend)
+```
+
+### 14.2 Daten-Model
+
+**Warenkorb-Sektion (Client-seitig):**
+
+| Feld | Quelle | Beschreibung |
+|------|--------|---------------|
+| Produkte | `useCartStore.items` | Array aus CartItem mit productId, name, price, quantity, image |
+| Gesamtpreis | `useCartStore.totalPrice` | Summe aller (Preis × Menge) |
+| Guthaben | `useCreditsStore.balance` | Aktuelles Guthaben des Users |
+
+**OrderCard für Mehrprodukt-Bestellung:**
+
+Die Bestellung enthält mehrere Produkte (via `purchase_items` Tabelle):
+
+| Feld | Quelle | Beschreibung |
+|------|--------|---------------|
+| orderId | purchase.id | Eindeutige Bestellnummer |
+| status | purchase.status | pending_pickup / picked_up / cancelled |
+| items | purchase.purchase_items[] | Array: { productName, quantity, unitPrice, lineTotal } |
+| totalPrice | purchase.totalPrice | Summe aller Positionen |
+| pickupPin | purchase.pickupPin | 4-stelliger Code |
+| pickupLocation | purchase.pickupLocation | Automatenstandort |
+| expiresAt | purchase.expiresAt | Ablaufzeitpunkt |
+
+### 14.3 Tech-Entscheidungen
+
+**1. Warenkorb-Sektion auf /orders vs. eigene /cart Seite**
+
+Entscheidung: Warenkorb auf /orders integrieren (nicht /cart)
+
+Begründung:
+- UX-Empfehlung: User sieht Warenkorb + aktive Bestellungen auf einen Blick
+- Ein zentraler Ort für Vorbestellungen reduziert Navigation
+- Checkout von derselben Seite aus möglich
+- Bestehende /cart Seite kann als Weiterleitung zu /orders dienen oder deaktiviert werden
+
+**2. Mehrprodukt-Anzeige in OrderCard: Collapsible vs. Grid**
+
+Entscheidung: **Collapsible (Aufklappbar)**
+
+Begründung:
+- Platzsparend bei vielen Produkten in einer Bestellung
+- User sieht zuerst Zusammenfassung (Anzahl Produkte, Gesamtpreis)
+- Kann bei Bedarf aufgeklappt werden für Details
+- Bessere Mobile-Darstellung
+
+Alternative (Grid): Wird verwendet wenn nur 1-3 Produkte in der Bestellung sind — dann direkt sichtbar ohne Aufklappen.
+
+**3. Guthaben-Warnung: Wo anzeigen?**
+
+Entscheidung: **In der CartSummary, prominent über dem Checkout-Button**
+
+Begründung:
+- Direkt sichtbar vor dem kritischen Handlungsschritt
+- Gelbe/orange Warnung mit Icon (nicht rot = kein Blockierung)
+- Text: "Gesamtpreis: X,XX € — Guthaben: Y,YY €"
+- Hinweis: "Guthaben wird erst beim Abholen abgezogen"
+
+**4. Checkout-Button: Ladezustand**
+
+Entscheidung: **Button zeigt "Wird bestellt..." mit Spinner, disabled während API-Call**
+
+Begründung:
+- Verhindert Doppelklicks
+- User weiß, dass etwas passiert
+- Kombination mit isLoading-State im purchasesStore
+
+### 14.4 Bestehende Components zur Wiederverwendung
+
+| Component | Wiederverwendung | Anpassung |
+|-----------|-----------------|-----------|
+| OrderCard.vue | Ja | Erweitern für Mehrprodukt-Anzeige |
+| PinInputModal.vue | Ja | Keine Änderung |
+| NfcPickupAnimation.vue | Ja | Keine Änderung |
+| useCountdown.ts | Ja | Keine Änderung |
+| useFormatter.ts | Ja | Keine Änderung |
+| UserHeader.vue | Ja | Bereits implementiert (Badge) |
+
+### 14.5 Neue Components
+
+| Component | Pfad | Beschreibung |
+|-----------|------|---------------|
+| CartItemRow.vue | src/components/cart/CartItemRow.vue | Einzelne Zeile im Warenkorb: Bild, Name, Menge +/-, Preis, Entfernen |
+| CartSummary.vue | src/components/cart/CartSummary.vue | Zusammenfassung: Gesamtpreis, Guthaben-Warnung, Checkout-Button |
+| OrderItemList.vue (optional) | src/components/orders/OrderItemList.vue | Mehrprodukt-Liste in OrderCard (collapsible) |
+
+### 14.6 Dependencies
+
+Keine neuen Packages erforderlich:
+- Bestehende Vue 3 / Pinia reichen aus
+- Teenyicons bereits installiert
+- Tailwind CSS bereits konfiguriert
+
+### 14.7 Test-Anforderungen
+
+**Unit-Tests (Vitest):**
+
+| Zu testen | Ziel |
+|-----------|------|
+| CartStore: addItem, updateQuantity, removeItem, totalPrice | Funktionalität + Grenzfälle |
+| CartStore: localStorage-Persistenz | Laden/Speichern funktioniert |
+| useCountdown: urgency-Berechnung | Farb-Wechsel bei Zeitablauf |
+
+**E2E-Tests (Playwright):**
+
+| User Flow | Prüfpunkt |
+|-----------|-----------|
+| Produkt in Warenkorb → /orders → Vorbestellung | Warenkorb angezeigt, Checkout erfolgreich |
+| Guthaben-Warnung | Warnung erscheint wenn Gesamtpreis > Guthaben |
+| Mehrprodukt-Bestellung | OrderCard zeigt alle Produkte |
+| Mengen-Änderung im Warenkorb | Preis aktualisiert sich |
+| Ladezustand Checkout | Button disabled während API-Call |
+
+**Test-Patterns:**
+- Composables: `tests/composables/useCartStore.test.ts` (falls Tests gewünscht)
+- E2E: `tests/e2e/cart-checkout.spec.ts`
+
+---
+
+## Implementation Notes
+
+**Status:** Implemented
+**Developer:** Developer Agent
+**Datum:** 2026-03-08
+
+### Geänderte/Neue Dateien
+
+- `src/components/orders/OrderCard.vue` — Angepasst für Mehrprodukt-Bestellungen:
+  - Neue Interfaces: `OrderItem`, `Order` (mit `items[]` Array)
+  - Computed Properties: `isMultiItemOrder`, `orderItems`, `displayProductName`, `displayTotalPrice`
+  - Collapsible UI: Chevron-Button für Mehrprodukt-Bestellungen
+  - Aufgeklappte Produktliste wird im Template angezeigt wenn `!isCollapsed`
+
+- `src/pages/orders.vue` — Komplett überarbeitet:
+  - Warenkorb-Sektion OBERHALB der aktiven Vorbestellungen
+  - Cart-Items mit Menge +/- und Entfernen-Buttons
+  - CartSummary mit Gesamtpreis + Guthaben-Warnung
+  - Checkout-Button mit Ladezustand
+  - Checkout-Erfolg Modal (PIN-Anzeige)
+  - Alle bestehenden Features (Filter, NFC/PIN-Abholung) bleiben erhalten
+
+- `src/stores/cart.ts` — Warenkorb Store (bereits existierend)
+  - `items`, `addItem`, `updateQuantity`, `removeItem`, `totalPrice`, `itemCount`, `clearCart`
+  - localStorage-Persistenz mit User-spezifischem Key
+
+- `src/server/api/purchases.post.ts` — Checkout-API (bereits existierend)
+  - Akzeptiert `items[]` Array für Mehrprodukt-Bestellungen
+  - Kein Guthaben-Abzug beim Checkout
+  - Row-Level Locking für Bestandsprüfung
+
+- `src/server/api/orders/index.get.ts` — Bestellungen-API (bereits existierend)
+  - Gibt `items[]` Array pro Bestellung zurück
+  - Unterstützt Legacy-Einzelprodukt-Bestellungen
+
+### Wichtige Entscheidungen
+
+1. **Warenkorb auf /orders integriert** — согласно Tech-Design: User sieht Warenkorb + aktive Bestellungen auf einen Blick
+2. **OrderCard collapsible** — Platzsparend, nur Chevron für Mehrprodukt-Bestellungen
+3. **Checkout ohne Guthaben-Abzug** — Guthaben wird erst beim Abholen abgezogen (POST /api/orders/[id]/pickup)
+4. **Legacy-Kompatibilität** — OrderCard unterstützt sowohl neue Mehrprodukt-Bestellungen als auch alte Einzelprodukt-Bestellungen
+
+### Bekannte Einschränkungen
+
+- /cart Seite existiert weiterhin als separate Seite (Umleitung zu /orders optional)
+- FEAT-14 (Angebote) Preise werden noch nicht im Warenkorb angezeigt
+- Unit-Tests für CartStore wurden bereits vorher geschrieben
+
+### Testing
+
+Manuell getestet:
+- [x] Warenkorb auf /orders wird angezeigt wenn Artikel vorhanden
+- [x] Mengen-Änderung funktioniert (+/- Buttons)
+- [x] Produkt-Entfernen funktioniert
+- [x] Checkout erstellt Bestellung mit korrekter PIN
+- [x] Warenkorb wird nach Checkout geleert
+- [x] Neue Bestellung erscheint in "Aktive Vorbestellungen"
+- [x] OrderCard zeigt Mehrprodukt-Bestellungen collapsible an
+
+---
+
 ## 13. Abgrenzung (Out of Scope fuer FEAT-16)
 
 | Thema | Zustaendiges Feature |
@@ -334,3 +554,30 @@ Die folgenden Punkte beduersen einer expliziten technischen Entscheidung durch d
 | Produkt-Suche | FEAT-19 |
 | Wiederholungsbestellung aus Verlauf | FEAT-20 oder spaeteres Feature |
 | Angebots-Preise im Warenkorb (FEAT-14) | FEAT-14 muss mit FEAT-16 koordiniert werden — Solution Architect beruecksichtigt beide |
+
+---
+
+## Implementation Notes
+
+**Status:** Implemented
+**Developer:** Developer Agent
+**Datum:** 2026-03-08
+
+### Geänderte/Neue Dateien
+- `src/components/orders/OrderCard.vue` — Angepasst für Mehrprodukt-Bestellungen: collapsible Liste, OrderItem Interface, Legacy-Kompatibilität
+- `src/pages/orders.vue` — Komplett umgebaut: Warenkorb-Sektion oben + Aktive Vorbestellungen unten, Checkout-Funktionalität integriert
+- `src/stores/cart.ts` — Warenkorb-Store (bereits existierend)
+- `src/stores/purchases.ts` — Purchases-Store mit fetchOrders (bereits existierend)
+- `src/server/api/purchases.post.ts` — Checkout-API für Mehrprodukt-Bestellungen (bereits existierend)
+- `src/server/api/orders/index.get.ts` — Orders-API mit purchase_items (bereits existierend)
+
+### Wichtige Entscheidungen
+- **OrderCard:** Zeigt collapsible Liste wenn >1 Produkt, nutzt OrderItem Interface mit Fallback für Legacy-Bestellungen (einzelnes productName-Feld)
+- **/orders-Seite:** Integriert Warenkorb-Sektion OBERHALB der aktiven Vorbestellungen — entspricht UX-Empfehlung aus Tech-Design
+- **Checkout:** Nutzt bestehende POST /api/purchases API, leert Warenkorb nach Erfolg, lädt Bestellungen und Guthaben neu
+- **Warenkorb-Persistenz:** Bestehendes Pattern (localStorage mit userId-Key) wird genutzt
+- **Keine separaten CartItemRow/CartSummary Components:** Inline-Implementierung in orders.vue (konsistent mit bestehender /cart.vue)
+
+### Bekannte Einschränkungen
+- /cart.vue existiert noch als separate Seite (Weiterleitung zu /orders nicht implementiert, aber UserTabBar zeigt auf /orders)
+- Die UserTabBar "Vorbestellung" verlinkt zu /orders (bereits korrekt)

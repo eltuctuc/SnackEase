@@ -580,3 +580,126 @@ tests/e2e/offers.spec.ts         — E2E-Tests Admin + User Flows
 ### Bekannte Einschraenkungen
 
 - E2E-Tests (`tests/e2e/offers.spec.ts`) wurden nicht implementiert — die bestehenden E2E-Tests zeigen strukturelle Fragilitaet (19 Playwright-Tests sind bereits als "skipped" markiert). Eine E2E-Test-Implementierung wuerde eine Ueberarbeitung des gesamten E2E-Test-Setups erfordern.
+
+---
+
+## 14. QA Report
+
+**Getestet am:** 2026-03-08
+**QA Engineer:** QA Agent
+**App URL:** http://localhost:3000
+
+---
+
+### Unit-Tests
+
+**Command:** `npx vitest run`
+
+| Test-Suite | Tests | Passing | Failing | Coverage |
+|------------|-------|---------|---------|----------|
+| tests/utils/offers.test.ts | 18 | 18 | 0 | 100% |
+| Andere Suites (Regression) | 209 | 209 | 0 | - |
+| **GESAMT** | **227** | **208** | **0** | **100% (offers.ts)** |
+
+**Status:** Alle Unit-Tests bestanden (19 skipped sind bekannte Pre-existing-Skips)
+
+**TypeScript-Check:** `npx nuxi typecheck` — Exit Code 0, keine Fehler
+
+---
+
+### Acceptance Criteria Status
+
+| AC | Beschreibung | Status | Notizen |
+|----|-------------|--------|---------|
+| AC-1 | "Angebot"-Schaltfläche in Admin-Produktuebersicht | ✅ | Lila Button in Aktionsspalte, oeffnet OfferModal |
+| AC-2 | Modal zeigt korrekten Status (aktiv/inaktiv/geplant/kein Angebot) | ✅ | `offerStatus` computed, 4 States korrekt |
+| AC-3 | Rabatt als Prozent (0-100%) oder absoluter Betrag validiert | ✅ | API + Frontend validieren |
+| AC-4 | Live-Vorschau des Angebotspreises | ✅ | `previewDiscountedPrice` computed in OfferModal |
+| AC-5 | Angebot mit Startdatum heute wird sofort als aktiv erkannt | ✅ | `isOfferCurrentlyActive()` prueft startsAt <= NOW() |
+| AC-6 | Abgelaufenes Angebot wird automatisch geloescht (Cron-Job) | ✅ | `cleanupExpiredOffers()` in cronJobs.ts, alle 60s |
+| AC-7 | Admin kann aktives Angebot manuell deaktivieren | ✅ | "Angebot deaktivieren" Button → PATCH isActive=false |
+| AC-8 | Admin kann deaktiviertes Angebot wieder aktivieren | ✅ | "Angebot aktivieren" Button → PATCH isActive=true |
+| AC-9 | Neues Angebot ersetzt bestehendes | ✅ | `onConflictDoUpdate` auf UNIQUE productId-Index |
+| AC-10 | Badge "Angebot aktiv" in Admin-Produktuebersicht | ❌ | **BUG-FEAT14-001**: Admin-API liefert kein activeOffer |
+| AC-11 | User-Produktkatalog: Originalpreis durchgestrichen + Angebotspreis | ✅ | ProductGrid.vue korrekt implementiert |
+| AC-12 | Beim Checkout wird Angebotspreis verwendet | ✅ | purchases.post.ts prueft und berechnet korrekt |
+| AC-13 | Absoluter Rabatt > Produktpreis → Fehlermeldung | ✅ | Server-Validierung mit korrekter Fehlermeldung |
+| AC-14 | Enddatum ist Pflichtfeld | ✅ | Frontend + Server validieren |
+| AC-15 | 100%-Rabatt (Produkt kostenlos) ist erlaubt | ✅ | Math.max(0, ...) verhindert negative Preise |
+
+---
+
+### Edge Cases Status
+
+| EC | Szenario | Status | Notizen |
+|----|----------|--------|---------|
+| EC-1 | Neues Angebot ersetzt bestehendes | ✅ | `onConflictDoUpdate` auf UNIQUE productId |
+| EC-2 | Absoluter Rabatt > Produktpreis | ✅ | 400-Fehler mit korrekter Fehlermeldung |
+| EC-3 | 100%-Rabatt → 0,00 EUR | ✅ | `Math.max(0, ...)` in `calculateDiscountedPrice` |
+| EC-4 | Enddatum in der Vergangenheit → Fehlermeldung | ⚠️ | Server validiert korrekt; **BUG-FEAT14-003**: kein Frontend-Feedback |
+| EC-5 | Startdatum nach Enddatum | ⚠️ | Server validiert korrekt; **BUG-FEAT14-003**: kein Frontend-Feedback |
+| EC-6 | Angebot deaktiviert waehrend laufendem Kauf | ✅ | Serverseitige Berechnung zum Kaufzeitpunkt massgeblich |
+| EC-7 | Cron-Job loescht abgelaufene Angebote | ✅ | `cleanupExpiredOffers()` implementiert |
+| EC-8 | Produkt mit Angebot loeschen | ✅ | ON DELETE CASCADE auf `product_offers.productId` |
+| EC-9 | Gleichzeitiger Kauf waehrend Angebot deaktiviert | ✅ | Serverseitig berechnet in purchases.post.ts |
+| EC-10 | Geplantes Angebot (Startdatum in Zukunft) | ✅ | `isOfferCurrentlyActive()` prueft startsAt <= NOW() |
+
+---
+
+### Accessibility (WCAG 2.1)
+
+- ✅ `role="dialog"` und `aria-modal="true"` im OfferModal
+- ✅ `aria-labelledby="offer-modal-title"` vorhanden
+- ✅ `aria-label="Modal schliessen"` am X-Button
+- ✅ Formularfelder haben Labels mit `for`-Attribut
+- ✅ Focus States via Tailwind `focus:ring-2` vorhanden
+- ✅ Farbkontrast: gruene/gelbe/rote Status-Badges mit ausreichend Kontrast
+
+---
+
+### Security
+
+- ✅ `requireAdmin()` in allen Admin-API-Endpoints (GET, POST, PATCH, DELETE)
+- ✅ Keine DB-Calls aus Vue-Komponenten oder Pinia-Stores
+- ✅ Angebotspreis-Berechnung nur serverseitig (EC-9)
+- ✅ Clientseitige Live-Vorschau ist nur Anzeige, nicht massgeblich
+- ✅ Input-Validierung serverseitig fuer alle Felder
+
+---
+
+### Tech Stack & Code Quality
+
+- ✅ Composition API mit `<script setup>` in OfferModal.vue und OfferBadge.vue
+- ✅ Kein `any` in TypeScript (alle Typen explizit)
+- ✅ Kein direkter DB-Zugriff aus Vue-Komponenten
+- ✅ Drizzle ORM fuer alle Queries
+- ✅ Server Routes haben try/catch mit `createError()`
+- ✅ Utility-Funktion `calculateDiscountedPrice()` und `isOfferCurrentlyActive()` nicht dupliziert
+- ⚠️ N+1 Query in purchases.post.ts (BUG-FEAT14-002)
+
+---
+
+### Offene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| [BUG-FEAT14-001](../bugs/BUG-FEAT14-001.md) | OfferBadge zeigt nie "Angebot aktiv" (Admin-API liefert kein activeOffer) | High | Must Fix | Offen |
+| [BUG-FEAT14-002](../bugs/BUG-FEAT14-002.md) | N+1 Query in purchases.post.ts beim Angebot-Check | Medium | Should Fix | Offen |
+| [BUG-FEAT14-003](../bugs/BUG-FEAT14-003.md) | Fehlende Frontend-Validierung fuer Datum-Regeln im OfferModal | Low | Nice to Fix | Offen |
+
+---
+
+### Regression
+
+- ✅ Alle 209 bestehenden Unit-Tests bestanden (keine Regression)
+- ✅ TypeScript-Check ohne Fehler
+
+---
+
+## ❌ NOT Production Ready
+
+**Grund:** BUG-FEAT14-001 (High / Must Fix) — AC-10 ist nicht erfuellt: Das "Angebot aktiv"-Badge in der Admin-Produkttabelle wird niemals angezeigt, weil die Admin-Produkte-API das Feld `activeOffer` nicht zurueckgibt. Dies ist ein klar sichtbarer Funktionsfehler.
+
+**Empfehlung UX Expert:** ❌ Nicht noetig
+
+**Begruendung:** Die gefundenen Bugs sind technischer Natur. BUG-FEAT14-001 muss gefixt werden, bevor das Feature in Produktion geht. Nach dem Fix kann das Feature ohne weitere UX-Pruefung deployed werden — alle UX-Anforderungen (Modal, Status-Anzeige, Farben, Responsiveness) sind korrekt implementiert.

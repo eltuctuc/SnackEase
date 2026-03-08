@@ -357,7 +357,7 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 | Bei Kauf: Bestand wird automatisch -1 | ✅ | In purchases.post.ts implementiert (aber Race Condition! → BUG-FEAT12-001) |
 | Nutzer sieht Stückzahl im Produktkatalog | ✅ | PurchaseButton.vue zeigt "Noch X Stück verfügbar" und "Nur noch X Stück verfügbar" |
 | Bei 0 Stück: "Kaufen" Button deaktiviert | ✅ | Button disabled + Text "Ausverkauft" |
-| Beim System-Reset: Bestand wird auf Seed-Werte zurückgesetzt | ❌ | Reset setzt pauschal auf 10 statt auf produktspezifische Seed-Werte (→ BUG-FEAT12-002) |
+| Beim System-Reset: Bestand wird auf Seed-Werte zurückgesetzt | ✅ | SEED_STOCK_BY_NAME-Map mit produktspezifischen Werten implementiert (BUG-FEAT12-002 behoben) |
 
 ### Edge Cases Status
 
@@ -367,7 +367,7 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 | EC-2: Parallele Käufe (Race Condition) | ❌ | KRITISCH: Kein echter Row-Level Lock — Bestand kann unter 0 fallen (→ BUG-FEAT12-001) |
 | EC-3: Admin setzt negativen Bestand | ✅ | Validierung: 0-999, createError bei Unterschreitung |
 | EC-4: Bestand aktualisieren bei laufender Bestellung | ✅ (teilw.) | Erlaubt, Warnung fehlt aber als "Should-Have" akzeptabel |
-| EC-5: System-Reset | ❌ | Setzt auf 10 statt produktspezifische Seed-Werte (→ BUG-FEAT12-002) |
+| EC-5: System-Reset | ✅ | Behoben: SEED_STOCK_BY_NAME-Map mit produktspezifischen Werten |
 | EC-6: Produkt deaktiviert | ✅ | Deaktivierte Produkte werden in Inventory mit opacity-50 angezeigt |
 | EC-7: Bulk-Update mit ungültigen Werten | ✅ (teilw.) | Transaktion läuft (alle oder keine), aber nicht-existierende IDs schlagen still fehl (→ BUG-FEAT12-004) |
 | EC-8: Paralleler Kauf + Admin-Bestandsänderung | ❌ | Selbes Problem wie EC-2 — kein echter DB-Lock |
@@ -419,10 +419,10 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 | Bug-ID | Titel | Severity | Priority | Status |
 |--------|-------|----------|----------|--------|
 | BUG-FEAT12-001 | Race Condition — Bestand kann unter 0 fallen | Critical | Must Fix | Offen |
-| BUG-FEAT12-002 | System-Reset setzt auf pauschal 10 statt Seed-Werte | Medium | Should Fix | Offen |
+| BUG-FEAT12-002 | System-Reset setzt auf pauschal 10 statt Seed-Werte | Medium | Should Fix | ✅ Behoben |
 | BUG-FEAT12-003 | Client-seitiger Auth-Guard — kurzer Layout-Flash | Medium | Should Fix | Offen |
 | BUG-FEAT12-004 | PATCH prüft nicht ob productId existiert | Low | Nice to Fix | Offen |
-| BUG-FEAT12-005 | "Max"-Button setzt auf 50 statt 999 | Low | Nice to Fix | Offen |
+| BUG-FEAT12-005 | "Max"-Button setzt auf 50 statt 999 | Low | Nice to Fix | Ungültig (inventory.vue existiert nicht) |
 
 ---
 

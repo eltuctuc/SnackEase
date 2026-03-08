@@ -89,25 +89,32 @@ git log --name-only -10 --format=""
 - Prüft Edge Cases automatisch
 - Verhindert Regression (alte Features kaputt)
 
-### 3. Manuelle Tests durchführen
+### 3. E2E-Tests ausführen
+- **KRITISCH:** Führe IMMER alle E2E-Tests aus — nicht nur die des aktuellen Features!
+- Alle E2E-Tests laufen lassen: `npx playwright test --reporter=list`
+- Alle Tests müssen grün sein (oder bewusst mit `test.skip()` markiert und begründet)
+- Falls Tests fehlschlagen: Bug dokumentieren mit vollständigem Test-Output
+- **Warum alle Tests?** Ein neues Feature kann bestehende Features kaputt machen (Regression)
+
+### 4. Manuelle Tests durchführen
 - Teste jedes Acceptance Criteria im Browser
 - Teste alle Edge Cases (die nicht durch Unit-Tests abgedeckt sind)
 - Teste Cross-Browser (Chrome, Firefox, Safari)
 - Teste Responsive (Mobile, Tablet, Desktop)
 
-### 4. Accessibility Tests (WCAG 2.1)
+### 5. Accessibility Tests (WCAG 2.1)
 - Farbkontrast prüfen (>4.5:1)
 - Tastatur-Navigation testen
 - Screen Reader testen (VoiceOver/NVDA)
 - Touch-Targets prüfen (>44x44px)
 - Focus States prüfen
 
-### 5. Security Audit
+### 6. Security Audit
 - Input Validation
 - Auth/Authorization Checks
 - Rate Limiting
 
-### 6. Tech Stack & Code Quality Check
+### 7. Tech Stack & Code Quality Check
 
 **Nuxt 3 / Vue.js Konventionen:**
 - [ ] Nur Composition API mit `<script setup>` – kein Options API
@@ -135,7 +142,7 @@ git log --name-only -10 --format=""
 - [ ] Duplizierter Code der als Composable ausgelagert werden könnte
 - [ ] Fehlende Error-States in der UI (nur Loading, aber kein Fehlerfall)
 
-### 7. Bugs dokumentieren ODER Erfolg dokumentieren
+### 8. Bugs dokumentieren ODER Erfolg dokumentieren
 
 **Falls Bugs gefunden:**
 - Erstelle für JEDEN Bug eine eigene Datei: `./bugs/BUG-[ID].md`
@@ -169,7 +176,7 @@ Test erwartet normales Leerzeichen.
 - Dokumentiere in `features/FEAT-X.md` als QA-Section
 - **KRITISCH:** Erstelle zwingend `./docs/FEAT-X-feature-name.md` als Feature-Dokumentation
 
-### 8. Bug im Feature-File dokumentieren
+### 9. Bug im Feature-File dokumentieren
 
 Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
 
@@ -184,7 +191,7 @@ Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
 
 **Wichtig:** Sortiere nach Priority: Critical → High → Medium → Low
 
-### 9. Feature-Dokumentation erstellen (IMMER!)
+### 10. Feature-Dokumentation erstellen (IMMER!)
 
 **WICHTIG:** Erstelle für jedes erfolgreich getestete Feature eine Dokumentation unter `./docs/FEAT-X-feature-name.md`
 
@@ -193,7 +200,7 @@ Diese Dokumentation soll für Außenstehende verständlich erklären:
 - Wie funktioniert es?
 - Wie sieht es aus?
 
-### 10. UX-Empfehlung abgeben
+### 11. UX-Empfehlung abgeben
 
 Beantworte diese Frage:
 > "Soll UX Expert nochmals prüfen, ob alle UX-Vorgaben eingehalten wurden?"
@@ -263,6 +270,17 @@ Begründe deine Empfehlung:
 | **GESAMT** | **39** | **39** | **0** | **90%** |
 
 **Status:** ✅ Alle Unit-Tests bestanden
+
+### E2E-Tests
+
+**Command:** `npx playwright test --reporter=list`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| offers.spec.ts | 13 | 12 | 0 | 1 |
+| ... | ... | ... | ... | ... |
+
+**Status:** ✅ Alle E2E-Tests bestanden (bewusst geskippte Tests dokumentiert)
 
 ### Acceptance Criteria Status
 
@@ -431,7 +449,9 @@ Bevor du den Test-Report als "fertig" markierst, stelle sicher:
 - [ ] **Feature Spec gelesen:** `/features/FEAT-X.md` vollständig verstanden
 - [ ] **Unit-Tests ausgeführt:** `npm test -- --run` erfolgreich
 - [ ] **Test-Coverage geprüft:** `npm run test:coverage` (Ziel: >80%)
-- [ ] **Alle Tests grün:** Keine fehlschlagenden Unit-Tests
+- [ ] **Alle Unit-Tests grün:** Keine fehlschlagenden Unit-Tests
+- [ ] **E2E-Tests ausgeführt:** `npx playwright test --reporter=list` erfolgreich
+- [ ] **Alle E2E-Tests grün:** Keine fehlschlagenden Tests (bewusst geskippte Tests mit `test.skip()` sind ok)
 - [ ] **Alle Acceptance Criteria getestet:** Jedes AC hat Status (✅ oder ❌)
 - [ ] **Alle Edge Cases getestet:** Jeder Edge Case wurde durchgespielt
 - [ ] **Cross-Browser getestet:** Chrome, Firefox, Safari

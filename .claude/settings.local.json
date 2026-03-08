@@ -40,7 +40,9 @@
       "mcp__playwright__browser_install",
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_click"
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "Read(//Users/enricoreinsdorf/.claude/agents/**)"
     ],
     "additionalDirectories": [
       "/Users/enricoreinsdorf/.claude/projects/-Users-enricoreinsdorf-Projekte-SnackEase/memory",

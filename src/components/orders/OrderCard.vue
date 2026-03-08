@@ -13,15 +13,15 @@
 -->
 
 <script setup lang="ts">
-import type { PurchaseWithProduct } from '~/types'
 import { useCountdown } from '~/composables/useCountdown'
+import type { Order, OrderItem } from '~/types'
 
 // ========================================
 // PROPS & EMITS
 // ========================================
 
 interface Props {
-  order: PurchaseWithProduct
+  order: Order
   /** Ob gerade eine Abholung für diese Bestellung läuft */
   isPickingUp?: boolean
 }
@@ -42,8 +42,59 @@ const emit = defineEmits<{
 const { formatPrice } = useFormatter()
 
 // ========================================
+// STATE
+// ========================================
+
+/** Ob die Bestell-Details eingeklappt sind (nur bei Mehrprodukt-Bestellungen) */
+const isCollapsed = ref(true)
+
+// ========================================
 // COMPUTED
 // ========================================
+
+/** Ist dies eine Mehrprodukt-Bestellung? */
+const isMultiItemOrder = computed(() => {
+  return props.order.items && props.order.items.length > 1
+})
+
+/** Liste aller Produkte (Legacy + Neu) */
+const orderItems = computed((): OrderItem[] => {
+  if (props.order.items && props.order.items.length > 0) {
+    return props.order.items
+  }
+  // Fallback für Legacy-Bestellungen (einzelnes Produkt)
+  if (props.order.productName) {
+    return [{
+      productId: 0,
+      productName: props.order.productName,
+      quantity: 1,
+      unitPrice: props.order.price?.toString() || '0',
+      imageUrl: props.order.productImageUrl ?? null
+    }]
+  }
+  return []
+})
+
+/** Produktname für Anzeige (Legacy) */
+const displayProductName = computed(() => {
+  if (isMultiItemOrder.value) {
+    return `${orderItems.value.length} Produkte`
+  }
+  return orderItems.value[0]?.productName || 'Produkt'
+})
+
+/** Produktbild für Anzeige (Legacy) */
+const displayImage = computed(() => {
+  if (isMultiItemOrder.value) {
+    return orderItems.value[0]?.imageUrl
+  }
+  return orderItems.value[0]?.imageUrl
+})
+
+/** Gesamtpreis */
+const displayTotalPrice = computed(() => {
+  return parseFloat(props.order.totalPrice?.toString() || '0')
+})
 
 /** Ist die Bestellung bereit zur Abholung? */
 const isPendingPickup = computed(() => props.order.status === 'pending_pickup')
@@ -157,19 +208,58 @@ function handlePinPickup() {
     </div>
 
     <!-- Produkt-Info -->
-    <div class="flex items-center gap-3 mb-3">
-      <div class="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-2xl flex-shrink-0">
-        <span v-if="!order.productImageUrl">🍎</span>
+    <div
+      class="flex items-center gap-3 mb-3"
+      :class="{ 'cursor-pointer': isMultiItemOrder }"
+      @click="isMultiItemOrder && (isCollapsed = !isCollapsed)"
+    >
+      <!-- Einzelnes Bild oder Produktanzahl -->
+      <div class="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+        <span v-if="!displayImage">🍎</span>
         <img
           v-else
-          :src="order.productImageUrl"
-          :alt="order.productName"
-          class="w-full h-full object-cover rounded-lg"
+          :src="displayImage"
+          :alt="displayProductName"
+          class="w-full h-full object-cover"
         />
       </div>
-      <div>
-        <h3 class="font-medium text-foreground">{{ order.productName }}</h3>
-        <p class="text-sm text-muted-foreground">{{ formatPrice(order.price) }} €</p>
+      <div class="flex-1">
+        <h3 class="font-medium text-foreground">{{ displayProductName }}</h3>
+        <p class="text-sm text-muted-foreground">{{ formatPrice(displayTotalPrice) }} €</p>
+      </div>
+      <!-- Chevron für Mehrprodukt-Bestellungen -->
+      <span
+        v-if="isMultiItemOrder"
+        class="text-muted-foreground transition-transform"
+        :class="{ 'rotate-180': !isCollapsed }"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </div>
+
+    <!-- Aufgeklappte Produktliste (nur bei Mehrprodukt-Bestellungen) -->
+    <div
+      v-if="isMultiItemOrder && !isCollapsed"
+      class="mb-3 pl-15 space-y-2"
+    >
+      <div
+        v-for="item in orderItems"
+        :key="item.productId"
+        class="flex items-center gap-2 text-sm"
+      >
+        <div class="w-8 h-8 bg-muted rounded overflow-hidden flex-shrink-0">
+          <img
+            v-if="item.imageUrl"
+            :src="item.imageUrl"
+            :alt="item.productName"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <span class="flex-1 text-foreground">{{ item.productName }}</span>
+        <span class="text-muted-foreground">x{{ item.quantity }}</span>
+        <span class="text-foreground font-medium">{{ formatPrice(parseFloat(item.unitPrice)) }}€</span>
       </div>
     </div>
 
@@ -262,8 +352,7 @@ function handlePinPickup() {
           <span>Nicht abgeholt innerhalb 2 Stunden</span>
         </div>
         <div class="text-sm text-muted-foreground flex items-center gap-1.5">
-          <span aria-hidden="true">💰</span>
-          <span>Guthaben wurde zurückerstattet</span>
+          <span>Nicht abgeholt — kein Guthaben wurde abgezogen</span>
         </div>
         <div v-if="cancelledAtFormatted" class="text-xs text-muted-foreground">
           Storniert am {{ cancelledAtFormatted }} Uhr

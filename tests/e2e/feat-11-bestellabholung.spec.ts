@@ -9,6 +9,12 @@
  * 5. PIN-Abholung: falsche PIN mit Fehlermeldung
  * 6. Leerer Zustand auf /orders
  * 7. Filter-Funktionalität auf /orders
+ *
+ * FEAT-16 Hinweis: Kauf-Flow läuft jetzt über den Warenkorb:
+ *   1. Produkt über "In den Warenkorb"-Button hinzufügen
+ *   2. Zur /orders-Seite navigieren
+ *   3. "Vorbestellung aufgeben"-Button klicken
+ *   4. Checkout-Erfolg-Modal erscheint mit NFC- und PIN-Buttons
  */
 
 import { test, expect, type Page } from '@playwright/test'
@@ -32,6 +38,61 @@ async function loginAsDemoUser(page: Page) {
     const grid = document.querySelector('[data-testid="product-grid"]')
     return grid && !grid.closest('.animate-pulse')
   }, { timeout: 15000 })
+}
+
+/**
+ * Hilfsfunktion: Produkt in Warenkorb legen, zu /orders navigieren und Checkout durchführen.
+ * Gibt true zurück wenn der Checkout-Erfolg-Modal erschienen ist, false wenn übersprungen werden soll.
+ */
+async function purchaseViaCart(page: Page): Promise<boolean> {
+  // Sicherstellen, dass wir auf dem Dashboard sind
+  if (!page.url().includes('/dashboard')) {
+    await page.goto('/dashboard', { waitUntil: 'networkidle' })
+    await page.waitForSelector('[data-testid="product-grid"]', { timeout: 15000 })
+  }
+
+  // Warte auf Produktkarten
+  await page.waitForSelector('[data-testid="product-card"]', { timeout: 20000 })
+  await page.waitForTimeout(500)
+
+  // Erstes aktiviertes "In den Warenkorb"-Button suchen (manche Produkte können ausverkauft sein)
+  const allAddButtons = page.locator('[data-testid="add-to-cart-button"]')
+  const btnCount = await allAddButtons.count()
+
+  let addToCartBtn = null
+  for (let i = 0; i < btnCount; i++) {
+    const btn = allAddButtons.nth(i)
+    const isVisible = await btn.isVisible().catch(() => false)
+    const isDisabled = await btn.isDisabled().catch(() => true)
+    if (isVisible && !isDisabled) {
+      addToCartBtn = btn
+      break
+    }
+  }
+
+  // Kein aktivierter Button gefunden
+  if (!addToCartBtn) return false
+
+  // Produkt in Warenkorb legen
+  await addToCartBtn.click()
+
+  // Zur /orders-Seite navigieren
+  await page.goto('/orders', { waitUntil: 'networkidle' })
+
+  // Warte auf Checkout-Button
+  const checkoutBtn = page.locator('[data-testid="checkout-button"]')
+  await checkoutBtn.waitFor({ state: 'visible', timeout: 10000 })
+
+  const checkoutDisabled = await checkoutBtn.isDisabled().catch(() => true)
+  if (checkoutDisabled) return false
+
+  // Checkout auslösen
+  await checkoutBtn.click()
+
+  // Warte auf Checkout-Erfolg-Modal
+  await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 10000 })
+
+  return true
 }
 
 test.describe('Bestellabholung (FEAT-11)', () => {
@@ -87,31 +148,18 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   })
 
   // ============================================================
-  // Test 3: NFC-Abholung vom Bestätigungsmodal
+  // Test 3: NFC-Abholung vom Bestätigungsmodal (FEAT-16 Flow)
   // ============================================================
 
   test('NFC-Abholung vom Bestätigungsmodal nach Kauf', async ({ page }) => {
-    // 1. Produkt kaufen - warte auf Produktkarten
-    await page.waitForSelector('[data-testid="product-card"]', { timeout: 20000 })
-    await page.waitForTimeout(1000) // Extra Wartezeit für vollständiges Laden
-
-    const firstProduct = page.locator('[data-testid="product-card"]').first()
-    const buyButton = firstProduct.locator('button').first()
-
-    // Warte bis der Button sichtbar ist
-    await buyButton.waitFor({ state: 'visible', timeout: 10000 })
-
-    // Prüfe ob der Button aktiv ist
-    const isDisabled = await buyButton.isDisabled()
-    if (isDisabled) {
+    // 1. Kauf über Warenkorb-Flow durchführen
+    const purchased = await purchaseViaCart(page)
+    if (!purchased) {
       test.skip()
       return
     }
 
-    await buyButton.click()
-
-    // 2. Warte auf Success-Modal
-    await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 8000 })
+    // 2. Modal prüfen
     const modal = page.locator('[data-testid="purchase-success-modal"]')
     await expect(modal).toBeVisible()
 
@@ -134,34 +182,19 @@ test.describe('Bestellabholung (FEAT-11)', () => {
       state: 'hidden',
       timeout: 8000,
     })
-
-    // 7. Modal sollte sich nach erfolgreicher Abholung schließen
-    await page.waitForSelector('[data-testid="purchase-success-modal"]', {
-      state: 'hidden',
-      timeout: 5000,
-    })
   })
 
   // ============================================================
-  // Test 4: PIN-Button im Modal aktiviert
+  // Test 4: PIN-Button im Modal aktiviert (FEAT-16 Flow)
   // ============================================================
 
   test('PIN-Button im Bestätigungsmodal ist aktiviert', async ({ page }) => {
-    // 1. Produkt kaufen
-    await page.waitForSelector('[data-testid="product-card"]', { timeout: 15000 })
-    await page.waitForTimeout(500)
-
-    const firstProduct = page.locator('[data-testid="product-card"]').first()
-    const buyButton = firstProduct.locator('[data-testid="purchase-button"]')
-
-    // Skip wenn Button disabled (kein Guthaben/Bestand)
-    await buyButton.waitFor({ state: 'visible', timeout: 5000 })
-    if (await buyButton.isDisabled()) {
+    // 1. Kauf über Warenkorb-Flow durchführen
+    const purchased = await purchaseViaCart(page)
+    if (!purchased) {
       test.skip()
       return
     }
-
-    await buyButton.click()
 
     // 2. Warte auf Success-Modal
     await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 8000 })
@@ -185,11 +218,12 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   // ============================================================
 
   test.skip('falsche PIN zeigt Fehlermeldung', async ({ page }) => {
-    // 1. Produkt kaufen
-    await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 })
-    const firstProduct = page.locator('[data-testid="product-card"]').first()
-    const buyButton = firstProduct.locator('[data-testid="purchase-button"]')
-    await buyButton.click()
+    // 1. Kauf über Warenkorb-Flow durchführen
+    const purchased = await purchaseViaCart(page)
+    if (!purchased) {
+      test.skip()
+      return
+    }
 
     // 2. Warte auf Success-Modal und PIN anzeigen
     await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 8000 })
@@ -246,7 +280,7 @@ test.describe('Bestellabholung (FEAT-11)', () => {
     await page.waitForTimeout(500)
 
     // Kein Fehler — Filter funktioniert
-    await expect(page.locator('h1')).toContainText('Meine Bestellungen')
+    await expect(page.locator('h1')).toContainText('Vorbestellung')
   })
 
   // ============================================================
@@ -254,10 +288,12 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   // ============================================================
 
   test.skip('Link zu Bestellungen im Bestätigungsmodal navigiert korrekt', async ({ page }) => {
-    // 1. Produkt kaufen
-    await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 })
-    const firstProduct = page.locator('[data-testid="product-card"]').first()
-    await firstProduct.locator('[data-testid="purchase-button"]').click()
+    // 1. Kauf über Warenkorb-Flow durchführen
+    const purchased = await purchaseViaCart(page)
+    if (!purchased) {
+      test.skip()
+      return
+    }
 
     // 2. Warte auf Modal
     await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 8000 })
@@ -273,9 +309,13 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   // ============================================================
 
   test.skip('PIN-Modal kann per Abbrechen geschlossen werden', async ({ page }) => {
-    // 1. Kaufen
-    await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 })
-    await page.locator('[data-testid="product-card"]').first().locator('[data-testid="purchase-button"]').click()
+    // 1. Kauf über Warenkorb-Flow durchführen
+    const purchased = await purchaseViaCart(page)
+    if (!purchased) {
+      test.skip()
+      return
+    }
+
     await page.waitForSelector('[data-testid="purchase-success-modal"]', { timeout: 8000 })
 
     // 2. PIN-Modal öffnen

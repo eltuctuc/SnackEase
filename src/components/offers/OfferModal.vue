@@ -178,6 +178,22 @@ const handleSave = async () => {
     return
   }
 
+  // EC-4: Enddatum darf nicht in der Vergangenheit liegen
+  const expiresAtDate = new Date(expiresAt.value)
+  if (expiresAtDate < new Date()) {
+    error.value = 'Enddatum muss in der Zukunft liegen'
+    return
+  }
+
+  // EC-5: Startdatum muss vor dem Enddatum liegen
+  if (startsAt.value) {
+    const startsAtDate = new Date(startsAt.value)
+    if (startsAtDate >= expiresAtDate) {
+      error.value = 'Startdatum muss vor dem Enddatum liegen'
+      return
+    }
+  }
+
   isSaving.value = true
 
   try {
@@ -263,12 +279,12 @@ const handleDelete = async () => {
 // LIFECYCLE
 // ========================================
 
-/** Angebot laden wenn Modal geöffnet wird */
+/** Angebot laden wenn Modal geöffnet wird (immediate: true, da Modal per v-if mit show=true gemountet wird) */
 watch(() => props.show, (newVal) => {
   if (newVal) {
     loadExistingOffer()
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
