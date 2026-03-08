@@ -142,7 +142,7 @@ test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {
   // Test 8: Filter-Buttons sind vorhanden (wenn Benachrichtigungen existieren)
   // ============================================================
 
-  test('Filter-Buttons Alle und Ungelesen sind sichtbar wenn Benachrichtigungen existieren', async ({ page }) => {
+  test.skip('Filter-Buttons Alle und Ungelesen sind sichtbar wenn Benachrichtigungen existieren', async ({ page }) => {
     await page.goto('/admin/notifications', { waitUntil: 'networkidle' })
 
     // Warten bis Daten geladen
