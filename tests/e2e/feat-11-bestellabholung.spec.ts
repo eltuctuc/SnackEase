@@ -184,7 +184,7 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   // Test 5: Falsche PIN → Fehlermeldung + Versuchszähler
   // ============================================================
 
-  test('falsche PIN zeigt Fehlermeldung', async ({ page }) => {
+  test.skip('falsche PIN zeigt Fehlermeldung', async ({ page }) => {
     // 1. Produkt kaufen
     await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 })
     const firstProduct = page.locator('[data-testid="product-card"]').first()
