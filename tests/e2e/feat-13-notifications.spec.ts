@@ -154,8 +154,9 @@ test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {
       return
     }
 
-    await expect(page.getByRole('button', { name: /Alle/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /Ungelesen/i })).toBeVisible()
+    // Filter-Buttons im Hauptbereich (erstes Element)
+    await expect(page.locator('[data-testid="filter-all"]')).toBeVisible()
+    await expect(page.locator('[data-testid="filter-unread"]')).toBeVisible()
   })
 
   // ============================================================

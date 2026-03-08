@@ -46,12 +46,18 @@ test.describe('Accessibility', () => {
   })
 
   test('Tastaturnavigation funktioniert', async ({ page }) => {
-    await page.goto('/login')
-    
+    await page.goto('/login', { waitUntil: 'networkidle' })
+
+    // Warte bis Seite geladen ist
+    await page.waitForSelector('button')
+
     const firstButton = page.locator('button').first()
     await firstButton.focus()
-    
-    const isFocused = await firstButton.evaluate(el => el === document.activeElement)
+
+    // Warte kurz, damit der Fokus gesetzt werden kann
+    await page.waitForTimeout(100)
+
+    const isFocused = await firstButton.evaluate(el => document.activeElement === el)
     expect(isFocused).toBe(true)
   })
 

@@ -71,7 +71,8 @@ test.describe('FEAT-9: Admin ohne Guthaben', () => {
     test('Admin sieht Admin-Panel mit Systemuebersicht', async ({ page }) => {
       await loginAsAdmin(page)
 
-      await expect(page.locator('h1')).toBeVisible({ timeout: 5000 })
+      // Der zweite h1 ist der Seiten-Überschrift (nach dem Header-h1)
+      await expect(page.locator('h1').nth(1)).toBeVisible({ timeout: 5000 })
     })
   })
 

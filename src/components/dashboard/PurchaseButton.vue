@@ -192,7 +192,7 @@ async function handlePurchase() {
     </div>
 
     <!-- Kaufen-Button -->
-    <button
+    <button data-testid="purchase-button"
       @click="handlePurchase"
       :disabled="isDisabled"
       :class="[
