@@ -26,7 +26,7 @@
     "drizzle-orm": "^0.29.0",
     "pinia": "^2.1.7",
     "tailwindcss-animate": "^1.0.7",
-    "teenyicons": "^1.0.0",
+    "teenyicons": "^0.4.1",
     "vue": "^3.4.0",
     "vue-router": "^4.2.0",
     "ws": "^8.19.0"
