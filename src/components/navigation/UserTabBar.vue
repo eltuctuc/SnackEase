@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { useCartStore } from '~/stores/cart'
-
-// Warenkorb-Store fuer Badge (wird in FEAT-16 vollstaendig implementiert)
-// fuer FEAT-15 nutzen wir einen temporaeren Mock-Store
-const cartStore = useCartStore()
-const cartCount = computed(() => cartStore?.itemCount ?? 0)
+// cartStore wird in FEAT-16 vollständig implementiert
+void useCartStore()
 
 const route = useRoute()
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useNotificationsStore } from '~/stores/notifications'
 
-const notificationsStore = useNotificationsStore()
+// notificationsStore wird für zukünftige Features benötigt (FEAT-13)
+void useNotificationsStore()
 const route = useRoute()
 
 // Tab-Definitionen fuer Admins (5 Tabs ohne Bestand)
@@ -21,8 +22,8 @@ const isActive = (path: string) => {
   return route.path.startsWith(path)
 }
 
-// Aktuellen Seitentitel ermitteln
-const currentTitle = computed(() => {
+// Aktuellen Seitentitel ermitteln (für zukünftige Breadcrumbs)
+void computed(() => {
   const activeTab = tabs.find(tab => isActive(tab.path))
   return activeTab?.label ?? 'Dashboard'
 })

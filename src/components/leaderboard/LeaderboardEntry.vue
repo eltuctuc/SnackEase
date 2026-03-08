@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { LeaderboardEntry } from '~/composables/useLeaderboard'
 
-defineProps<{
+const props = defineProps<{
   entry: LeaderboardEntry
   /** Ist das der eigene Eintrag des eingeloggten Users? */
   isOwn: boolean
@@ -12,7 +12,7 @@ defineProps<{
 const router = useRouter()
 
 function handleClick() {
-  router.push(`/leaderboard/${entry.id}`)
+  router.push(`/leaderboard/${props.entry.id}`)
 }
 </script>
 

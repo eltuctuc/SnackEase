@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { useCartStore } from '~/stores/cart'
-
-const cartStore = useCartStore()
-const cartCount = computed(() => cartStore?.itemCount ?? 0)
+// cartStore wird in FEAT-16 vollständig implementiert
+void useCartStore()
 
 const route = useRoute()
 
