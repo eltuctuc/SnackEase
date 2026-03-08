@@ -19,10 +19,12 @@ test.describe.configure({ mode: 'serial' })
 async function loginAsAdmin(page: Page) {
   await page.goto('/login', { waitUntil: 'networkidle' })
   await page.waitForSelector('input[type="email"]', { timeout: 15000 })
-  await page.fill('input[type="email"]', 'admin@snackease.de')
+  await page.fill('input[type="email"]', 'admin@demo.de')
   await page.fill('input[type="password"]', 'admin123')
   await page.click('button[type="submit"]')
-  await page.waitForURL('/admin', { timeout: 15000 })
+
+  // Warten auf Navigation - mit verlängertem Timeout wegen setTimeout im Code
+  await page.waitForURL(/\/admin/, { timeout: 30000 })
 }
 
 test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {

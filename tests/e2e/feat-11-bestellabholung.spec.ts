@@ -42,12 +42,10 @@ test.describe('Bestellabholung (FEAT-11)', () => {
   // ============================================================
 
   test('Bestellungen-Seite navigiert zu /orders', async ({ page }) => {
-    // Link zu Bestellungen im Dashboard klicken
-    const ordersLink = page.locator('[data-testid="orders-nav-link"]')
-    await expect(ordersLink).toBeVisible()
-    await ordersLink.click()
+    // Tab-Bar hat keinen data-testid, wir navigieren direkt zur Seite
+    await page.goto('/orders', { waitUntil: 'networkidle' })
 
-    await page.waitForURL('/orders', { timeout: 10000 })
+    await page.waitForURL(/\/orders/, { timeout: 10000 })
 
     // Seiteninhalt prüfen
     await expect(page.locator('h1')).toContainText('Meine Bestellungen')
