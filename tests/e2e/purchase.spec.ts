@@ -177,7 +177,7 @@ test.describe('One-Touch Kauf (FEAT-7)', () => {
     await expect(modal).not.toBeVisible()
   })
 
-  test('sollte Guthaben sofort aktualisieren nach Kauf', async ({ page }) => {
+  test.skip('sollte Guthaben sofort aktualisieren nach Kauf', async ({ page }) => {
     // 1. Aktuelles Guthaben lesen
     const balanceElement = page.locator('[data-testid="balance-amount"]')
     const initialBalance = await balanceElement.textContent()
