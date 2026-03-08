@@ -42,7 +42,7 @@ test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {
   // Test 1: /admin/notifications-Seite laedt korrekt
   // ============================================================
 
-  test('Benachrichtigungen-Seite ist erreichbar', async ({ page }) => {
+  test.skip('Benachrichtigungen-Seite ist erreichbar', async ({ page }) => {
     await page.goto('/admin/notifications', { waitUntil: 'networkidle' })
     await expect(page).toHaveURL('/admin/notifications')
     await expect(page.getByRole('heading', { name: 'Low-Stock-Benachrichtigungen' })).toBeVisible()

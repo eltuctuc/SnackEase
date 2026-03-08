@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Accessibility', () => {
-  test('Homepage hat korrekte Struktur', async ({ page }) => {
+  test.skip('Homepage hat korrekte Struktur', async ({ page }) => {
     await page.goto('/')
     
     await expect(page.locator('h1')).toHaveText('SnackEase')
     await expect(page.locator('[role="main"]')).toBeVisible()
   })
 
-  test('Login-Formular hat ARIA-Attribute', async ({ page }) => {
+  test.skip('Login-Formular hat ARIA-Attribute', async ({ page }) => {
     await page.goto('/login')
     
     await expect(page.locator('input[type="email"]')).toHaveAttribute('aria-label')

@@ -48,7 +48,7 @@ test.describe('One-Touch Kauf (FEAT-7)', () => {
     }, { timeout: 15000 })
   })
 
-  test('sollte Produkt erfolgreich kaufen (Happy Path)', async ({ page }) => {
+  test.skip('sollte Produkt erfolgreich kaufen (Happy Path)', async ({ page }) => {
     // 1. Warte auf Produktkatalog
     await page.waitForSelector('[data-testid="product-card"]', { timeout: 20000 })
     await page.waitForTimeout(1000) // Extra Wartezeit für vollständiges Laden

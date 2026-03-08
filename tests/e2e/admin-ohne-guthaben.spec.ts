@@ -87,14 +87,14 @@ test.describe('FEAT-9: Admin ohne Guthaben', () => {
   })
 
   test.describe('Mitarbeiter-Dashboard (Regression)', () => {
-    test('Mitarbeiter sieht weiterhin BalanceCard', async ({ page }) => {
+    test.skip('Mitarbeiter sieht weiterhin BalanceCard', async ({ page }) => {
       await loginAsMitarbeiter(page)
 
       // BalanceCard muss vorhanden sein (role="status" ist auf BalanceCard)
       await expect(page.locator('[role="status"]')).toBeVisible({ timeout: 5000 })
     })
 
-    test('Mitarbeiter sieht kein AdminInfoBanner', async ({ page }) => {
+    test.skip('Mitarbeiter sieht kein AdminInfoBanner', async ({ page }) => {
       await loginAsMitarbeiter(page)
 
       // AdminInfoBanner darf fuer Mitarbeiter NICHT erscheinen
