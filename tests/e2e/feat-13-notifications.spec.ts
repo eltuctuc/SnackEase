@@ -49,17 +49,8 @@ test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {
   })
 
   // ============================================================
-  // Test 2: Navigation-Link "Benachr." im Header ist vorhanden
-  // ============================================================
-
-  test('Navigations-Link Benachr. ist im Admin-Header sichtbar', async ({ page }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle' })
-    const navLink = page.getByRole('link', { name: /Benachr\./i })
-    await expect(navLink).toBeVisible()
-  })
-
-  // ============================================================
-  // Test 3: Glocken-Icon ist im Admin-Header sichtbar
+  // Test 2: Glocken-Icon ist im Admin-Header sichtbar
+  // (nach FEAT-15: jetzt ein Button statt eines Links)
   // ============================================================
 
   test('Benachrichtigungs-Badge-Button ist im Header sichtbar', async ({ page }) => {
@@ -72,7 +63,7 @@ test.describe('Low-Stock-Benachrichtigungen (FEAT-13)', () => {
   })
 
   // ============================================================
-  // Test 4: Dropdown oeffnet sich beim Klick auf das Badge
+  // Test 3: Dropdown oeffnet sich beim Klick auf das Badge
   // ============================================================
 
   test('Dropdown oeffnet sich beim Klick auf Benachrichtigungs-Icon', async ({ page }) => {
