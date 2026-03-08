@@ -51,8 +51,9 @@
  */
 
 import { db } from '~/server/db'
-import { products, productCategories, categories } from '~/server/db/schema'
+import { products, productCategories, categories, productOffers } from '~/server/db/schema'
 import { eq, and, sql, inArray, notInArray } from 'drizzle-orm'
+import { isOfferCurrentlyActive, calculateDiscountedPrice } from '~/server/utils/offers'
 
 // ========================================
 // HELPER - Product Selection
@@ -235,10 +236,56 @@ export default defineEventHandler(async (event) => {
      * Aktuell getrennt für bessere Lesbarkeit.
      */
     // Immer mit WHERE-Clause (mindestens isActive-Filter ist immer vorhanden)
-    return await db.select(productSelectFields)
+    const productList = await db.select(productSelectFields)
       .from(products)
       .where(and(...conditions))
-      
+
+    // FEAT-14: Aktive Angebote für die gefundenen Produkte laden
+    const productIds = productList.map(p => p.id)
+
+    let offersMap = new Map<number, {
+      id: number
+      discountType: string
+      discountValue: string
+      discountedPrice: string
+      startsAt: string
+      expiresAt: string
+    }>()
+
+    if (productIds.length > 0) {
+      const offers = await db
+        .select()
+        .from(productOffers)
+        .where(inArray(productOffers.productId, productIds))
+
+      for (const offer of offers) {
+        if (isOfferCurrentlyActive(offer)) {
+          const originalPrice = productList.find(p => p.id === offer.productId)
+          if (originalPrice) {
+            const discountedPrice = calculateDiscountedPrice(
+              parseFloat(originalPrice.price),
+              offer.discountType as 'percent' | 'absolute',
+              parseFloat(offer.discountValue),
+            )
+            offersMap.set(offer.productId, {
+              id: offer.id,
+              discountType: offer.discountType,
+              discountValue: offer.discountValue,
+              discountedPrice: discountedPrice.toFixed(2),
+              startsAt: offer.startsAt.toISOString(),
+              expiresAt: offer.expiresAt.toISOString(),
+            })
+          }
+        }
+      }
+    }
+
+    // activeOffer an jedes Produkt-Objekt anhängen
+    return productList.map(product => ({
+      ...product,
+      activeOffer: offersMap.get(product.id) ?? null,
+    }))
+
   } catch (error) {
     // ----------------------------------------
     // ERROR HANDLING

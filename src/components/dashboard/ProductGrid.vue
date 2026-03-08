@@ -67,7 +67,6 @@ const emit = defineEmits<{
 // ========================================
 
 const authStore = useAuthStore()
-const cartStore = useCartStore()
 
 // ========================================
 // REACTIVE STATE
@@ -198,8 +197,17 @@ const openProductDetail = (product: Product) => {
           <h3 class="font-medium text-foreground text-sm truncate">{{ product.name }}</h3>
           
           <!-- Preis + Stock-Status -->
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-lg font-bold text-primary" data-testid="product-price">{{ formatPrice(product.price) }} €</span>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <!-- FEAT-14: Angebotspreis-Anzeige -->
+            <template v-if="product.activeOffer">
+              <s class="text-sm text-muted-foreground">{{ formatPrice(product.price) }} €</s>
+              <span class="text-lg font-bold text-red-500" data-testid="product-price">
+                {{ formatPrice(product.activeOffer.discountedPrice) }} €
+              </span>
+            </template>
+            <template v-else>
+              <span class="text-lg font-bold text-primary" data-testid="product-price">{{ formatPrice(product.price) }} €</span>
+            </template>
             <span v-if="product.stock === 0" class="text-xs text-red-500">Ausverkauft</span>
           </div>
           

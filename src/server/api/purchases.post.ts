@@ -44,10 +44,11 @@
  */
 
 import { db } from '~/server/db'
-import { userCredits, products, purchases, purchaseItems, lowStockNotifications } from '~/server/db/schema'
+import { products, purchases, purchaseItems, lowStockNotifications, productOffers } from '~/server/db/schema'
 import { eq, sql, and } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 import { generatePin } from '~/server/utils/purchase'
+import { calculateDiscountedPrice, isOfferCurrentlyActive } from '~/server/utils/offers'
 
 interface CheckoutItem {
   productId: number
@@ -138,9 +139,22 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      // FEAT-14: Angebots-Preis prüfen (hier vereinfacht - Normalpreis)
-      // TODO: Wenn FEAT-14 implementiert ist, hier Angebotspreis abrufen
-      const unitPrice = parseFloat(product.price.toString())
+      // FEAT-14: Aktives Angebot für dieses Produkt prüfen
+      let unitPrice = parseFloat(product.price.toString())
+
+      const offerRows = await db
+        .select()
+        .from(productOffers)
+        .where(eq(productOffers.productId, item.productId))
+        .limit(1)
+
+      if (offerRows.length > 0 && isOfferCurrentlyActive(offerRows[0])) {
+        unitPrice = calculateDiscountedPrice(
+          unitPrice,
+          offerRows[0].discountType as 'percent' | 'absolute',
+          parseFloat(offerRows[0].discountValue),
+        )
+      }
       totalPrice += unitPrice * item.quantity
 
       orderItems.push({

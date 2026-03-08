@@ -26,7 +26,7 @@
  */
 
 import { db } from '~/server/db'
-import { purchases } from '~/server/db/schema'
+import { purchases, productOffers } from '~/server/db/schema'
 import { eq, and, lt, sql } from 'drizzle-orm'
 
 /**
@@ -95,12 +95,37 @@ async function cancelExpiredOrders(): Promise<void> {
   }
 }
 
+/**
+ * Löscht alle abgelaufenen Angebote
+ * FEAT-14: Cleanup abgelaufener Angebote
+ */
+async function cleanupExpiredOffers(): Promise<void> {
+  try {
+    const now = new Date()
+
+    const deleted = await db
+      .delete(productOffers)
+      .where(lt(productOffers.expiresAt, now))
+      .returning({ id: productOffers.id })
+
+    if (deleted.length > 0) {
+      console.log(`[CronJob] ${deleted.length} abgelaufene Angebot(e) gelöscht (FEAT-14)`)
+    }
+  } catch (err: unknown) {
+    const e = err as { message?: string }
+    console.error('[CronJob] Fehler beim Löschen abgelaufener Angebote:', e.message)
+  }
+}
+
 export default defineNitroPlugin(() => {
   // Einmal beim Start ausführen (falls Server nach langer Pause startet)
   cancelExpiredOrders()
+  cleanupExpiredOffers()
 
   // Dann jede Minute wiederholen
   setInterval(cancelExpiredOrders, 60 * 1000)
+  setInterval(cleanupExpiredOffers, 60 * 1000)
 
   console.log('[CronJob] Automatische Stornierung aktiv (Intervall: 60s, kein Refund - FEAT-16)')
+  console.log('[CronJob] Angebots-Cleanup aktiv (Intervall: 60s - FEAT-14)')
 })

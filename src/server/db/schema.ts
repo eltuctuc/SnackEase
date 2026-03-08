@@ -173,3 +173,21 @@ export const lowStockNotifications = pgTable('low_stock_notifications', {
 
 export type LowStockNotification = typeof lowStockNotifications.$inferSelect;
 export type NewLowStockNotification = typeof lowStockNotifications.$inferInsert;
+
+// FEAT-14: Angebote & Rabatte
+export const productOffers = pgTable('product_offers', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  discountType: text('discount_type').notNull(), // 'percent' | 'absolute'
+  discountValue: decimal('discount_value', { precision: 10, scale: 2 }).notNull(),
+  startsAt: timestamp('starts_at').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  productIdUnique: uniqueIndex('product_offers_product_id_unique').on(table.productId),
+}));
+
+export type ProductOffer = typeof productOffers.$inferSelect;
+export type NewProductOffer = typeof productOffers.$inferInsert;

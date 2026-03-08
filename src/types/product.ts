@@ -22,6 +22,7 @@
  * @property isVegan - Ob das Produkt vegan ist (Standard: false)
  * @property isGlutenFree - Ob das Produkt glutenfrei ist (Standard: false)
  * @property stock - Verfügbare Stückzahl im Lager (Standard: 10)
+ * @property activeOffer - Aktives Angebot (null wenn keins aktiv)
  */
 export interface Product {
   id: number
@@ -38,6 +39,14 @@ export interface Product {
   isVegan: boolean
   isGlutenFree: boolean
   stock: number
+  activeOffer?: {
+    id: number
+    discountType: 'percent' | 'absolute'
+    discountValue: string
+    discountedPrice: string
+    startsAt: string
+    expiresAt: string
+  } | null
 }
 
 /**

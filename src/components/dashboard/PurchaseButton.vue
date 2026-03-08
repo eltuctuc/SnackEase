@@ -42,7 +42,6 @@ const emit = defineEmits<{
 // ========================================
 
 const cartStore = useCartStore()
-const { formatPrice } = useFormatter()
 
 // ========================================
 // COMPUTED

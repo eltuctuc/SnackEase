@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import OfferModal from '~/components/offers/OfferModal.vue'
+import OfferBadge from '~/components/offers/OfferBadge.vue'
+
 const authStore = useAuthStore()
 const router = useRouter()
 
@@ -25,6 +28,14 @@ interface AdminProduct {
   stock: number | null
   categories: CategoryRef[]
   createdAt: string
+  activeOffer?: {
+    id: number
+    discountType: 'percent' | 'absolute'
+    discountValue: string
+    discountedPrice: string
+    startsAt: string
+    expiresAt: string
+  } | null
 }
 
 interface CategoryOption {
@@ -75,6 +86,24 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const showDeleteModal = ref(false)
 const deletingProduct = ref<AdminProduct | null>(null)
 const isDeleting = ref(false)
+
+// Offer Modal (FEAT-14)
+const showOfferModal = ref(false)
+const selectedProductForOffer = ref<AdminProduct | null>(null)
+
+const openOfferModal = (product: AdminProduct) => {
+  selectedProductForOffer.value = product
+  showOfferModal.value = true
+}
+
+const closeOfferModal = () => {
+  showOfferModal.value = false
+  selectedProductForOffer.value = null
+}
+
+const handleOfferSaved = async () => {
+  await fetchProducts()
+}
 
 const filteredProducts = computed(() => {
   return products.value.filter(p => {
@@ -447,6 +476,7 @@ onMounted(async () => {
               <th class="text-left p-4 font-medium text-muted-foreground">Name</th>
               <th class="text-left p-4 font-medium text-muted-foreground">Kategorien</th>
               <th class="text-left p-4 font-medium text-muted-foreground">Preis</th>
+              <th class="text-left p-4 font-medium text-muted-foreground">Angebot</th>
               <th class="text-left p-4 font-medium text-muted-foreground">Lager</th>
               <th class="text-left p-4 font-medium text-muted-foreground">Status</th>
               <th class="text-left p-4 font-medium text-muted-foreground">Aktionen</th>
@@ -486,6 +516,9 @@ onMounted(async () => {
                 </div>
               </td>
               <td class="p-4 font-medium">{{ parseFloat(product.price).toFixed(2) }} EUR</td>
+              <td class="p-4">
+                <OfferBadge :has-active-offer="!!product.activeOffer" />
+              </td>
               <td class="p-4 text-muted-foreground">{{ product.stock ?? '-' }}</td>
               <td class="p-4">
                 <span
@@ -498,12 +531,18 @@ onMounted(async () => {
                 </span>
               </td>
               <td class="p-4">
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                   <button
                     @click="openEditModal(product)"
                     class="px-3 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
                   >
                     Bearbeiten
+                  </button>
+                  <button
+                    @click="openOfferModal(product)"
+                    class="px-3 py-1 text-xs bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors"
+                  >
+                    Angebot
                   </button>
                   <button
                     @click="toggleProductStatus(product)"
@@ -744,6 +783,17 @@ onMounted(async () => {
         </div>
       </div>
     </Teleport>
+
+    <!-- Modal: Angebot verwalten (FEAT-14) -->
+    <OfferModal
+      v-if="selectedProductForOffer"
+      :show="showOfferModal"
+      :product-id="selectedProductForOffer.id"
+      :product-name="selectedProductForOffer.name"
+      :product-price="selectedProductForOffer.price"
+      @close="closeOfferModal"
+      @saved="handleOfferSaved"
+    />
 
     <!-- Modal: Löschen bestätigen -->
     <Teleport to="body">

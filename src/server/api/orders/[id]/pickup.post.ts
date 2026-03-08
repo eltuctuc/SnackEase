@@ -47,7 +47,7 @@
  */
 
 import { db } from '~/server/db'
-import { purchases, purchaseItems, userCredits, creditTransactions, products } from '~/server/db/schema'
+import { purchases, userCredits, creditTransactions } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 
