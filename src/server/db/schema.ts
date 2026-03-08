@@ -106,38 +106,57 @@ export const loginEvents = pgTable('login_events', {
 export type LoginEvent = typeof loginEvents.$inferSelect;
 export type NewLoginEvent = typeof loginEvents.$inferInsert;
 
-// FEAT-7: Purchases Tabelle für One-Touch Kauf
+// FEAT-7/16: Purchases Tabelle für One-Touch Kauf / Warenkorb
 export const purchases = pgTable('purchases', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
-  productId: integer('product_id').references(() => products.id).notNull(),
-  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  // FEAT-16: productId bleibt für Abwärtskompatibilität mit FEAT-7 (Single-Product-Käufe)
+  // Bei Warenkorb-Bestellungen ist productId NULL und Items werden in purchase_items gespeichert
+  productId: integer('product_id').references(() => products.id),
+  // FEAT-16: Preis für FEAT-7 (Single-Product-Kauf)
+  price: decimal('price', { precision: 10, scale: 2 }),
+  // FEAT-16: Gesamtpreis aller Produkte der Bestellung
+  totalPrice: decimal('total_price', { precision: 10, scale: 2 }),
   bonusPoints: integer('bonus_points').default(0),
-  
+
   // Für FEAT-11 (Bestellabholung):
   status: varchar('status', { length: 20 }).default('pending_pickup').notNull(),
   // Status: 'pending_pickup', 'picked_up', 'cancelled'
-  
+
   pickupPin: varchar('pickup_pin', { length: 4 }).notNull(),
   // 4-stellige PIN (z.B. "1234")
-  
+
   pickupLocation: varchar('pickup_location', { length: 50 }).default('Nürnberg').notNull(),
   // Standort des Automaten
-  
+
   expiresAt: timestamp('expires_at').notNull(),
   // createdAt + 2 Stunden
-  
+
   pickedUpAt: timestamp('picked_up_at'),
   // NULL wenn noch nicht abgeholt
-  
+
   cancelledAt: timestamp('cancelled_at'),
   // NULL wenn nicht storniert
-  
+
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
+
+// FEAT-16: n:m Verknüpfung zwischen Purchases und Products (Warenkorb)
+export const purchaseItems = pgTable('purchase_items', {
+  id: serial('id').primaryKey(),
+  purchaseId: integer('purchase_id').references(() => purchases.id, { onDelete: 'cascade' }).notNull(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  // Preis zum Bestellzeitpunkt (inkl. aktivem Angebot falls vorhanden)
+  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type PurchaseItem = typeof purchaseItems.$inferSelect;
+export type NewPurchaseItem = typeof purchaseItems.$inferInsert;
 
 // FEAT-13: Low-Stock-Benachrichtigungen
 export const lowStockNotifications = pgTable('low_stock_notifications', {

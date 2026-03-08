@@ -1,18 +1,17 @@
 <!--
-  PurchaseButton - One-Touch Kaufen-Button (FEAT-7)
-  
+  PurchaseButton - Warenkorb-Button (FEAT-16)
+
   Diese Komponente:
-  - Zeigt "Kaufen"-Button auf Produktkarte
-  - Prüft Guthaben und Bestand
-  - Zeigt Ladeanimation während Kauf
-  - Öffnet Success-Modal nach erfolgreichem Kauf
-  - Zeigt Fehlermeldungen als Toast
-  
+  - Zeigt "In den Warenkorb"-Button oder "+/-" bei bereits vorhandenen Produkten
+  - Zeigt Bestand an
+  - Nutzt Cart-Store für Warenkorb-Verwaltung
+
   @component
 -->
 
 <script setup lang="ts">
 import type { Product } from '~/types'
+import { useCartStore } from '~/stores/cart'
 
 // ========================================
 // PROPS & EMITS
@@ -20,109 +19,61 @@ import type { Product } from '~/types'
 
 /**
  * Props für PurchaseButton
- * 
- * @property product - Produkt das gekauft werden soll
- * @property userBalance - Aktuelles Guthaben des Users (für Validierung)
+ *
+ * @property product - Produkt das in den Warenkorb gelegt werden soll
  */
 interface Props {
   product: Product
-  userBalance: number
 }
 
 const props = defineProps<Props>()
 
 /**
- * Events die diese Komponente emitted
- * 
- * @event purchase-success - Kauf erfolgreich, öffnet Success-Modal
+ * Events die diese Komponente emits
+ *
+ * @event added-to-cart - Produkt wurde zum Warenkorb hinzugefügt
  */
 const emit = defineEmits<{
-  purchaseSuccess: []
+  addedToCart: []
 }>()
 
 // ========================================
 // COMPOSABLES & STORES
 // ========================================
 
-const purchasesStore = usePurchasesStore()
+const cartStore = useCartStore()
 const { formatPrice } = useFormatter()
-
-// ========================================
-// REACTIVE STATE
-// ========================================
-
-/** Loading-State für Button-Animation */
-const isLoading = ref(false)
-
-/** Inline-Fehlermeldung statt Browser-Alert */
-const inlineError = ref<string | null>(null)
 
 // ========================================
 // COMPUTED
 // ========================================
 
 /**
- * Produktpreis als Zahl für Vergleiche
+ * Ist Produkt im Warenkorb?
+ */
+const isInCart = computed(() => cartStore.hasProduct(props.product.id))
+
+/**
+ * Anzahl dieses Produkts im Warenkorb
+ */
+const quantityInCart = computed(() => cartStore.getQuantity(props.product.id))
+
+/**
+ * Produktpreis als Zahl
  */
 const productPrice = computed(() => parseFloat(props.product.price))
 
 /**
- * Kann User sich dieses Produkt leisten?
- */
-const canAfford = computed(() => props.userBalance >= productPrice.value)
-
-/**
- * Ist Produkt auf Lager? (FEAT-12)
+ * Ist Produkt auf Lager?
  */
 const isInStock = computed(() => (props.product.stock ?? 0) > 0)
 
 /**
- * Ist Bestand niedrig? (<=3 Stück) (FEAT-12)
+ * Ist Bestand niedrig? (<=3 Stück)
  */
 const isLowStock = computed(() => {
   const stock = props.product.stock ?? 0
   return stock > 0 && stock <= 3
-})
-
-/**
- * Button-Disabled-State
- * 
- * Button ist deaktiviert wenn:
- * - Nicht genug Guthaben
- * - Produkt ausverkauft
- * - Loading-State aktiv
- */
-const isDisabled = computed(() => {
-  return !canAfford.value || !isInStock.value || isLoading.value
-})
-
-/**
- * Button-Text dynamisch
- */
-const buttonText = computed(() => {
-  if (isLoading.value) return 'Wird gekauft...'
-  if (!isInStock.value) return 'Ausverkauft'
-  if (!canAfford.value) return 'Zu wenig Guthaben'
-  return 'Kaufen'
-})
-
-/**
- * Button-Farbe dynamisch
- * 
- * - Grün: Normal (kann kaufen)
- * - Gelb: Low Stock (Warnung)
- * - Grau: Deaktiviert (nicht kaufbar)
- */
-const buttonClass = computed(() => {
-  if (isDisabled.value) {
-    return 'bg-gray-300 text-gray-500 cursor-not-allowed'
-  }
-  
-  if (isLowStock.value) {
-    return 'bg-yellow-500 text-white hover:bg-yellow-600'
-  }
-  
-  return 'bg-green-600 text-white hover:bg-green-700'
 })
 
 // ========================================
@@ -130,46 +81,39 @@ const buttonClass = computed(() => {
 // ========================================
 
 /**
- * Kauft das Produkt (One-Touch)
- * 
- * @description
- * Ablauf:
- * 1. Button deaktivieren (Loading-State)
- * 2. API-Call via Store
- * 3. Bei Erfolg: Success-Modal öffnen
- * 4. Bei Fehler: Toast mit Fehlermeldung
+ * Produkt zum Warenkorb hinzufügen
  */
-async function handlePurchase() {
-  // Debounce: Verhindert Doppelklicks
-  if (isLoading.value) return
+function addToCart() {
+  if (!isInStock.value) return
 
-  isLoading.value = true
-  inlineError.value = null
+  cartStore.addItem({
+    productId: props.product.id,
+    name: props.product.name,
+    price: productPrice.value,
+    image: props.product.imageUrl || undefined
+  })
 
-  try {
-    const result = await purchasesStore.purchase(props.product.id)
+  emit('addedToCart')
+}
 
-    if (result.success) {
-      // Erfolg: Modal öffnen
-      emit('purchaseSuccess')
-    } else {
-      // Fehler: Inline anzeigen
-      inlineError.value = result.error || 'Kauf fehlgeschlagen.'
-      setTimeout(() => { inlineError.value = null }, 5000)
-    }
-  } catch (err) {
-    // Netzwerk-Fehler
-    inlineError.value = 'Verbindungsfehler. Bitte erneut versuchen.'
-    setTimeout(() => { inlineError.value = null }, 5000)
-  } finally {
-    isLoading.value = false
-  }
+/**
+ * Menge im Warenkorb erhöhen
+ */
+function incrementQuantity() {
+  cartStore.updateQuantity(props.product.id, quantityInCart.value + 1)
+}
+
+/**
+ * Menge im Warenkorb verringern
+ */
+function decrementQuantity() {
+  cartStore.updateQuantity(props.product.id, quantityInCart.value - 1)
 }
 </script>
 
 <template>
   <div class="mt-3">
-    <!-- Bestandsanzeige (FEAT-12) -->
+    <!-- Bestandsanzeige -->
     <div
       v-if="!isInStock"
       class="text-xs text-red-600 mb-1 font-medium"
@@ -191,42 +135,48 @@ async function handlePurchase() {
       {{ product.stock }} Stück verfügbar
     </div>
 
-    <!-- Kaufen-Button -->
-    <button data-testid="purchase-button"
-      @click="handlePurchase"
-      :disabled="isDisabled"
+    <!-- Wenn Produkt bereits im Warenkorb: +/- Buttons -->
+    <div v-if="isInStock && isInCart" class="flex items-center gap-2">
+      <button
+        @click="decrementQuantity"
+        class="w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center text-foreground transition-colors"
+        aria-label="Menge verringern"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+        </svg>
+      </button>
+
+      <span class="flex-1 text-center font-medium text-foreground">{{ quantityInCart }}</span>
+
+      <button
+        @click="incrementQuantity"
+        class="w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 flex items-center justify-center text-primary-foreground transition-colors"
+        aria-label="Menge erhöhen"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- "In den Warenkorb"-Button -->
+    <button
+      v-else
+      @click="addToCart"
+      :disabled="!isInStock"
       :class="[
         'w-full py-2 px-4 rounded-lg font-medium transition-all text-sm inline-flex items-center justify-center gap-2',
-        isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
-        buttonClass
+        isInStock
+          ? 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
       ]"
-      :aria-label="`${product.name} für ${formatPrice(product.price)} Euro kaufen`"
-      :aria-busy="isLoading"
+      :aria-label="`${product.name} in den Warenkorb legen`"
     >
-      <!-- Loading-Spinner (SVG statt Emoji) -->
-      <svg v-if="isLoading" class="animate-spin w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
-      {{ buttonText }}
+      {{ isInStock ? 'In den Warenkorb' : 'Ausverkauft' }}
     </button>
-
-    <!-- Inline-Fehlermeldung -->
-    <div
-      v-if="inlineError"
-      role="alert"
-      aria-live="assertive"
-      class="mt-1 text-xs text-red-600 font-medium text-center"
-    >
-      {{ inlineError }}
-    </div>
-
-    <!-- Bonuspunkte-Hinweis -->
-    <div
-      v-if="isInStock && canAfford"
-      class="text-xs text-muted-foreground mt-1 text-center"
-    >
-      Bonuspunkte sammeln
-    </div>
   </div>
 </template>

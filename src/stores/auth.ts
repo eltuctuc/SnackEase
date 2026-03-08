@@ -16,6 +16,7 @@
  */
 
 import type { User, LoginCredentials, LoginResponse, MeResponse } from '~/types'
+import { useCartStore } from '~/stores/cart'
 
 /**
  * Auth Store mit Composition API
@@ -146,7 +147,11 @@ export const useAuthStore = defineStore('auth', () => {
       if (data.success && data.user) {
         isLoggedIn.value = true
         user.value = data.user
-        
+
+        // FEAT-16: Warenkorb für User laden
+        const cartStore = useCartStore()
+        cartStore.setUserId(data.user.id)
+
         return { success: true }
       }
       
@@ -180,10 +185,14 @@ export const useAuthStore = defineStore('auth', () => {
     // Optimistic Update: State sofort resetten
     isLoggedIn.value = false
     user.value = null
-    
+
+    // FEAT-16: Warenkorb löschen
+    const cartStore = useCartStore()
+    cartStore.logout()
+
     // Backend: Session-Cookie löschen (async, nicht blockierend)
     await $fetch('/api/auth/logout', { method: 'POST' })
-    
+
     // Redirect zu Login-Page
     navigateTo('/login')
   }
@@ -224,6 +233,10 @@ export const useAuthStore = defineStore('auth', () => {
       if (data?.user) {
         isLoggedIn.value = true
         user.value = data.user
+
+        // FEAT-16: Warenkorb für User laden
+        const cartStore = useCartStore()
+        cartStore.setUserId(data.user.id)
       }
     } catch (e) {
       // Silent fail - Cookie abgelaufen oder invalide

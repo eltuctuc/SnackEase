@@ -1,21 +1,20 @@
 <!--
   ProductGrid - Produktkatalog mit Suche und Kategorie-Filtern
-  
+
   Diese Komponente zeigt:
   - Suchfeld mit Enter-Key-Support
   - Kategorie-Filter-Buttons
   - Grid-Layout mit Produktkarten
   - Loading- und Error-States
   - Empty-State bei keinen Ergebnissen
-  - PurchaseButton auf jeder Produktkarte (FEAT-7)
-  
+  - PurchaseButton auf jeder Produktkarte (FEAT-16)
+
   @component
 -->
 
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
 import PurchaseButton from './PurchaseButton.vue'
-import PurchaseSuccessModal from './PurchaseSuccessModal.vue'
 
 // ========================================
 // COMPOSABLES
@@ -30,7 +29,7 @@ const { formatPrice } = useFormatter()
 
 /**
  * Props für ProductGrid
- * 
+ *
  * @property products - Liste der anzuzeigenden Produkte
  * @property categories - Verfügbare Kategorien mit Icons
  * @property selectedCategory - Aktuell ausgewählte Kategorie
@@ -52,7 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 /**
  * Events die diese Komponente emitted
- * 
+ *
  * @event select-category - User hat Kategorie gewählt
  * @event search - User hat Suche getriggert (Enter oder Button)
  * @event product-click - User hat auf Produkt geklickt (für Detail-Ansicht)
@@ -64,12 +63,11 @@ const emit = defineEmits<{
 }>()
 
 // ========================================
-// COMPOSABLES & STORES (FEAT-7)
+// COMPOSABLES & STORES
 // ========================================
 
 const authStore = useAuthStore()
-const purchasesStore = usePurchasesStore()
-const creditsStore = useCreditsStore()
+const cartStore = useCartStore()
 
 // ========================================
 // REACTIVE STATE
@@ -77,9 +75,6 @@ const creditsStore = useCreditsStore()
 
 /** Suchbegriff-Input */
 const searchQuery = ref('')
-
-/** Success-Modal State (FEAT-7) */
-const isSuccessModalOpen = ref(false)
 
 // ========================================
 // METHODS
@@ -112,21 +107,6 @@ const selectCategory = (category: string) => {
  */
 const openProductDetail = (product: Product) => {
   emit('productClick', product)
-}
-
-/**
- * Kauf erfolgreich → Success-Modal öffnen (FEAT-7)
- */
-const handlePurchaseSuccess = () => {
-  isSuccessModalOpen.value = true
-}
-
-/**
- * Success-Modal schließen (FEAT-7)
- */
-const closeSuccessModal = () => {
-  isSuccessModalOpen.value = false
-  purchasesStore.clearLastPurchase()
 }
 </script>
 
@@ -240,26 +220,17 @@ const closeSuccessModal = () => {
           </div>
         </div>
 
-        <!-- FEAT-7: Purchase Button (nur für Mitarbeiter) -->
+        <!-- FEAT-16: Purchase Button (nur für Mitarbeiter) -->
         <PurchaseButton
           v-if="!authStore.isAdmin"
           :product="product"
-          :user-balance="creditsStore.balanceNumeric"
-          @purchase-success="handlePurchaseSuccess"
         />
-        
+
         <!-- Admin: Info-Text statt Kauf-Button -->
         <p v-else class="text-sm text-muted-foreground text-center mt-3">
           Nur zur Information
         </p>
       </div>
     </div>
-
-    <!-- FEAT-7: Success Modal -->
-    <PurchaseSuccessModal
-      :is-open="isSuccessModalOpen"
-      :purchase="purchasesStore.lastPurchase"
-      @close="closeSuccessModal"
-    />
   </div>
 </template>

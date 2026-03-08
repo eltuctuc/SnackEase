@@ -2,6 +2,7 @@
  * POST /api/orders/:id/pickup
  *
  * FEAT-11: Bestellabholung — Bestellung per NFC oder PIN abholen
+ * FEAT-16: Guthaben-Abzug erfolgt jetzt beim Abholen (nicht beim Checkout)
  *
  * @description
  * Führt die Abholung einer Bestellung durch. Unterstützt zwei Methoden:
@@ -14,8 +15,9 @@
  * 3. Status ist "pending_pickup"
  * 4. Bestellung ist nicht abgelaufen (expiresAt > jetzt)
  * 5. Bei PIN-Methode: PIN stimmt überein
+ * 6. Guthaben reicht aus (FEAT-16)
  *
- * Bei Erfolg: Status → "picked_up", pickedUpAt wird gesetzt
+ * Bei Erfolg: Status → "picked_up", pickedUpAt wird gesetzt, Guthaben abgezogen
  *
  * @route POST /api/orders/:id/pickup
  * @access Protected (Login erforderlich)
@@ -45,7 +47,7 @@
  */
 
 import { db } from '~/server/db'
-import { purchases } from '~/server/db/schema'
+import { purchases, purchaseItems, userCredits, creditTransactions, products } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 
@@ -125,7 +127,7 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
     const result = await db.transaction(async (tx) => {
       // Bestellung mit Row-Level-Lock laden
       const rows = await tx.execute(
-        sql`SELECT id, user_id, status, pickup_pin, expires_at FROM purchases WHERE id = ${orderId} FOR UPDATE`
+        sql`SELECT id, user_id, status, pickup_pin, expires_at, total_price FROM purchases WHERE id = ${orderId} FOR UPDATE`
       )
 
       const order = rows.rows[0] as {
@@ -134,6 +136,7 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
         status: string
         pickup_pin: string
         expires_at: Date | string
+        total_price: string | null
       } | undefined
 
       // Bestellung nicht gefunden
@@ -163,7 +166,7 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
       if (order.status === 'cancelled') {
         throw createError({
           statusCode: 409,
-          message: 'Bestellung wurde storniert, Guthaben zurückerstattet',
+          message: 'Bestellung wurde storniert',
         })
       }
 
@@ -200,6 +203,51 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
 
         // Erfolg: Rate-Limit-Eintrag löschen
         pinAttempts.delete(rateLimitKey)
+      }
+
+      // ========================================
+      // FEAT-16: Guthaben-Abzug beim Abholen
+      // ========================================
+
+      const totalPrice = order.total_price ? parseFloat(order.total_price.toString()) : 0
+
+      if (totalPrice > 0) {
+        // Aktuelles Guthaben laden
+        const creditRows = await tx.select().from(userCredits).where(eq(userCredits.userId, user.id)).limit(1)
+
+        if (!creditRows[0]) {
+          throw createError({
+            statusCode: 400,
+            message: 'Kein Guthaben gefunden',
+          })
+        }
+
+        const currentBalance = parseFloat(creditRows[0].balance.toString())
+
+        // Guthaben-Prüfung
+        if (currentBalance < totalPrice) {
+          throw createError({
+            statusCode: 400,
+            message: `Nicht genug Guthaben. Benötigt: ${totalPrice.toFixed(2)}€, Verfügbar: ${currentBalance.toFixed(2)}€`,
+          })
+        }
+
+        // Guthaben abziehen
+        const newBalance = currentBalance - totalPrice
+        await tx.update(userCredits)
+          .set({
+            balance: newBalance.toFixed(2),
+            updatedAt: new Date(),
+          })
+          .where(eq(userCredits.userId, user.id))
+
+        // Transaction-Log erstellen
+        await tx.insert(creditTransactions).values({
+          userId: user.id,
+          amount: `-${totalPrice.toFixed(2)}`,
+          type: 'purchase',
+          description: `Abholung Bestellung #${orderId}`,
+        })
       }
 
       // Status auf picked_up setzen

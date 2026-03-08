@@ -8,9 +8,17 @@ interface CartItem {
   image?: string
 }
 
+const STORAGE_PREFIX = 'snackease_cart_'
+
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([])
   const isLoading = ref(false)
+  const userId = ref<number | null>(null)
+
+  // Storage-Key basierend auf User-ID
+  const storageKey = computed(() => {
+    return userId.value ? `${STORAGE_PREFIX}${userId.value}` : null
+  })
 
   // Computed: Anzahl der Artikel im Warenkorb
   const itemCount = computed(() => {
@@ -22,7 +30,58 @@ export const useCartStore = defineStore('cart', () => {
     return items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   })
 
-  // Artikel zum Warenkorb hinzufuegen
+  // Computed: Ist Warenkorb leer?
+  const isEmpty = computed(() => items.value.length === 0)
+
+  // Warenkorb aus localStorage laden
+  function loadFromStorage() {
+    if (!storageKey.value) return
+
+    try {
+      const stored = localStorage.getItem(storageKey.value)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          items.value = parsed
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des Warenkorbs aus localStorage:', error)
+    }
+  }
+
+  // Warenkorb in localStorage speichern
+  function saveToStorage() {
+    if (!storageKey.value) return
+
+    try {
+      localStorage.setItem(storageKey.value, JSON.stringify(items.value))
+    } catch (error) {
+      console.error('Fehler beim Speichern des Warenkorbs in localStorage:', error)
+    }
+  }
+
+  // User-ID setzen und Warenkorb laden
+  function setUserId(id: number) {
+    userId.value = id
+    loadFromStorage()
+  }
+
+  // Warenkorb leeren und Storage löschen
+  function clearCart() {
+    items.value = []
+    if (storageKey.value) {
+      localStorage.removeItem(storageKey.value)
+    }
+  }
+
+  // Warenkorb-Key löschen (bei Logout)
+  function logout() {
+    clearCart()
+    userId.value = null
+  }
+
+  // Artikel zum Warenkorb hinzufügen
   function addItem(product: Omit<CartItem, 'quantity'>, quantity: number = 1) {
     const existingItem = items.value.find(item => item.productId === product.productId)
 
@@ -37,9 +96,11 @@ export const useCartStore = defineStore('cart', () => {
         image: product.image
       })
     }
+
+    saveToStorage()
   }
 
-  // Artikelmenge aendern
+  // Artikelmenge ändern
   function updateQuantity(productId: number, quantity: number) {
     const item = items.value.find(i => i.productId === productId)
     if (item) {
@@ -47,6 +108,7 @@ export const useCartStore = defineStore('cart', () => {
         removeItem(productId)
       } else {
         item.quantity = quantity
+        saveToStorage()
       }
     }
   }
@@ -56,39 +118,19 @@ export const useCartStore = defineStore('cart', () => {
     const index = items.value.findIndex(i => i.productId === productId)
     if (index !== -1) {
       items.value.splice(index, 1)
+      saveToStorage()
     }
   }
 
-  // Warenkorb leeren
-  function clearCart() {
-    items.value = []
+  // Prüfen ob Produkt im Warenkorb ist
+  function hasProduct(productId: number): boolean {
+    return items.value.some(item => item.productId === productId)
   }
 
-  // Warenkorb vom Server laden ( fuer FEAT-16)
-  async function fetchCart() {
-    isLoading.value = true
-    try {
-      const data = await $fetch<CartItem[]>('/api/cart')
-      if (data) {
-        items.value = data
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden des Warenkorbs:', error)
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  // Warenkorb auf Server speichern ( fuer FEAT-16)
-  async function saveCart() {
-    try {
-      await $fetch('/api/cart', {
-        method: 'POST',
-        body: { items: items.value }
-      })
-    } catch (error) {
-      console.error('Fehler beim Speichern des Warenkorbs:', error)
-    }
+  // Produktmenge im Warenkorb abrufen
+  function getQuantity(productId: number): number {
+    const item = items.value.find(i => i.productId === productId)
+    return item?.quantity ?? 0
   }
 
   return {
@@ -96,11 +138,17 @@ export const useCartStore = defineStore('cart', () => {
     isLoading,
     itemCount,
     totalPrice,
+    isEmpty,
+    storageKey,
+    setUserId,
+    clearCart,
+    logout,
     addItem,
     updateQuantity,
     removeItem,
-    clearCart,
-    fetchCart,
-    saveCart
+    hasProduct,
+    getQuantity,
+    loadFromStorage,
+    saveToStorage
   }
 })

@@ -2,13 +2,18 @@
  * Nitro Server Plugin: Cron-Jobs
  *
  * FEAT-11: Automatische Stornierung abgelaufener Bestellungen
+ * FEAT-16: Kein Refund mehr nötig (Guthaben wird erst beim Abholen abgezogen)
  *
  * @description
  * Dieses Plugin startet beim Server-Start und führt jede Minute
  * die cancelExpiredOrders-Funktion aus.
  *
  * Abgelaufene Bestellungen (status='pending_pickup', expiresAt < jetzt)
- * werden automatisch storniert und das Guthaben zurückerstattet.
+ * werden automatisch storniert.
+ *
+ * FEAT-16 Änderung:
+ * - Kein Guthaben-Refund mehr! Das Guthaben wird erst beim Abholen abgezogen.
+ * - Bei Stornierung verfällt die Bestellung einfach ohne Guthaben-Bewegung.
  *
  * Warum Nitro Plugin?
  * - Nativer Nuxt 3 Mechanismus für Server-seitige Initialisierung
@@ -21,11 +26,12 @@
  */
 
 import { db } from '~/server/db'
-import { purchases, userCredits, creditTransactions, products } from '~/server/db/schema'
+import { purchases } from '~/server/db/schema'
 import { eq, and, lt, sql } from 'drizzle-orm'
 
 /**
- * Storniert alle abgelaufenen Bestellungen und erstattet Guthaben zurück
+ * Storniert alle abgelaufenen Bestellungen
+ * FEAT-16: Kein Guthaben-Refund mehr!
  */
 async function cancelExpiredOrders(): Promise<void> {
   try {
@@ -36,8 +42,6 @@ async function cancelExpiredOrders(): Promise<void> {
       .select({
         id: purchases.id,
         userId: purchases.userId,
-        productId: purchases.productId,
-        price: purchases.price,
       })
       .from(purchases)
       .where(
@@ -68,7 +72,7 @@ async function cancelExpiredOrders(): Promise<void> {
             return // Abholung hat gewonnen — überspringen
           }
 
-          // Status auf cancelled setzen
+          // Status auf cancelled setzen (kein Refund mehr!)
           await tx
             .update(purchases)
             .set({
@@ -76,35 +80,9 @@ async function cancelExpiredOrders(): Promise<void> {
               cancelledAt: now,
             })
             .where(eq(purchases.id, order.id))
-
-          // Guthaben zurückerstatten
-          await tx
-            .update(userCredits)
-            .set({
-              balance: sql`${userCredits.balance} + ${order.price}`,
-              updatedAt: now,
-            })
-            .where(eq(userCredits.userId, order.userId))
-
-          // Produktname für Transaction-Log holen
-          const productRows = await tx
-            .select({ name: products.name })
-            .from(products)
-            .where(eq(products.id, order.productId))
-            .limit(1)
-
-          const productName = productRows[0]?.name ?? 'Unbekanntes Produkt'
-
-          // Refund-Transaktion loggen
-          await tx.insert(creditTransactions).values({
-            userId: order.userId,
-            amount: order.price.toString(),
-            type: 'refund',
-            description: `Rückerstattung: ${productName} (Bestellung abgelaufen)`,
-          })
         })
 
-        console.log(`[CronJob] Bestellung #${order.id} storniert, Guthaben zurückerstattet`)
+        console.log(`[CronJob] Bestellung #${order.id} storniert (kein Refund - FEAT-16)`)
       } catch (txErr: unknown) {
         // Einzelne Transaktion fehlgeschlagen — weiter mit nächster Bestellung
         const e = txErr as { message?: string }
@@ -124,5 +102,5 @@ export default defineNitroPlugin(() => {
   // Dann jede Minute wiederholen
   setInterval(cancelExpiredOrders, 60 * 1000)
 
-  console.log('[CronJob] Automatische Stornierung aktiv (Intervall: 60s)')
+  console.log('[CronJob] Automatische Stornierung aktiv (Intervall: 60s, kein Refund - FEAT-16)')
 })
