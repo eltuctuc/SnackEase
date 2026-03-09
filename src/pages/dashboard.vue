@@ -18,8 +18,10 @@
 
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
+import { useCartStore } from '~/stores/cart'
 import BalanceCard from '~/components/dashboard/BalanceCard.vue'
 import AdminInfoBanner from '~/components/dashboard/AdminInfoBanner.vue'
+import OffersSlider from '~/components/dashboard/OffersSlider.vue'
 import ProductGrid from '~/components/dashboard/ProductGrid.vue'
 import RechargeModal from '~/components/dashboard/RechargeModal.vue'
 import ProductDetailModal from '~/components/dashboard/ProductDetailModal.vue'
@@ -58,6 +60,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const creditsStore = useCreditsStore()
 const productsStore = useProductsStore()
+const cartStore = useCartStore()
 
 // ========================================
 // REACTIVE STATE
@@ -240,6 +243,43 @@ const handleCloseProductDetailModal = () => {
   closeProductDetailModal()
   selectedProductDetail.value = null
 }
+
+// ========================================
+// EVENT HANDLERS - Offers Slider (FEAT-17)
+// ========================================
+
+/**
+ * Oeffnet Produkt-Detail-Modal aus dem Angebots-Slider heraus.
+ * Analog zu handleProductClick im ProductGrid.
+ *
+ * @param product - Angeklicktes Angebots-Produkt
+ */
+const handleOfferCardClick = (product: Product) => {
+  selectedProductDetail.value = product
+  openProductDetailModal()
+}
+
+/**
+ * Legt ein Produkt aus dem Angebots-Slider direkt in den Warenkorb.
+ * Verwendet den Angebotspreis (activeOffer.discountedPrice) als Preis.
+ *
+ * @param product - Produkt mit aktivem Angebot
+ */
+const handleAddToCartFromSlider = (product: Product) => {
+  const price = product.activeOffer
+    ? parseFloat(product.activeOffer.discountedPrice)
+    : parseFloat(product.price)
+
+  cartStore.addItem(
+    {
+      productId: product.id,
+      name: product.name,
+      price,
+      image: product.imageUrl ?? undefined,
+    },
+    1,
+  )
+}
 </script>
 
 <template>
@@ -301,6 +341,15 @@ const handleCloseProductDetailModal = () => {
           @dismiss-error="dismissBalanceError"
         />
       </div>
+
+      <!-- Angebots-Querslider (FEAT-17) — nur fuer Mitarbeiter, nicht fuer Admins -->
+      <OffersSlider
+        v-if="!authStore.isAdmin"
+        :products="productsStore.products"
+        :is-loading="productsStore.isLoading"
+        @open-detail="handleOfferCardClick"
+        @add-to-cart="handleAddToCartFromSlider"
+      />
 
       <!-- Product Grid Component -->
       <ProductGrid

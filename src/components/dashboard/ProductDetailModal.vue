@@ -97,8 +97,26 @@ const closeModal = () => {
           />
         </div>
 
-        <!-- Preis -->
-        <p class="text-2xl font-bold text-primary mb-4">{{ formatPrice(product.price) }} €</p>
+        <!-- Preis: Originalpreis durchgestrichen + Angebotspreis wenn Angebot aktiv (FEAT-17) -->
+        <div class="flex items-baseline gap-3 mb-4">
+          <!-- Angebotspreis (hervorgehoben, nur wenn Angebot aktiv) -->
+          <p
+            v-if="product.activeOffer"
+            class="text-2xl font-bold text-primary"
+          >
+            {{ formatPrice(product.activeOffer.discountedPrice) }} €
+          </p>
+          <!-- Originalpreis: durchgestrichen wenn Angebot aktiv, ansonsten normal -->
+          <p
+            :class="[
+              product.activeOffer
+                ? 'text-base text-muted-foreground line-through'
+                : 'text-2xl font-bold text-primary',
+            ]"
+          >
+            {{ formatPrice(product.price) }} €
+          </p>
+        </div>
 
         <!-- Beschreibung -->
         <p v-if="product.description" class="text-muted-foreground mb-4">
