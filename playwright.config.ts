@@ -22,7 +22,10 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   
   // Anzahl paralleler Worker
-  workers: process.env.CI ? 1 : undefined,
+  // Sequenziell (1 Worker) auch lokal, da mehrere Test-Suites dieselbe
+  // Datenbank (Angebote) manipulieren und sonst Race-Conditions entstehen
+  // (z.B. offers-slider.spec.ts und offers.spec.ts gleichzeitig)
+  workers: 1,
   
   // Reporter
   reporter: 'html',

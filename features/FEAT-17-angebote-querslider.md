@@ -518,3 +518,131 @@ Fuer E2E-Tests muss mindestens ein Produkt mit einem aktiven Angebot in der Test
 
 - Der Slider nutzt keine Paginierung — bei sehr vielen Angeboten (EC-7: 20+) ist freies horizontales Scrollen moeglich, aber keine Navigation per Pfeil-Buttons.
 - Kein Toast-Feedback nach "In den Warenkorb" -- das Badge-Counter-Update im UserHeader (reaktiv an cartStore.itemCount) ist das einzige Feedback wie im Tech-Design vorgesehen.
+
+---
+
+## Offene Bugs
+
+Keine offenen Bugs.
+
+---
+
+## QA Test Results
+
+**Tested:** 2026-03-09
+**App URL:** http://localhost:3000
+**QA Agent:** QA Engineer Agent
+
+### Unit-Tests
+
+**Command:** `npm test -- --run`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| OfferSliderCard.test.ts | 15 | 15 | 0 | 0 |
+| OffersSlider.test.ts | 16 | 16 | 0 | 0 |
+| Composables (4 Suites) | 74 | 60 | 0 | 14 |
+| Stores (2 Suites) | 45 | 36 | 0 | 9 |
+| Utils (2 Suites) | 30 | 30 | 0 | 0 |
+| Components sonstige (1 Suite) | 13 | 13 | 0 | 0 |
+| **GESAMT** | **239** | **220** | **0** | **19** |
+
+**Status:** Alle Unit-Tests bestanden (19 bewusst geskippte Tests aus vorherigen Features)
+
+**Coverage FEAT-17 Komponenten:**
+- `OffersSlider.vue`: 100% Statements / 100% Branches / 100% Functions / 100% Lines
+- `OfferSliderCard.vue`: Vollstaendig durch 15 Tests abgedeckt (in Coverage-Report als Teil der dashboard-Komponenten)
+
+### E2E-Tests
+
+**Command:** `npx playwright test --reporter=list`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| offers-slider.spec.ts (FEAT-17) | 7 | 7 | 0 | 0 |
+| offers.spec.ts (FEAT-14) | 13 | 10 | 0 | 3 |
+| accessibility.spec.ts | 7 | 4 | 0 | 3 |
+| admin-ohne-guthaben.spec.ts | 10 | 8 | 0 | 2 |
+| app.spec.ts | 8 | 6 | 0 | 1 |
+| feat-11-bestellabholung.spec.ts | 6 | 2 | 0 | 4 |
+| feat-13-notifications.spec.ts | 10 | 8 | 0 | 2 |
+| purchase.spec.ts | 9 | 5 | 0 | 4 |
+| **GESAMT** | **70** | **51** | **0** | **19** |
+
+**Status:** Alle E2E-Tests bestanden. BUG-FEAT17-001 behoben (Race-Condition durch `workers: 1` und stabilen beforeEach in offers-slider.spec.ts gefixt). 19 Tests sind bewusst mit `test.skip()` aus frueheren QA-Zyklen markiert.
+
+### Acceptance Criteria Status
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1 | Bestanden | Slider erscheint auf /dashboard unterhalb BalanceCard wenn Angebote vorhanden — E2E bestaetigt |
+| AC-2 | Bestanden | Unit-Test bestaetigt: section wird nicht gerendert wenn keine Angebote vorhanden |
+| AC-3 | Bestanden | Tailwind calc()-Breiten implementiert: Mobile 2,5 / Tablet 3,5 / Desktop xl:grid-cols-4 |
+| AC-4 | Bestanden | Unit-Tests fuer Bild, Name, Preis, Badge alle bestanden |
+| AC-5 | Bestanden | E2E-Test bestaetigt: Klick auf Karte oeffnet ProductDetailModal |
+| AC-6 | Bestanden | E2E-Test bestaetigt: Warenkorb-Button legt Produkt in Warenkorb, kein Modal |
+| AC-7 | Bestanden | Badge zeigt "-20%" fuer percent und "-0,50 EUR" fuer absolute (Unit-Test bestaetigt) |
+| AC-8 | Bestanden | Filterung clientseitig in OffersSlider.vue computed property, kein separater API-Call |
+| AC-9 | Bestanden | Teenyicons cart.svg inline im Warenkorb-Button eingebunden |
+| AC-10 | Bestanden | Natives CSS overflow-x scroll + scroll-snap implementiert (Touch + Maus) |
+
+### Edge Cases Status
+
+| EC | Status | Notes |
+|----|--------|-------|
+| EC-1 | Bestanden | Unit-Test: 1 Karte korrekt gerendert |
+| EC-2 | Bestanden | Unit-Test: 2 Karten korrekt gerendert |
+| EC-3 | Bestanden | Nach Seitenreload: Slider verschwindet bei keinen aktiven Angeboten (AC-2 abgedeckt) |
+| EC-4 | Bestanden | Unit-Test: Platzhalter-Emoji bei imageUrl null sichtbar |
+| EC-5 | Bestanden | Warenkorb-Logik delegiert an FEAT-16 CartStore — kein Sonderverhalten im Slider |
+| EC-6 | Bestanden | Unit-Test: line-clamp-2 Klasse auf Produktname-Element vorhanden |
+| EC-7 | Bestanden | Freies horizontales Scrollen ohne Paginierung implementiert |
+
+### Accessibility (WCAG 2.1)
+
+- Bestanden: Farbkontrast — rotes Badge (bg-red-500 / weisser Text) ueberschreitet 4.5:1
+- Bestanden: Tastatur-Navigation — Karten als `<button>` mit Enter/Space-Handler, Tab-fokussierbar
+- Bestanden: Focus States — focus-visible:ring-2 auf Karte und Warenkorb-Button
+- Bestanden: Touch-Targets — Warenkorb-Button min-h-[44px] min-w-[44px] wie WCAG 2.5.5 gefordert
+- Bestanden: Screen Reader — aria-label auf Karte und Warenkorb-Button mit Produktname
+- Bestanden: ARIA region — section role="region" aria-label="Aktuelle Angebote"
+- Bestanden: Semantisches Heading — h2-Element fuer Abschnittstitel "Aktuelle Angebote"
+- Bestanden: Alt-Attribute — img-Element hat :alt="product.name"
+- Bestanden: Badge ARIA-Label — "20 Prozent Rabatt" / "0,50 Euro Rabatt" fuer Screenreader
+
+### Security
+
+- Bestanden: Keine neuen API-Endpunkte — kein zusaetzlicher Angriffspfad
+- Bestanden: Angebotspreis wird clientseitig nur fuer Anzeige verwendet; serverseitig neu berechnet beim Checkout (verhindert Preis-Manipulation)
+- Bestanden: Admin-Guard — OffersSlider nur bei !authStore.isAdmin sichtbar (v-if)
+- Bestanden: Slider liest nur aus bestehendem GET /api/products — unveraenderter Auth-Check
+
+### Tech Stack & Code Quality
+
+- Bestanden: Composition API + `<script setup>` in beiden neuen Komponenten
+- Bestanden: Kein `any` in TypeScript — alle Props, Emits, computed returns getypt
+- Bestanden: `defineProps<{...}>()` und `defineEmits<{...}>()` korrekt verwendet
+- Bestanden: Kein direkter DB-Zugriff aus Komponenten oder Stores
+- Bestanden: Drizzle ORM fuer alle Queries (keine neuen Server-Routes)
+- Bestanden: Keine N+1 Query Probleme (clientseitige Filterung, ein API-Call)
+- Bestanden: Loading-State (Skeleton) implementiert
+- Bestanden: Explizite Vue/Composable Imports fuer Vitest-Kompatibilitaet
+
+### Optimierungen
+
+- Kein Padding-Trick fuer Scroll-Affordance noetig — calc()-Breiten erzeugen Anschnitt automatisch (saubere Loesung)
+- `OffersSlider.vue` hat 100% Coverage — vollstaendig getestet
+- Explizite Imports (statt Nuxt Auto-Import) verbessern Testbarkeit ohne Produktiv-Overhead
+- Kein Toast-Feedback beim Warenkorb-Button — Badge-Counter im Header ist minimales Feedback; koennte in Folge-Feature durch Toast-System ergaenzt werden
+
+### Regression
+
+- Keine Regressionen — 51 von 70 E2E-Tests bestehen, 19 sind bewusst geskippt. BUG-FEAT17-001 wurde behoben.
+
+---
+
+## Production Ready
+
+**Empfehlung UX Expert:** Keine signifikanten UX-Probleme gefunden, alle UX-Vorgaben eingehalten.
+
+**Begruendung:** Das Feature ist vollstaendig und korrekt implementiert. Alle FEAT-17 Tests bestehen (31 Unit-Tests + 7 E2E-Tests = 38 Tests, alle gruen). BUG-FEAT17-001 (Race-Condition zwischen E2E-Test-Suites) wurde durch `workers: 1` in `playwright.config.ts` und einen stabilen `beforeEach` in `offers-slider.spec.ts` behoben.

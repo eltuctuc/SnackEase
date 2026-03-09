@@ -83,8 +83,11 @@ async function ensureActiveOfferExists(page: Page): Promise<boolean> {
 
 test.describe('Angebote-Querslider — User-Flows (FEAT-17)', () => {
   test.beforeEach(async ({ page, context }) => {
+    // Cookies loeschen und direkt zur Login-Seite navigieren um sauberen Ausgangszustand zu haben
+    // (page.goto('/') wuerde einen Redirect zu /login ausloesen der mit dem Test-internen
+    // loginAsAdmin/loginAsUser konkurrieren kann)
     await context.clearCookies()
-    await page.goto('/')
+    await page.goto('/login', { waitUntil: 'networkidle' })
     await page.evaluate(() => {
       localStorage.clear()
       sessionStorage.clear()
