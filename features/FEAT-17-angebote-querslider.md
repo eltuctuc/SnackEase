@@ -1,6 +1,6 @@
 # FEAT-17: Angebote-Querslider
 
-## Status: Implemented
+## Status: Implemented (Production Ready)
 
 ## Abhaengigkeiten
 - Benoetigt: FEAT-14 (Angebote & Rabatte) — `product_offers`-Tabelle und `activeOffer`-Feld in GET /api/products muss existieren
@@ -518,12 +518,6 @@ Fuer E2E-Tests muss mindestens ein Produkt mit einem aktiven Angebot in der Test
 
 - Der Slider nutzt keine Paginierung — bei sehr vielen Angeboten (EC-7: 20+) ist freies horizontales Scrollen moeglich, aber keine Navigation per Pfeil-Buttons.
 - Kein Toast-Feedback nach "In den Warenkorb" -- das Badge-Counter-Update im UserHeader (reaktiv an cartStore.itemCount) ist das einzige Feedback wie im Tech-Design vorgesehen.
-
----
-
-## Offene Bugs
-
-Keine offenen Bugs.
 
 ---
 
