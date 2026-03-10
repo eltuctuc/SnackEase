@@ -45,4 +45,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path === '/leaderboard' && authStore.user.role === 'admin') {
     return navigateTo('/admin')
   }
+
+  // FEAT-20 AC-19: Admins haben keinen Zugriff auf /profile (zu /admin weiterleiten)
+  if (to.path === '/profile' && authStore.user.role === 'admin') {
+    return navigateTo('/admin')
+  }
 })
