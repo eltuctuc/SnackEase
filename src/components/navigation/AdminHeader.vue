@@ -90,13 +90,10 @@ onUnmounted(() => {
           </svg>
         </NuxtLink>
 
-        <!-- Seitentitel -->
-        <h1 v-if="!showBackButton" class="text-lg font-semibold text-foreground">
+        <!-- Seitentitel (p statt h1: jede Admin-Seite hat ihren eigenen h1 im Content) -->
+        <p class="text-lg font-semibold text-foreground">
           {{ currentTitle }}
-        </h1>
-        <h1 v-else class="text-lg font-semibold text-foreground">
-          {{ currentTitle }}
-        </h1>
+        </p>
       </div>
 
       <!-- Rechte Seite: Benachrichtigungs-Badge + Dropdown -->

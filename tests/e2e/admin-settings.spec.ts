@@ -39,8 +39,8 @@ test.describe('FEAT-21: Admin Einstellungsseite', () => {
       await loginAsAdmin(page)
       await page.goto('/admin/settings', { waitUntil: 'networkidle' })
 
-      // Seitenheader mit Titel "Einstellungen" sichtbar
-      await expect(page.getByRole('heading', { name: 'Einstellungen' })).toBeVisible({ timeout: 10000 })
+      // Seitenheader mit Titel "Einstellungen" sichtbar (exact: true verhindert Match auf "Weitere Einstellungen")
+      await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible({ timeout: 10000 })
 
       // Kein Platzhalter-Text mehr sichtbar
       await expect(page.locator('text=Einstellungsseiten-Inhalt')).not.toBeVisible()

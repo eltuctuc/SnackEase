@@ -367,3 +367,60 @@ Ziel-Coverage: Alle 6 kritischen Flows muessen gruenlich durchlaufen.
 ### Bekannte Einschraenkungen
 - Die Erfolgs-Banner bleiben bis zur naechsten Navigation sichtbar (kein Auto-Close). Das entspricht dem Spec-Design; ein Auto-Close wurde nicht gefordert.
 - Der autofocus auf das RESET-Eingabefeld im System-Reset-Modal greift nur beim ersten Oeffnen zuverlaessig (Browser-natives Attribut). Bei erneutem Oeffnen desselben v-if-Elements ist autofocus browserabhaengig — Playwright-Tests validieren die Input-Interaktion dennoch korrekt.
+
+---
+
+## QA Test Results
+
+**Getestet am:** 2026-03-09
+**QA-Report:** `/docs/qa-reports/FEAT-21-qa-report.md`
+
+### Unit-Tests
+
+**Befehl:** `npm test -- --run`
+
+| Test-Suite | Tests | Bestanden | Fehlgeschlagen |
+|------------|-------|-----------|----------------|
+| Alle 14 Test-Suites | 258 | 239 | 0 |
+| **GESAMT** | **258** | **239** | **0** |
+
+**Status:** Alle Unit-Tests bestanden (19 uebersprungen sind beabsichtigt)
+
+### E2E-Tests
+
+**Befehl:** `npx playwright test tests/e2e/admin-settings.spec.ts --reporter=line`
+
+| Test-Suite | Tests | Bestanden | Fehlgeschlagen |
+|------------|-------|-----------|----------------|
+| admin-settings.spec.ts | 16 | 15 | 1 |
+
+**Status:** 15/16 Tests bestanden — 1 fehlgeschlagen (BUG-FEAT21-001)
+
+### Acceptance Criteria Status
+
+| AC | Beschreibung | Status |
+|----|--------------|--------|
+| AC-1 | /admin/settings zeigt vollstaendige Seite | PASS (fachlich), E2E-Test-Bug |
+| AC-2 | Logout-Button vorhanden | PASS |
+| AC-3 | Logout -> /login | PASS |
+| AC-4 | System-Reset-Button vorhanden | PASS |
+| AC-5 | System-Reset erfordert "RESET"-Eingabe | PASS |
+| AC-6 | Erfolgs-Feedback nach System-Reset | PASS |
+| AC-7 | Guthaben-Reset-Button vorhanden | PASS |
+| AC-8 | Guthaben-Reset-Dialog mit Erklaerung | PASS |
+| AC-9 | Erfolgs-Feedback nach Guthaben-Reset | PASS |
+| AC-10 | admin/index.vue: Keine Reset-Bloecke mehr | PASS |
+| AC-11 | Auth-Guard vorhanden | PASS |
+| AC-12 | Icons aus Teenyicons | PASS |
+
+### Offene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| BUG-FEAT21-001 | Doppelter h1-Heading — E2E-Test Strict Mode Violation + WCAG | Medium | Should Fix | Offen |
+
+### QA-Empfehlung
+
+**FREIGABE mit Vorbehalt** — Alle Acceptance Criteria fachlich erfuellt. BUG-FEAT21-001 (doppelter h1) sollte vor naechstem Release behoben werden.
+
+**UX Expert nochmals noetig?** Nein

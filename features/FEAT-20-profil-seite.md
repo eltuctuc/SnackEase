@@ -697,3 +697,106 @@ Alle anderen benoetigen Funktionen (Tailwind, Teenyicons, Pinia, useFormatter) s
 
 - Bonuspunkte-Chart zeigt leeren Zustand fuer Demo-User Nina, da `bonusPoints`-Feld in den Testdaten 0 ist (Produktions-Daten wuerden echte Werte zeigen).
 - Gesundheits-Score von 9/10 fuer Nina (hat hauptsaechlich Bananen und Bio-Aepfel gekauft) — korrektes Verhalten gemaess Spec.
+
+---
+
+## QA Test Results
+
+**Tested:** 2026-03-10
+**App URL:** http://localhost:3000
+
+### Unit-Tests
+
+**Command:** `npx vitest run --reporter=verbose`
+
+| Test-Suite | Tests | Passing | Failing | Coverage |
+|------------|-------|---------|---------|----------|
+| healthScore.test.ts | 14 | 14 | 0 | 100% |
+| Alle anderen | 258 | 239 | 0 | — |
+| **GESAMT** | **272** | **253** | **0** | — |
+
+**Status:** Alle Unit-Tests bestanden. 19 geskippte Tests (Integration, kein Nuxt-Kontext — pre-existent).
+
+### E2E-Tests
+
+**Command:** `npx playwright test tests/e2e/profile.spec.ts --reporter=line`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| profile.spec.ts | 14 | 14 | 0 | 0 |
+| **GESAMT (alle E2E)** | **100** | **79** | **2** | **19** |
+
+Die 2 fehlgeschlagenen Tests (`admin-ohne-guthaben.spec.ts:71` und `admin-settings.spec.ts:38`) sind pre-existierende FEAT-21-Bugs (BUG-FEAT21-001) und wurden nicht durch FEAT-20 verursacht.
+
+**Status:** Alle FEAT-20 E2E-Tests bestanden.
+
+### Acceptance Criteria Status
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1 | PASS | /profile laedt, Name als h1, Standort, Guthaben sichtbar |
+| AC-2 | PASS | Kein Edit-Button, kein Eingabefeld |
+| AC-3 | PASS | 4 Tabs: 7 Tage, 30 Tage, 90 Tage, Alle Zeit |
+| AC-4 | PASS | Standard: 30d |
+| AC-5 | PASS | Aktiver Tab: bg-primary, aria-selected=true |
+| AC-6 | PASS | watch(period) loest loadProfile() aus |
+| AC-7 | PASS | totalSpentInPeriod summiert alle orders im Zeitraum |
+| AC-8 | PASS | orderCount = orders.length (nur picked_up im Zeitraum) |
+| AC-9 | PASS | GROUP BY + COUNT(*) + ORDER BY count DESC, name ASC |
+| AC-10 | PASS | Math.max(1, Math.min(10, Math.round(boostedScore))) |
+| AC-11 | PASS | "Noch keine Bestellungen" / "Noch kein Score" |
+| AC-12 | PASS | eq(purchases.status, 'picked_up') als harte WHERE-Bedingung |
+| AC-13 | PASS | orderBy(desc(purchases.pickedUpAt)) |
+| AC-14 | PASS | Datum (DD.MM.YYYY HH:MM Uhr), Betrag, Produktliste |
+| AC-15 | PASS | "Keine Bestellungen in diesem Zeitraum" |
+| AC-16 | PASS | LogoutButton.vue sichtbar, roter Outline-Stil |
+| AC-17 | PASS | authStore.logout() loescht Cookie, navigiert zu /login |
+| AC-18 | PASS | protectedPaths in auth.global.ts |
+| AC-19 | PASS | Doppelte Absicherung: Middleware + API 403 |
+
+### Accessibility (WCAG 2.1)
+
+- PASS Farbkontrast > 4.5:1 (Tailwind-Theme konform)
+- PASS Tastatur-Navigation (native HTML-Buttons, focus:ring-2)
+- PASS Screen Reader (aria-label, aria-selected, role, SR-Tabelle fuer Chart)
+- PASS Touch-Targets > 44px (min-h-[44px] auf allen primären interaktiven Elementen)
+- PASS Focus-States sichtbar (focus:outline-none focus:ring-2 focus:ring-primary)
+- INFO Bonuspunkte-Tabs: min-h-[36px] (sekundaerer Umschalter — Design-Entscheidung)
+
+### Security
+
+- PASS Input Validation (period-Parameter gegen Whitelist geprueft)
+- PASS Auth-Checks doppelt (Middleware + API-Route)
+- PASS Admin-Zugriff abgewehrt (HTTP 403 im API-Endpunkt)
+- PASS Kein DB-Zugriff im Browser
+- INFO Kein Rate Limiting auf /api/profile/stats (Optimierungspotenzial)
+
+### Tech Stack & Code Quality
+
+- PASS Composition API + `<script setup>` in allen 11 neuen Komponenten
+- PASS Kein `any` in TypeScript
+- PASS Kein direkter DB-Zugriff aus Stores/Components
+- PASS Drizzle ORM fuer alle 9 Queries
+- PASS Server Route hat vollstaendiges Error Handling
+- PASS Promise.all() fuer parallele Queries (kein N+1-Problem)
+- INFO Health-Score-Query leicht sequenziell (nach Promise.all) — Optimierungspotenzial
+
+### Optimierungen
+
+- Health-Score-Query koennte in Promise.all()-Block integriert werden (Low)
+- Bonuspunkte-Chart aggregiert immer alle 3 Zeitraeume (Low)
+- Bonuspunkte-Tabs: min-h-[36px] statt 44px (Nice to Fix)
+- Kein Rate Limiting auf /api/profile/stats (Nice to Fix)
+
+### Regression
+
+- PASS Alle bestehenden FEAT-0 bis FEAT-17 Features funktionieren noch
+- HINWEIS 2 pre-existierende FEAT-21 Testfehler (admin-ohne-guthaben.spec.ts, admin-settings.spec.ts) — nicht durch FEAT-20 verursacht
+
+---
+
+## PASS Production Ready
+
+**Empfehlung UX Expert:** Kein erneutes Review noetig.
+
+**Begruendung:** Alle 19 Acceptance Criteria bestanden, 14/14 E2E-Tests gruen, 14/14 Unit-Tests (100% Health-Score-Coverage) gruen. Alle UX-Vorgaben umgesetzt (Tooltip, zweistufiger Logout, SR-Tabelle, Skeleton-Screens). Keine Bugs in FEAT-20 gefunden.
