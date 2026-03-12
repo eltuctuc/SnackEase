@@ -42,7 +42,10 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_evaluate",
-      "Read(//Users/enricoreinsdorf/.claude/agents/**)"
+      "Read(//Users/enricoreinsdorf/.claude/agents/**)",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_take_screenshot"
     ],
     "additionalDirectories": [
       "/Users/enricoreinsdorf/.claude/projects/-Users-enricoreinsdorf-Projekte-SnackEase/memory",
