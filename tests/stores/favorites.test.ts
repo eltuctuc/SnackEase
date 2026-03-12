@@ -14,7 +14,7 @@
  * getestet.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { ref, computed } from 'vue'
 
 describe.skip('favorites Store (Integration - erfordert Nuxt-Context)', () => {

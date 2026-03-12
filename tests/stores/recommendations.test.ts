@@ -12,8 +12,8 @@
  * getestet.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref, computed } from 'vue'
+import { describe, it, expect, vi } from 'vitest'
+import { ref } from 'vue'
 
 describe.skip('recommendations Store (Integration - erfordert Nuxt-Context)', () => {
   it('Platzhalter', () => expect(true).toBe(true))
