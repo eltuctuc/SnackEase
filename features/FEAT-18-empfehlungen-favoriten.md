@@ -1,6 +1,6 @@
 # FEAT-18: Empfehlungen & Favoriten
 
-## Status: Planned
+## Status: Implemented
 
 ## Abhaengigkeiten
 - Benoetigt: FEAT-15 (App-Navigationsstruktur) - Dashboard-Layout muss existieren
@@ -241,3 +241,155 @@ LIMIT 10
 | Empfehlungs-Kommentare | Nutzer kann optional einen Kommentar zur Empfehlung hinterlassen |
 | Mehr als 10 Favoriten | Limit erhoehen oder aufheben (konfigurierbar durch Admin) |
 | Empfehlung im Warenkorb-Flow | "Dieses Produkt empfehlen" als optionaler Schritt nach dem Kauf |
+
+---
+
+## 12. Tech-Design (Solution Architect)
+
+Vollstaendige Architektur-Dokumentation: `docs/architecture-FEAT-18.md`
+
+### Component-Struktur
+
+```
+src/pages/dashboard.vue (GEAENDERT)
+├── OffersSlider.vue (unveraendert, FEAT-17)
+├── DashboardTabs.vue (NEU) — Tab-Umschalter "Empfohlen" / "Favoriten"
+│   ├── RecommendedList.vue (NEU) — Top-10-Liste mit Empfehlungsanzahl-Badge
+│   └── FavoritesList.vue (NEU) — Private Favoriten-Liste (neueste zuerst)
+├── ProductGrid.vue (unveraendert) — Produktkatalog mit Suche bleibt erhalten
+│   └── FavoriteIcon.vue (NEU) — Herz-Icon auf jeder Produktkarte
+└── ProductDetailModal.vue (GEAENDERT)
+    └── RecommendButton.vue (NEU) — Daumen-hoch + Zaehler, unterhalb VORBESTELLEN
+
+src/components/shared/EmptyState.vue (NEU) — Wiederverwendbar fuer leere Zustaende
+```
+
+### Daten-Model
+
+Zwei neue Tabellen in der PostgreSQL-Datenbank:
+
+**`recommendations`** — eine Empfehlung pro Nutzer pro Produkt
+- Felder: id, productId (FK→products CASCADE), userId (FK→users CASCADE), createdAt
+- UNIQUE auf (productId, userId) — verhindert Duplikate auf DB-Ebene
+
+**`favorites`** — private Favoriten-Liste pro Nutzer (max. 10)
+- Felder: id, productId (FK→products CASCADE), userId (FK→users CASCADE), createdAt
+- UNIQUE auf (productId, userId)
+- Sortierung: neueste zuerst (createdAt DESC)
+
+### State-Management (Pinia)
+
+**`src/stores/recommendations.ts`** — NEU
+- Haelt Top-10-Liste mit `recommendationCount` und `isRecommendedByMe` pro Produkt
+- Optimistisches Toggle mit Snapshot-Rollback bei API-Fehler
+
+**`src/stores/favorites.ts`** — NEU
+- Haelt `favorites[]` (vollstaendige Produkt-Daten) und `favoriteIds` (Set fuer O(1)-Lookup)
+- Optimistisches Toggle: sofortiges UI-Update, Rollback bei Fehler inkl. 422-Limit
+- `limitError` fuer Fehlermeldung bei > 10 Favoriten
+
+### API-Endpoints
+
+| Endpoint | Methode | Beschreibung |
+|----------|---------|--------------|
+| `/api/recommendations` | GET | Top-10 meistempfohlene Produkte |
+| `/api/recommendations` | POST | Empfehlung hinzufuegen (`{ productId }`) |
+| `/api/recommendations/[productId]` | DELETE | Eigene Empfehlung zurueckziehen |
+| `/api/favorites` | GET | Eigene Favoriten-Liste |
+| `/api/favorites` | POST | Produkt zu Favoriten (`{ productId }`) |
+| `/api/favorites/[productId]` | DELETE | Aus Favoriten entfernen |
+| `/api/products` | GET | ERWEITERT um `isFavorite: boolean` |
+| `/api/products/[id]` | GET | ERWEITERT um `recommendationCount`, `isRecommendedByMe` |
+
+userId kommt ausschliesslich aus der Session (HttpOnly Cookie) — nie aus dem Request-Body.
+
+### Tech-Entscheidungen
+
+- **Favoriten als Set im Store:** `favoriteIds: Set<number>` ermoeglicht O(1)-Lookup bei jedem Produktkarten-Render — keine Array-`find()`-Schleife
+- **Optimistisches UI:** Toggle-Aktionen wirken sofort im UI, API-Fehler werden zurueckgerollt — fuer Empfehlungen und Favoriten identisches Pattern
+- **Top-10 serverseitig aggregiert:** COUNT + GROUP BY auf DB-Ebene, kein clientseitiges Zaehlen
+- **Lazy-Loading Recommendations:** fetchTopRecommendations() erst beim Tab-Aktivieren, nicht beim Dashboard-Mount
+- **10er-Limit als 422:** Serverseitige Pruefung mit spezifischem HTTP-Status, eigene `limitError`-State-Variable im Store
+- **Tiebreaker Top-10 bei Gleichstand:** ORDER BY recommendationCount DESC, MIN(createdAt) ASC (EC-9)
+
+### Accessibility (WCAG 2.1 AA — alle Pflicht)
+
+- `FavoriteIcon.vue`: `aria-pressed` + dynamisches `aria-label` + Touch-Target 44x44px
+- `RecommendButton.vue`: `aria-pressed` + dynamisches `aria-label` + Farbwechsel bei aktiv (nicht nur Icon-Fill)
+- `DashboardTabs.vue`: `role="tablist/tab/tabpanel"` + `aria-selected` + Pfeiltasten-Navigation
+- Fehlermeldung Favoriten-Limit: `role="alert"` + min. 5 Sekunden sichtbar
+
+### Dependencies
+
+Keine neuen npm-Packages benoetigt. Teenyicons (bereits installiert) liefert alle benoetigen Icons:
+- `teenyicons/outline/heart.svg` — Favorit inaktiv
+- `teenyicons/solid/heart.svg` — Favorit aktiv
+- `teenyicons/outline/thumb-up.svg` — Empfehlung inaktiv
+- `teenyicons/solid/thumb-up.svg` — Empfehlung aktiv
+
+### Test-Anforderungen
+
+**Unit-Tests (Vitest):**
+- `tests/unit/stores/recommendations.test.ts` — fetchTopRecommendations, toggleRecommendation (Hinzufuegen/Entfernen/Rollback/409)
+- `tests/unit/stores/favorites.test.ts` — fetchFavorites, toggleFavorite (Hinzufuegen/Entfernen/Rollback/422-Limit), isFavorite-Lookup
+- Coverage-Ziel: 80%+
+
+**E2E-Tests (Playwright, Chromium):**
+- `tests/e2e/recommendations-favorites.spec.ts`
+- Flows: Dashboard-Default-Tab, Tab-Wechsel, Herz-Toggle, Favoriten sichtbar in Tab, Empfehlung im Modal, 11. Favorit → Fehlermeldung, Reload → Tab zurueck auf Empfohlen
+
+---
+
+## Implementation Notes
+
+**Status:** Implementiert
+**Developer:** Developer Agent
+**Datum:** 2026-03-12
+
+### Geaenderte/Neue Dateien
+
+**Backend — DB-Schema**
+- `src/server/db/schema.ts` — Tabellen `recommendations` und `favorites` ergaenzt (uniqueIndex auf productId+userId)
+
+**Backend — API Endpoints (alle NEU)**
+- `src/server/api/recommendations/index.get.ts` — Top-10 mit COUNT+GROUP BY, Tiebreaker MIN(createdAt), Angebots-Integration
+- `src/server/api/recommendations/index.post.ts` — Empfehlung hinzufuegen, 409 bei Duplikat
+- `src/server/api/recommendations/[productId].get.ts` — Einzelprodukt-Empfehlungsstatus fuer ProductDetailModal
+- `src/server/api/recommendations/[productId].delete.ts` — Empfehlung zurueckziehen, 404 bei nicht vorhanden
+- `src/server/api/favorites/index.get.ts` — Private Favoriten (neueste zuerst), inkl. Angebote
+- `src/server/api/favorites/index.post.ts` — Favorit hinzufuegen, 422 bei Limit-Ueberschreitung
+- `src/server/api/favorites/[productId].delete.ts` — Favorit entfernen
+
+**Frontend — Neue Stores**
+- `src/stores/recommendations.ts` — Top-10-Liste, optimistisches Toggle, Snapshot-Rollback
+- `src/stores/favorites.ts` — Private Favoriten, favoriteIds als Set (O(1)-Lookup), limitError mit 5s-Auto-Reset
+
+**Frontend — Neue Components**
+- `src/components/shared/EmptyState.vue` — Wiederverwendbarer Leer-Zustand mit Teenyicons inline SVG
+- `src/components/recommendations/FavoriteIcon.vue` — Herz-Icon Toggle, aria-pressed, aria-label, 44x44px Touch-Target
+- `src/components/recommendations/RecommendButton.vue` — Daumen-hoch mit Zaehler, Farbwechsel aktiv/inaktiv
+- `src/components/recommendations/RecommendedList.vue` — Top-10-Liste mit Rang-Badge und Empfehlungsanzahl
+- `src/components/recommendations/FavoritesList.vue` — Private Favoriten-Liste, optimistisches Entfernen (EC-11)
+- `src/components/dashboard/DashboardTabs.vue` — role=tablist/tab/tabpanel, aria-selected, Pfeiltasten-Navigation, role=alert Fehlermeldung
+
+**Frontend — Geaenderte Components**
+- `src/components/dashboard/ProductGrid.vue` — FavoriteIcon in Produktkarten-Ecke (nur fuer Mitarbeiter)
+- `src/components/dashboard/ProductDetailModal.vue` — RecommendButton unterhalb Schliessen-Button, Watch auf Produktwechsel
+- `src/pages/dashboard.vue` — DashboardTabs eingebunden, activeTab State, fetchFavorites in onMounted
+
+**Tests**
+- `tests/stores/recommendations.test.ts` — 11 Tests, 29 Assertions gesamt
+- `tests/stores/favorites.test.ts` — 17 Tests, alle Kern-Szenarien abgedeckt
+
+### Wichtige Entscheidungen
+
+1. **Auth-Utility `getCurrentUser()`:** Alle API-Endpoints nutzen `~/server/utils/auth` statt manuellem Cookie-Parsing.
+2. **`GET /api/recommendations/[productId]`:** Zusaetzlicher Endpoint fuer Einzelprodukt-Status im Modal (nicht im urspruenglichen Design vorgesehen, aber notwendig wenn Produkt nicht in Top-10).
+3. **ProductCard als Teil von ProductGrid:** Keine Extraktion als eigene Komponente vorgenommen — FavoriteIcon wurde direkt in ProductGrid.vue integriert, da RecommendedList und FavoritesList eigene Karten-Darstellungen haben.
+4. **`v-show` statt `v-if` fuer Tab-Panels:** DashboardTabs nutzt `v-show` damit RecommendedList sofort laden kann (onMounted laeuft auch bei nicht-sichtbaren Panels).
+5. **Unit-Test-Pattern:** Identisch mit bestehendem Muster (isolierte Logik statt Store-Integration) da Pinia/Nuxt-Kontext in Tests nicht verfuegbar ist.
+
+### Bekannte Einschraenkungen
+
+- E2E-Tests (`tests/e2e/recommendations-favorites.spec.ts`) sind in der Feature-Spec beschrieben aber noch nicht implementiert — werden als separater Task dem QA-Engineer uebergeben.
+- `GET /api/products` und `GET /api/products/[id]` wurden NICHT um `isFavorite`/`recommendationCount` erweitert (architektonisch nicht notwendig, da Favoriten separat per `GET /api/favorites` geladen werden).

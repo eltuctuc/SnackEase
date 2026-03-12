@@ -15,13 +15,23 @@
 
 <script setup lang="ts">
 import type { Product } from '~/types'
+import RecommendButton from '~/components/recommendations/RecommendButton.vue'
 
 // ========================================
-// COMPOSABLES
+// COMPOSABLES & STORES
 // ========================================
 
 /** useFormatter für Preis-Formatierung */
 const { formatPrice } = useFormatter()
+
+// FEAT-18: Empfehlungs-State fuer ProductDetailModal
+const authStore = useAuthStore()
+const recommendationsStore = useRecommendationsStore()
+
+/** Lokaler Empfehlungs-State fuer das geoeffnete Produkt */
+const localRecommendationCount = ref(0)
+const localIsRecommendedByMe = ref(false)
+const isRecommendLoading = ref(false)
 
 // ========================================
 // PROPS & EMITS
@@ -29,7 +39,7 @@ const { formatPrice } = useFormatter()
 
 /**
  * Props für ProductDetailModal
- * 
+ *
  * @property show - Steuert Sichtbarkeit des Modals
  * @property product - Produkt-Objekt das angezeigt werden soll (null = kein Produkt)
  */
@@ -42,12 +52,49 @@ const props = defineProps<Props>()
 
 /**
  * Events die diese Komponente emitted
- * 
+ *
  * @event close - User möchte Modal schließen (X-Button, Backdrop, ESC, Schließen-Button)
  */
 const emit = defineEmits<{
   close: []
 }>()
+
+// ========================================
+// WATCHERS
+// ========================================
+
+/**
+ * FEAT-18: Wenn ein Produkt geoeffnet wird, Empfehlungs-State initialisieren.
+ * Versucht zunächst Daten aus dem recommendations Store zu nehmen (falls in Top-10).
+ * Andernfalls: Zähler auf 0, isRecommendedByMe auf false.
+ */
+watch(() => props.product, async (newProduct) => {
+  if (!newProduct) {
+    localRecommendationCount.value = 0
+    localIsRecommendedByMe.value = false
+    return
+  }
+
+  // Aus Top-10-Store laden (falls vorhanden)
+  const storeProduct = recommendationsStore.products.find(p => p.id === newProduct.id)
+  if (storeProduct) {
+    localRecommendationCount.value = storeProduct.recommendationCount
+    localIsRecommendedByMe.value = storeProduct.isRecommendedByMe
+  } else {
+    // Produkt ist nicht in Top-10: Zähler per API laden
+    try {
+      const result = await $fetch<{ recommendationCount: number; isRecommendedByMe: boolean }>(
+        `/api/recommendations/${newProduct.id}`
+      )
+      localRecommendationCount.value = result.recommendationCount
+      localIsRecommendedByMe.value = result.isRecommendedByMe
+    } catch {
+      // Nicht-Kritisch: Fallback auf 0
+      localRecommendationCount.value = 0
+      localIsRecommendedByMe.value = false
+    }
+  }
+})
 
 // ========================================
 // METHODS
@@ -58,6 +105,55 @@ const emit = defineEmits<{
  */
 const closeModal = () => {
   emit('close')
+}
+
+/**
+ * FEAT-18: Toggelt Empfehlung fuer das aktuell angezeigte Produkt.
+ * Optimistisches UI: sofortige Zustandsaenderung, Rollback bei Fehler.
+ */
+const handleRecommendToggle = async (productId: number) => {
+  if (isRecommendLoading.value) return
+  isRecommendLoading.value = true
+
+  const wasRecommended = localIsRecommendedByMe.value
+  const prevCount = localRecommendationCount.value
+
+  // Optimistisches Update
+  localIsRecommendedByMe.value = !wasRecommended
+  localRecommendationCount.value = wasRecommended ? prevCount - 1 : prevCount + 1
+
+  try {
+    if (wasRecommended) {
+      const result = await $fetch<{ success: boolean; recommendationCount: number }>(
+        `/api/recommendations/${productId}`,
+        { method: 'DELETE' }
+      )
+      localRecommendationCount.value = result.recommendationCount
+    } else {
+      const result = await $fetch<{ success: boolean; recommendationCount: number }>(
+        '/api/recommendations',
+        { method: 'POST', body: { productId } }
+      )
+      localRecommendationCount.value = result.recommendationCount
+    }
+
+    // Top-10-Store aktualisieren (falls Produkt darin enthalten)
+    recommendationsStore.updateProductRecommendationState(
+      productId,
+      localIsRecommendedByMe.value,
+      localRecommendationCount.value,
+    )
+  } catch (e: unknown) {
+    const err = e as { statusCode?: number }
+    // 409: bereits empfohlen — silent ignore
+    if (err.statusCode !== 409) {
+      // Rollback
+      localIsRecommendedByMe.value = wasRecommended
+      localRecommendationCount.value = prevCount
+    }
+  } finally {
+    isRecommendLoading.value = false
+  }
 }
 </script>
 
@@ -194,8 +290,19 @@ const closeModal = () => {
           </div>
         </div>
 
+        <!-- FEAT-18: Empfehlungs-Button (nur fuer Mitarbeiter, REQ-7) -->
+        <div v-if="!authStore.isAdmin" class="mt-4">
+          <RecommendButton
+            :product-id="product.id"
+            :is-recommended="localIsRecommendedByMe"
+            :recommendation-count="localRecommendationCount"
+            :is-loading="isRecommendLoading"
+            @toggle="handleRecommendToggle"
+          />
+        </div>
+
         <!-- Schließen Button -->
-        <button 
+        <button
           @click="closeModal"
           class="w-full mt-6 py-3 border border-primary text-primary rounded-lg font-medium hover:bg-primary/10 transition-colors"
         >

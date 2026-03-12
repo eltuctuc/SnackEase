@@ -15,6 +15,7 @@
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
 import PurchaseButton from './PurchaseButton.vue'
+import FavoriteIcon from '~/components/recommendations/FavoriteIcon.vue'
 
 // ========================================
 // COMPOSABLES
@@ -67,6 +68,8 @@ const emit = defineEmits<{
 // ========================================
 
 const authStore = useAuthStore()
+// FEAT-18: Favoriten-Store fuer Herz-Icons
+const favoritesStore = useFavoritesStore()
 
 // ========================================
 // REACTIVE STATE
@@ -101,11 +104,24 @@ const selectCategory = (category: string) => {
 
 /**
  * Öffnet Produkt-Detail-Modal
- * 
+ *
  * @param product - Angeklicktes Produkt
  */
 const openProductDetail = (product: Product) => {
   emit('productClick', product)
+}
+
+/**
+ * FEAT-18: Toggelt Favoriten-Status eines Produkts.
+ * Nur fuer Mitarbeiter (nicht fuer Admins).
+ *
+ * @param productId - Produkt-ID
+ */
+const handleFavoriteToggle = (productId: number) => {
+  const product = props.products.find(p => p.id === productId)
+  if (product) {
+    favoritesStore.toggleFavorite(productId, product)
+  }
 }
 </script>
 
@@ -179,11 +195,11 @@ const openProductDetail = (product: Product) => {
         data-testid="product-card"
       >
         <!-- Produktbild oder Fallback-Icon (klickbar für Detail-Ansicht) -->
-        <div 
+        <div
           @click="openProductDetail(product)"
           class="cursor-pointer"
         >
-          <div class="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl">
+          <div class="relative aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl">
             <span v-if="!product.imageUrl" aria-hidden="true">🍎</span>
             <img
               v-else
@@ -191,6 +207,18 @@ const openProductDetail = (product: Product) => {
               :alt="product.name"
               class="w-full h-full object-cover rounded-lg"
             />
+            <!-- FEAT-18: FavoriteIcon (nur fuer Mitarbeiter, nicht fuer Admins) -->
+            <div
+              v-if="!authStore.isAdmin"
+              class="absolute top-1 right-1"
+              @click.stop
+            >
+              <FavoriteIcon
+                :product-id="product.id"
+                :is-favorite="favoritesStore.isFavorite(product.id)"
+                @toggle="handleFavoriteToggle"
+              />
+            </div>
           </div>
           
           <!-- Produktname -->

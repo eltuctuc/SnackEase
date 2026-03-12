@@ -191,3 +191,39 @@ export const productOffers = pgTable('product_offers', {
 
 export type ProductOffer = typeof productOffers.$inferSelect;
 export type NewProductOffer = typeof productOffers.$inferInsert;
+
+// FEAT-18: Empfehlungen (kollektiv, eine pro Nutzer pro Produkt)
+export const recommendations = pgTable('recommendations', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id')
+    .references(() => products.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  productUserUnique: uniqueIndex('recommendations_product_id_user_id_unique')
+    .on(table.productId, table.userId),
+}));
+
+export type Recommendation = typeof recommendations.$inferSelect;
+export type NewRecommendation = typeof recommendations.$inferInsert;
+
+// FEAT-18: Favoriten (privat, max. 10 pro Nutzer)
+export const favorites = pgTable('favorites', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id')
+    .references(() => products.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  productUserUnique: uniqueIndex('favorites_product_id_user_id_unique')
+    .on(table.productId, table.userId),
+}));
+
+export type Favorite = typeof favorites.$inferSelect;
+export type NewFavorite = typeof favorites.$inferInsert;

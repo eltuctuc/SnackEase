@@ -19,9 +19,11 @@
 <script setup lang="ts">
 import type { Product, ProductCategoryOption } from '~/types'
 import { useCartStore } from '~/stores/cart'
+import { useFavoritesStore } from '~/stores/favorites'
 import BalanceCard from '~/components/dashboard/BalanceCard.vue'
 import AdminInfoBanner from '~/components/dashboard/AdminInfoBanner.vue'
 import OffersSlider from '~/components/dashboard/OffersSlider.vue'
+import DashboardTabs from '~/components/dashboard/DashboardTabs.vue'
 import ProductGrid from '~/components/dashboard/ProductGrid.vue'
 import RechargeModal from '~/components/dashboard/RechargeModal.vue'
 import ProductDetailModal from '~/components/dashboard/ProductDetailModal.vue'
@@ -61,6 +63,7 @@ const authStore = useAuthStore()
 const creditsStore = useCreditsStore()
 const productsStore = useProductsStore()
 const cartStore = useCartStore()
+const favoritesStore = useFavoritesStore()
 
 // ========================================
 // REACTIVE STATE
@@ -71,6 +74,9 @@ const selectedProductDetail = ref<Product | null>(null)
 
 /** Verhindert Flash von Default-Store-Werten — erst true wenn alle Daten geladen sind */
 const pageReady = ref(false)
+
+/** FEAT-18: Aktiver Tab auf dem Dashboard (nie persistiert, REQ-5) */
+const activeTab = ref<'recommended' | 'favorites'>('recommended')
 
 // ========================================
 // CONSTANTS - Kategorien
@@ -125,9 +131,11 @@ onMounted(async () => {
     if (authStore.isAdmin) {
       await productsStore.fetchProducts()
     } else {
+      // FEAT-18: fetchFavorites parallel laden fuer Herz-Icons auf Produktkarten
       await Promise.all([
         creditsStore.fetchBalance(),
         productsStore.fetchProducts(),
+        favoritesStore.fetchFavorites(),
       ])
     }
     pageReady.value = true
@@ -349,6 +357,14 @@ const handleAddToCartFromSlider = (product: Product) => {
         :is-loading="productsStore.isLoading"
         @open-detail="handleOfferCardClick"
         @add-to-cart="handleAddToCartFromSlider"
+      />
+
+      <!-- FEAT-18: Tab-Umschalter "Empfohlen" / "Favoriten" — nur fuer Mitarbeiter -->
+      <DashboardTabs
+        v-if="!authStore.isAdmin"
+        :active-tab="activeTab"
+        @tab-change="activeTab = $event"
+        @product-click="handleProductClick"
       />
 
       <!-- Product Grid Component -->
