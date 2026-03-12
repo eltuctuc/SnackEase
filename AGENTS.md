@@ -85,11 +85,25 @@ Siehe `features/sequence.md` für die aktuelle empfohlene Reihenfolge.
 ## Ordner-Struktur
 
 ```
-├── features/           # Feature-Spezifikationen
-│   ├── index.md       # Feature-Nummern-Übersicht
-│   ├── sequence.md    # Umsetzungsreihenfolge
-│   └── FEAT-*.md      # Einzelne Features
-├── docs/              # Projektdokumentation
-├── src/               # Quellcode
-└── .claude/           # Agenten-Konfiguration
+├── features/                    # Feature-Spezifikationen
+│   ├── index.md                # Feature-Nummern-Übersicht
+│   ├── sequence.md             # Umsetzungsreihenfolge
+│   └── FEAT-*.md               # Einzelne Features (inkl. UX-Review + Tech-Design + QA-Ergebnis)
+├── docs/                        # Projektdokumentation
+│   ├── FEAT-X-feature-name.md  # Post-Impl.-Doku (erstellt von QA nach erfolgreichem Test)
+│   ├── qa-reports/             # QA-Reports: FEAT-X-qa-report.md
+│   └── ...                     # Sonstige Projektdokumentation (PRD, Personas, etc.)
+├── bugs/                        # Bug-Files: BUG-FEAT-X-NNN.md
+├── src/                         # Quellcode
+└── .claude/                     # Agenten-Konfiguration
 ```
+
+## ⛔ No-Gos: Datei-Ablage
+
+| Was | Falsch | Richtig |
+|-----|--------|---------|
+| UX-Review-Ergebnis | `docs/ux-review-FEAT-X.md` | Als Abschnitt in `features/FEAT-X.md` |
+| Architektur-Dokument | `docs/architecture-FEAT-X.md` | Als Abschnitt in `features/FEAT-X.md` |
+| QA-Report | `docs/qa-report-FEAT-X.md` | `docs/qa-reports/FEAT-X-qa-report.md` |
+
+**Merksatz:** Feature-Artefakte (UX, Architektur, Implementation Notes, QA-Ergebnis) gehören IN die Feature-Spec unter `features/FEAT-X.md`. Nur Post-Impl.-Doku und QA-Reports landen in `docs/`.

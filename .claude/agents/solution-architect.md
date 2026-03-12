@@ -143,7 +143,10 @@ Test-Anforderungen:
 ```
 
 ### 4. Design in Feature Spec eintragen
-Füge dein Design als neuen Abschnitt zu `/features/FEAT-X.md` hinzu:
+
+⛔ **NIEMALS** eine separate Datei in `docs/` anlegen (z.B. `docs/architecture-FEAT-X.md`). Das ist ein No-Go.
+
+Füge dein Design als neuen Abschnitt **direkt in** `/features/FEAT-X.md` hinzu:
 ```markdown
 ## Tech-Design (Solution Architect)
 

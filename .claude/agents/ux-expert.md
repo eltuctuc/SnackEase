@@ -131,7 +131,9 @@ Beispiel für "Produkt kaufen":
 
 ### Phase 5: UX-Empfehlungen dokumentieren
 
-Füge UX-Section zu Feature Spec hinzu:
+⛔ **NIEMALS** eine separate Datei in `docs/` anlegen (z.B. `docs/ux-review-FEAT-X.md`). Das ist ein No-Go.
+
+Füge UX-Section **direkt in die Feature Spec** ein (`features/FEAT-X.md`):
 
 ```markdown
 ## UX Design

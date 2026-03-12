@@ -134,7 +134,7 @@ test.describe('One-Touch Kauf (FEAT-7)', () => {
     // Falls ausverkauftes Produkt existiert
     if (await outOfStockProduct.count() > 0) {
       // 2. Verifiziere dass "Kaufen"-Button deaktiviert ist
-      const purchaseButton = outOfStockProduct.locator('button')
+      const purchaseButton = outOfStockProduct.locator('[data-testid="add-to-cart-button"]')
       await expect(purchaseButton).toBeDisabled()
       await expect(purchaseButton).toContainText(/Ausverkauft/)
     } else {

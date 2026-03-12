@@ -244,6 +244,17 @@ LIMIT 10
 
 ---
 
+---
+
+## Offene Bugs
+
+| Bug-ID | Titel | Severity | Priority | Status |
+|--------|-------|----------|----------|--------|
+| BUG-FEAT18-001 | GET /api/recommendations 500 Error — "function min() does not exist" | Critical | Must Fix | Offen |
+| BUG-FEAT18-002 | Doppeltes €-Zeichen in RecommendedList und FavoritesList | Medium | Should Fix | Offen |
+
+---
+
 ## 12. Tech-Design (Solution Architect)
 
 Vollstaendige Architektur-Dokumentation: `docs/architecture-FEAT-18.md`

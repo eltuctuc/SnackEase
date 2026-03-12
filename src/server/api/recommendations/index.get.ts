@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
       .groupBy(products.id)
       .orderBy(
         sql`count(${recommendations.id}) desc`,
-        sql`min(${recommendations.created_at}) asc`,
+        sql`min("recommendations"."created_at") asc`,
       )
       .limit(10)
 

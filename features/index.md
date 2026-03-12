@@ -12,17 +12,28 @@
 | FEAT-4 | Demo Guthaben | ✅ Implementiert | Guthaben anzeigen, aufladen, Monatspauschale |
 | FEAT-5 | Admin Basis | ✅ Implementiert | System-Reset, Nutzer-Verwaltung |
 | FEAT-6 | Produktkatalog | ✅ Implementiert | Produktgrid mit Kategorien, Suche, Details |
-| FEAT-7 | One-Touch-Kauf | ✅ Implementiert | One-Touch Kauf mit PIN, Bonuspunkte |
+| FEAT-7 | One-Touch-Kauf | ✅ Implementiert | Abgelöst durch FEAT-16 (Warenkorb) |
 | FEAT-8 | Leaderboard | ✅ Implementiert | Rangliste nach Bonuspunkten |
 | FEAT-9 | Admin ohne Guthaben | ✅ Implementiert | Admin sieht kein eigenes Guthaben |
 | FEAT-10 | Erweitertes Admin-Dashboard | ✅ Implementiert | Nutzer/Produkte/Kategorien/Statistiken |
 | FEAT-11 | Bestellabholung am Automaten | ✅ Implementiert | NFC/PIN-Simulation, 2h Abholfrist |
 | FEAT-12 | Bestandsverwaltung | ✅ Implementiert | Produktbestände im Automaten verwalten |
 | FEAT-13 | Low-Stock-Benachrichtigungen | ✅ Implementiert | Admin-Benachrichtigungen bei niedrigem Bestand |
+| FEAT-14 | Angebote & Rabatte | ✅ Implementiert | Prozent- und Absolutrabatte mit Zeitsteuerung |
+| FEAT-15 | App-Navigationstruktur | ✅ Implementiert | Footer Tab-Bar (Admin 6, User 5 Icons) + Header |
+| FEAT-16 | Warenkorb-System | ✅ Implementiert | Ersetzt FEAT-7; Guthaben-Abzug bei Abholung |
+| FEAT-17 | Angebote-Querslider | ✅ Implementiert | Horizontaler Slider für aktive Angebote |
+| FEAT-18 | Empfehlungen & Favoriten | ✅ Implementiert | — |
+| FEAT-19 | Erweiterte Suche | 📋 Spezifiziert | — |
+| FEAT-20 | Profil-Seite | ✅ Implementiert | Nutzer-Profilseite |
+| FEAT-21 | Admin Einstellungsseite | ✅ Implementiert | Admin-Konfiguration |
+| FEAT-22 | Konfigurierbarer Schwellwert | 📋 Spezifiziert | Low-Stock-Schwellwert konfigurierbar |
+| FEAT-23 | Leaderboard-Erweiterung | 📋 Spezifiziert | — |
+| FEAT-24 | Guthaben aufladen & Zahlungsmethode | 📋 Spezifiziert | — |
 
 ## Nächste freie Nummer
 
-**FEAT-14** (nächste zu vergebende Nummer)
+**FEAT-25** (nächste zu vergebende Nummer)
 
 ## Regeln
 

@@ -95,13 +95,13 @@ const handleProductClick = (product: Product) => {
         <div class="flex items-center gap-2 mt-0.5 flex-wrap">
           <!-- Preis -->
           <template v-if="product.activeOffer">
-            <s class="text-xs text-muted-foreground">{{ formatPrice(product.price) }} €</s>
+            <s class="text-xs text-muted-foreground">{{ formatPrice(product.price) }}</s>
             <span class="text-sm font-bold text-red-500">
-              {{ formatPrice(product.activeOffer.discountedPrice) }} €
+              {{ formatPrice(product.activeOffer.discountedPrice) }}
             </span>
           </template>
           <template v-else>
-            <span class="text-sm font-bold text-primary">{{ formatPrice(product.price) }} €</span>
+            <span class="text-sm font-bold text-primary">{{ formatPrice(product.price) }}</span>
           </template>
 
           <!-- Badges -->

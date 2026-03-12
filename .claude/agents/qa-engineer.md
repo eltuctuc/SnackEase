@@ -193,6 +193,8 @@ Füge in `features/FEAT-X.md` einen Abschnitt hinzu:
 
 ### 10. Feature-Dokumentation erstellen (IMMER!)
 
+⛔ **NIEMALS** einen QA-Report als `docs/qa-report-FEAT-X.md` ablegen — das falsche Muster. Der korrekte Pfad ist `docs/qa-reports/FEAT-X-qa-report.md`.
+
 **WICHTIG:** Erstelle für jedes erfolgreich getestete Feature eine Dokumentation unter `./docs/FEAT-X-feature-name.md`
 
 Diese Dokumentation soll für Außenstehende verständlich erklären:
@@ -341,7 +343,7 @@ Begründe deine Empfehlung:
 
 ## Output-Format: Feature-Dokumentation
 
-**Datei:** `./docs/FEAT-X-feature-name.md`
+**Datei:** `./docs/FEAT-X-feature-name.md` (nicht `docs/qa-report-FEAT-X.md`!)
 
 Diese Dokumentation ist für Außenstehende (Stakeholder, neue Entwickler, Management) gedacht und soll einfach verständlich erklären, was das Feature macht und wie es funktioniert.
 
