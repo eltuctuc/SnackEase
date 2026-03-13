@@ -1,10 +1,12 @@
 <script setup lang="ts">
 /**
  * Profil-Seite (/profile) — FEAT-20
+ * FEAT-23: Gesamt-Punkte-Anzeige + Transaktionsliste hinzugefuegt
  *
  * Zeigt persoenliche Uebersicht des eingeloggten Mitarbeiters:
  * - Profil-Header mit Name, Standort, Guthaben
  * - Bonuspunkte-Chart (eigener Woche/Monat/Jahr-Umschalter)
+ * - Gesamt-Punkte (FEAT-23): prominente Punktzahl + letzte 10 Transaktionen
  * - Globaler Zeitraum-Umschalter (7T / 30T / 90T / Alle)
  * - Einkaufsstatistiken (zeitraeume-unabhaengig + zeitraeume-abhaengig)
  * - Bestellverlauf (nur status = picked_up)
@@ -18,6 +20,9 @@
 // ============================================================
 // Typen
 // ============================================================
+
+import type { PointsTransaction } from '~/components/profile/PointsTransactionItem.vue'
+import PointsTransactionList from '~/components/profile/PointsTransactionList.vue'
 
 type Period = '7d' | '30d' | '90d' | 'all'
 
@@ -84,6 +89,19 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 // ============================================================
+// FEAT-23: Punkte-State
+// ============================================================
+
+/** Allzeit-Gesamt-Punktzahl */
+const totalPoints = ref<number>(0)
+
+/** Letzte 10 Punkte-Transaktionen */
+const pointTransactions = ref<PointsTransaction[]>([])
+
+/** Lade-Zustand Punkte */
+const pointsLoading = ref(true)
+
+// ============================================================
 // Profil-Daten laden
 // ============================================================
 
@@ -108,6 +126,23 @@ async function loadProfile() {
     error.value = 'Profil konnte nicht geladen werden.'
   } finally {
     loading.value = false
+  }
+}
+
+// ============================================================
+// FEAT-23: Punkte laden
+// ============================================================
+
+async function loadPoints() {
+  pointsLoading.value = true
+  try {
+    const data = await $fetch<{ totalPoints: number; transactions: PointsTransaction[] }>('/api/profile/points')
+    totalPoints.value = data.totalPoints
+    pointTransactions.value = data.transactions
+  } catch {
+    // Punkte-Fehler still ignorieren (kein kritischer Fehler)
+  } finally {
+    pointsLoading.value = false
   }
 }
 
@@ -141,8 +176,8 @@ onMounted(async () => {
     return
   }
 
-  // Profil-Daten laden
-  await loadProfile()
+  // Profil-Daten und Punkte parallel laden
+  await Promise.all([loadProfile(), loadPoints()])
 })
 
 // ============================================================
@@ -189,6 +224,34 @@ const headerBalance = computed(() => profileData.value?.user.balance ?? '0.00')
       :month="profileData?.bonusChart.month ?? []"
       :year="profileData?.bonusChart.year ?? []"
       :loading="loading"
+    />
+
+    <!-- FEAT-23: Gesamt-Punkte-Anzeige -->
+    <div class="mx-4 mb-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-gray-700">Gesamt-Punkte</h2>
+        <!-- Punkte-Icon (Stern) -->
+        <svg
+          aria-hidden="true"
+          class="w-5 h-5 text-yellow-500"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      </div>
+      <!-- Prominente Punktzahl -->
+      <div v-if="!pointsLoading" class="text-3xl font-bold text-primary">
+        {{ totalPoints.toLocaleString('de-DE') }}
+        <span class="text-sm font-normal text-gray-400 ml-1">Punkte (Allzeit)</span>
+      </div>
+      <div v-else class="h-9 w-32 bg-gray-100 rounded animate-pulse" />
+    </div>
+
+    <!-- FEAT-23: Punkte-Transaktionsliste -->
+    <PointsTransactionList
+      :transactions="pointTransactions"
+      :is-loading="pointsLoading"
     />
 
     <!-- Globaler Zeitraum-Umschalter -->

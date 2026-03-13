@@ -47,9 +47,10 @@
  */
 
 import { db } from '~/server/db'
-import { purchases, userCredits, creditTransactions } from '~/server/db/schema'
+import { purchases, userCredits, creditTransactions, purchaseItems, products, pointTransactions } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
+import { calculatePointTransaction } from '~/server/utils/points'
 
 // ========================================
 // RATE LIMITING (BUG-FEAT11-003)
@@ -258,6 +259,82 @@ export default defineEventHandler(async (event): Promise<PickupResponse> => {
           pickedUpAt: pickedUpAt,
         })
         .where(eq(purchases.id, orderId))
+
+      // ========================================
+      // FEAT-23: Punkte-Transaktion erstellen (atomar in derselben Transaktion)
+      // ========================================
+
+      // purchase_items fuer diese Bestellung mit Produkt-Stammdaten laden
+      const itemRows = await tx
+        .select({
+          productId: purchaseItems.productId,
+          quantity: purchaseItems.quantity,
+          unitPrice: purchaseItems.unitPrice,
+          productPrice: products.price,
+          isVegan: products.isVegan,
+          protein: products.protein,
+        })
+        .from(purchaseItems)
+        .innerJoin(products, eq(purchaseItems.productId, products.id))
+        .where(eq(purchaseItems.purchaseId, orderId))
+
+      if (itemRows.length > 0) {
+        // Streak pruefen: Gibt es eine Transaktion vom Vortag?
+        const streakRows = await tx.execute(
+          sql`SELECT 1 FROM point_transactions
+              WHERE user_id = ${user.id}
+                AND type = 'purchase_pickup'
+                AND DATE(created_at) = DATE(NOW()) - INTERVAL '1 day'
+              LIMIT 1`
+        )
+        const hasStreakYesterday = streakRows.rows.length > 0
+
+        // Punkte berechnen
+        const pointItems = itemRows.map(r => ({
+          productId: r.productId,
+          quantity: r.quantity,
+          unitPrice: parseFloat(r.unitPrice.toString()),
+        }))
+        const pointProds = itemRows.map(r => ({
+          id: r.productId,
+          price: parseFloat(r.productPrice.toString()),
+          isVegan: r.isVegan ?? false,
+          protein: r.protein,
+        }))
+
+        // Duplikate in pointProds entfernen (mehrere Items koennen dasselbe Produkt haben)
+        const uniqueProds = Array.from(
+          new Map(pointProds.map(p => [p.id, p])).values()
+        )
+
+        const purchaseForPoints = {
+          createdAt: new Date(
+            (await tx.execute(sql`SELECT created_at FROM purchases WHERE id = ${orderId} LIMIT 1`))
+              .rows[0]!.created_at as string
+          ),
+        }
+
+        const points = calculatePointTransaction(
+          purchaseForPoints,
+          pointItems,
+          uniqueProds,
+          pickedUpAt,
+          hasStreakYesterday,
+        )
+
+        await tx.insert(pointTransactions).values({
+          userId: user.id,
+          purchaseId: orderId,
+          type: 'purchase_pickup',
+          basePoints: points.basePoints,
+          veganBonus: points.veganBonus,
+          proteinBonus: points.proteinBonus,
+          offerBonus: points.offerBonus,
+          speedBonus: points.speedBonus,
+          streakBonus: points.streakBonus,
+          totalPoints: points.totalPoints,
+        })
+      }
 
       return { id: order.id }
     })

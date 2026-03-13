@@ -229,3 +229,26 @@ export const favorites = pgTable('favorites', {
 
 export type Favorite = typeof favorites.$inferSelect;
 export type NewFavorite = typeof favorites.$inferInsert;
+
+// FEAT-23: Punkte-Transaktionen (Punktesystem)
+export const pointTransactions = pgTable('point_transactions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  // NULL bei Empfehlungs-Transaktionen (kein Purchase-Bezug)
+  purchaseId: integer('purchase_id')
+    .references(() => purchases.id),
+  type: text('type').notNull(), // 'purchase_pickup' | 'recommendation'
+  basePoints: integer('base_points').notNull(),          // Summe der Basis-Punkte (10 pro Produkt)
+  veganBonus: integer('vegan_bonus').notNull().default(0),   // Summe Vegan/Gesund-Boni (+3 pro Produkt)
+  proteinBonus: integer('protein_bonus').notNull().default(0), // Summe Protein-Boni (+2 pro Produkt)
+  offerBonus: integer('offer_bonus').notNull().default(0),   // Summe Angebots-Boni (+2 pro Produkt)
+  speedBonus: integer('speed_bonus').notNull().default(0),   // Schnelligkeits-Bonus (0 oder 5)
+  streakBonus: integer('streak_bonus').notNull().default(0), // Streak-Bonus in Punkten (gerundeter Integer)
+  totalPoints: integer('total_points').notNull(),            // Gesamtpunkte der Transaktion
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export type PointTransaction = typeof pointTransactions.$inferSelect;
+export type NewPointTransaction = typeof pointTransactions.$inferInsert;

@@ -11,8 +11,8 @@
  */
 
 import { db } from '~/server/db'
-import { recommendations, products } from '~/server/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { recommendations, products, purchases, pointTransactions } from '~/server/db/schema'
+import { eq, sql, desc } from 'drizzle-orm'
 import { getCurrentUser } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -67,6 +67,53 @@ export default defineEventHandler(async (event) => {
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(recommendations)
       .where(eq(recommendations.productId, productId))
+
+    // ========================================
+    // FEAT-23 Nice-to-Have REQ-14: Empfehlungs-Punkte
+    // Pruefe ob der empfangende Nutzer (currentUser) das Produkt zuvor empfohlen hat.
+    // Wenn ja: vergib +5 Punkte an den empfehlenden Nutzer.
+    // ========================================
+    try {
+      // Pruefen ob currentUser selbst das Produkt kaufte (hat eine picked_up Bestellung mit diesem Produkt)
+      const ownPurchaseRows = await db.execute(
+        sql`SELECT p.user_id FROM purchases p
+            INNER JOIN purchase_items pi ON pi.purchase_id = p.id
+            WHERE pi.product_id = ${productId}
+              AND p.status = 'picked_up'
+            ORDER BY p.created_at DESC
+            LIMIT 1`
+      )
+
+      if (ownPurchaseRows.rows.length > 0) {
+        // Eigentuemernutzer des zuletzt abgeholten Kaufs dieses Produkts
+        const originalBuyerUserId = (ownPurchaseRows.rows[0] as { user_id: number }).user_id
+
+        // Nur Punkte vergeben wenn ein anderer Nutzer der Kaeufer war
+        if (originalBuyerUserId !== currentUser.id) {
+          // +5 Punkte an den Kaeufer (nicht an denjenigen der empfiehlt, sondern an den Nutzer dessen Empfehlung
+          // bestaetigt wurde — gemaess FEAT-23 Spec: Punkte an den der das Produkt empfohlen hat)
+          // Laut Spec: "Der Empfehlungs-Bonus wird dem Nutzer gutgeschrieben, dessen Empfehlung von einem anderen
+          // Nutzer abgegeben wurde"
+          // D.h. currentUser gibt die Empfehlung ab → originalBuyerUserId hat das Produkt selbst gekauft
+          // → originalBuyerUserId erhaelt die Punkte (EC-10: auch wenn inaktiv)
+          await db.insert(pointTransactions).values({
+            userId: originalBuyerUserId,
+            purchaseId: null,
+            type: 'recommendation',
+            basePoints: 5,
+            veganBonus: 0,
+            proteinBonus: 0,
+            offerBonus: 0,
+            speedBonus: 0,
+            streakBonus: 0,
+            totalPoints: 5,
+          })
+        }
+      }
+    } catch (pointsError: unknown) {
+      // Punkte-Fehler sind nicht kritisch — Empfehlung wird trotzdem gespeichert
+      console.error('[recommendations] Punkte-Vergabe fehlgeschlagen (nicht-kritisch):', pointsError)
+    }
 
     setResponseStatus(event, 201)
     return { success: true, recommendationCount: countResult[0]?.count ?? 1 }

@@ -1,21 +1,23 @@
 /**
- * useLeaderboard - Composable für Leaderboard-State und Datenabruf
+ * useLeaderboard - Composable fuer Leaderboard-State und Datenabruf
  *
  * @description
  * Verwaltet:
  * - Zeitraum-Filter (week / month / all)
- * - Aktiven Tab (mostPurchased / healthiest)
+ * - Aktiven Tab (mostPurchased / totalPoints / healthiest)
  * - API-Call mit $fetch
  * - Loading-, Fehler- und Leer-Zustand
  *
- * Beide Tab-Datensätze werden in einem API-Call geladen.
- * Tab-Wechsel löst keinen neuen API-Call aus (AC-7).
+ * Alle drei Tab-Datensaetze werden in einem API-Call geladen.
+ * Tab-Wechsel loest keinen neuen API-Call aus.
+ *
+ * FEAT-23: Dritter Tab "Gesamt-Punkte" (totalPoints) hinzugefuegt.
  */
 
 import { ref, computed, type Ref } from 'vue'
 
 export type Period = 'week' | 'month' | 'all'
-export type ActiveTab = 'mostPurchased' | 'healthiest'
+export type ActiveTab = 'mostPurchased' | 'totalPoints' | 'healthiest'
 
 export interface LeaderboardEntry {
   rank: number
@@ -27,10 +29,20 @@ export interface LeaderboardEntry {
   healthPoints: number
 }
 
+export interface PointsLeaderboardEntry {
+  rank: number
+  id: number
+  name: string
+  location: string
+  isActive: boolean
+  totalPoints: number
+}
+
 export interface LeaderboardData {
   period: Period
   mostPurchased: LeaderboardEntry[]
   healthiest: LeaderboardEntry[]
+  totalPoints: PointsLeaderboardEntry[]
 }
 
 export function useLeaderboard(currentUserId: Ref<number | undefined>) {
@@ -48,28 +60,39 @@ export function useLeaderboard(currentUserId: Ref<number | undefined>) {
   // COMPUTED
   // ========================================
 
-  /** Aktuelle Liste je nach Tab */
-  const currentList = computed<LeaderboardEntry[]>(() => {
+  /**
+   * Aktuelle Liste je nach Tab.
+   * Fuer totalPoints-Tab: PointsLeaderboardEntry[], sonst LeaderboardEntry[].
+   * Union-Typ da beide Listen-Typen verwendet werden.
+   */
+  const currentList = computed<LeaderboardEntry[] | PointsLeaderboardEntry[]>(() => {
     if (!data.value) return []
+    if (activeTab.value === 'totalPoints') return data.value.totalPoints
     return activeTab.value === 'mostPurchased'
       ? data.value.mostPurchased
       : data.value.healthiest
   })
 
-  /** Eigener Rang in der aktuellen Liste */
-  const ownEntry = computed<LeaderboardEntry | undefined>(() => {
+  /**
+   * Eigener Rang in der aktuellen Liste.
+   * Bei totalPoints-Tab: PointsLeaderboardEntry, sonst LeaderboardEntry.
+   */
+  const ownEntry = computed<LeaderboardEntry | PointsLeaderboardEntry | undefined>(() => {
     if (!currentUserId.value) return undefined
-    return currentList.value.find(e => e.id === currentUserId.value)
+    return (currentList.value as Array<{ id: number }>).find(e => e.id === currentUserId.value) as
+      | LeaderboardEntry
+      | PointsLeaderboardEntry
+      | undefined
   })
 
-  /** Leere Liste (keine Käufe im Zeitraum) */
+  /** Leere Liste (keine Eintraege im Zeitraum) */
   const isEmpty = computed(() => !isLoading.value && !error.value && currentList.value.length === 0)
 
   // ========================================
   // ACTIONS
   // ========================================
 
-  /** Lädt Leaderboard-Daten vom Server (neuer API-Call) */
+  /** Laedt Leaderboard-Daten vom Server (neuer API-Call) */
   async function fetchLeaderboard() {
     isLoading.value = true
     error.value = null
@@ -84,7 +107,7 @@ export function useLeaderboard(currentUserId: Ref<number | undefined>) {
     }
   }
 
-  /** Wechselt den Zeitraum und lädt neu */
+  /** Wechselt den Zeitraum und laedt neu */
   async function setPeriod(newPeriod: Period) {
     if (newPeriod === period.value) return
     period.value = newPeriod

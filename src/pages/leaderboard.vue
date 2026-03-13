@@ -1,13 +1,16 @@
 <!--
   /leaderboard — Mitarbeiter-Rangliste
   FEAT-8: Leaderboard mit zwei Tabs (Meistgekauft / Gesündeste) und Zeitraum-Filter
+  FEAT-23: Dritter Tab "Gesamt-Punkte" zwischen den bestehenden Tabs eingefuegt
 -->
 
 <script setup lang="ts">
 import { computed, ref as vRef } from 'vue'
 import { useLeaderboard } from '~/composables/useLeaderboard'
-import type { ActiveTab } from '~/composables/useLeaderboard'
+import type { ActiveTab, LeaderboardEntry, PointsLeaderboardEntry } from '~/composables/useLeaderboard'
 import LeaderboardList from '~/components/leaderboard/LeaderboardList.vue'
+import PointsLeaderboardEntry from '~/components/leaderboard/PointsLeaderboardEntry.vue'
+import LeaderboardSkeleton from '~/components/leaderboard/LeaderboardSkeleton.vue'
 
 // ========================================
 // AUTH
@@ -34,13 +37,29 @@ const {
   setTab,
 } = useLeaderboard(currentUserId)
 
-// Auth initialisieren, dann Daten laden (AC-8, AC-15)
+// Auth initialisieren, dann Daten laden
 onMounted(async () => {
   if (!authStore.user) {
     await authStore.initFromCookie()
   }
   await fetchLeaderboard()
 })
+
+// ========================================
+// TYPE GUARDS
+// ========================================
+
+function isPointsEntry(entry: LeaderboardEntry | PointsLeaderboardEntry): entry is PointsLeaderboardEntry {
+  return 'totalPoints' in entry
+}
+
+function isPointsList(list: LeaderboardEntry[] | PointsLeaderboardEntry[]): list is PointsLeaderboardEntry[] {
+  return activeTab.value === 'totalPoints'
+}
+
+function isLeaderboardEntry(entry: LeaderboardEntry | PointsLeaderboardEntry): entry is LeaderboardEntry {
+  return 'totalPurchases' in entry
+}
 
 // ========================================
 // PERIOD LABELS
@@ -53,10 +72,10 @@ const periodLabels = [
 ]
 
 // ========================================
-// TASTATUR-NAVIGATION (BUG-FEAT8-003)
+// TASTATUR-NAVIGATION
 // ========================================
 
-const tabOrder: ActiveTab[] = ['mostPurchased', 'healthiest']
+const tabOrder: ActiveTab[] = ['mostPurchased', 'totalPoints', 'healthiest']
 const tabRefs = vRef<HTMLButtonElement[]>([])
 
 function handleTabKeydown(event: KeyboardEvent) {
@@ -95,6 +114,23 @@ function handlePeriodKeydown(event: KeyboardEvent) {
     nextTick(() => periodRefs.value[prevIndex]?.focus())
   }
 }
+
+// ========================================
+// OWN ENTRY BANNER TEXT
+// ========================================
+
+function getOwnEntryValueText(): string {
+  if (!ownEntry.value) return ''
+  if (isPointsEntry(ownEntry.value)) {
+    return `${ownEntry.value.totalPoints} Punkte`
+  }
+  if (isLeaderboardEntry(ownEntry.value)) {
+    return activeTab.value === 'mostPurchased'
+      ? `${ownEntry.value.totalPurchases} Käufe`
+      : `${ownEntry.value.healthPoints} Punkte`
+  }
+  return ''
+}
 </script>
 
 <template>
@@ -108,7 +144,7 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         <h1 class="text-xl font-bold text-primary">Bestenliste</h1>
       </div>
 
-      <!-- Tabs (REQ-2) -->
+      <!-- Tabs (REQ-1) — drei Tabs: Meistgekauft / Gesamt-Punkte / Gesündeste -->
       <div
         role="tablist"
         aria-label="Ranglisten-Kategorien"
@@ -116,7 +152,7 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         @keydown="handleTabKeydown"
       >
         <button
-          ref="el => el && (tabRefs[0] = el as HTMLButtonElement)"
+          :ref="el => el && (tabRefs[0] = el as HTMLButtonElement)"
           role="tab"
           :aria-selected="activeTab === 'mostPurchased'"
           :tabindex="activeTab === 'mostPurchased' ? 0 : -1"
@@ -131,7 +167,22 @@ function handlePeriodKeydown(event: KeyboardEvent) {
           Meistgekauft
         </button>
         <button
-          ref="el => el && (tabRefs[1] = el as HTMLButtonElement)"
+          :ref="el => el && (tabRefs[1] = el as HTMLButtonElement)"
+          role="tab"
+          :aria-selected="activeTab === 'totalPoints'"
+          :tabindex="activeTab === 'totalPoints' ? 0 : -1"
+          class="flex-1 py-2.5 text-sm font-medium text-center focus:ring-2 focus:ring-primary min-h-[44px] transition-colors motion-safe:transition-colors"
+          :class="[
+            activeTab === 'totalPoints'
+              ? 'text-primary border-b-2 border-primary font-semibold'
+              : 'text-gray-500 hover:text-primary border-b-2 border-transparent'
+          ]"
+          @click="setTab('totalPoints')"
+        >
+          Gesamt-Punkte
+        </button>
+        <button
+          :ref="el => el && (tabRefs[2] = el as HTMLButtonElement)"
           role="tab"
           :aria-selected="activeTab === 'healthiest'"
           :tabindex="activeTab === 'healthiest' ? 0 : -1"
@@ -147,7 +198,7 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         </button>
       </div>
 
-      <!-- Punktesystem-Hinweis (UX-Empfehlung 2, nur bei Gesündeste-Tab) -->
+      <!-- Punkte-System-Hinweis (nur bei Gesündeste-Tab) -->
       <div
         v-if="activeTab === 'healthiest'"
         class="text-xs text-gray-500 text-center mb-3 bg-gray-50 rounded-lg px-3 py-2"
@@ -155,7 +206,15 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         Punkte: Obst +3 &nbsp;|&nbsp; Nüsse/Protein +2 &nbsp;|&nbsp; Snacks/Getränke +1
       </div>
 
-      <!-- Zeitraum-Filter (REQ-3) -->
+      <!-- Gesamt-Punkte-Hinweis (nur bei totalPoints-Tab) -->
+      <div
+        v-if="activeTab === 'totalPoints'"
+        class="text-xs text-gray-500 text-center mb-3 bg-blue-50 rounded-lg px-3 py-2"
+      >
+        Punkte: Abholung +10 &nbsp;|&nbsp; Vegan +3 &nbsp;|&nbsp; Protein +2 &nbsp;|&nbsp; Angebot +2 &nbsp;|&nbsp; Schnell &lt;30 min +5
+      </div>
+
+      <!-- Zeitraum-Filter -->
       <div
         role="radiogroup"
         aria-label="Zeitraum auswählen"
@@ -181,7 +240,7 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         </button>
       </div>
 
-      <!-- Eigener-Rang-Banner (UX-Empfehlung 3) -->
+      <!-- Eigener-Rang-Banner -->
       <div
         v-if="ownEntry && !isLoading && !error"
         class="mb-4 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-sm flex items-center justify-between"
@@ -189,7 +248,7 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         <span class="text-blue-700 font-medium">Dein Rang: Platz {{ ownEntry.rank }}</span>
         <span class="text-blue-700 text-xs">
           {{ ownEntry.location }} ·
-          {{ activeTab === 'mostPurchased' ? ownEntry.totalPurchases + ' Käufe' : ownEntry.healthPoints + ' Punkte' }}
+          {{ getOwnEntryValueText() }}
         </span>
       </div>
       <div
@@ -199,18 +258,59 @@ function handlePeriodKeydown(event: KeyboardEvent) {
         <span class="text-gray-500">Dein Rang: Noch nicht auf der Rangliste</span>
       </div>
 
-      <!-- Ranglisten-Bereich -->
+      <!-- Ranglisten-Bereich: Gesamt-Punkte-Tab -->
+      <template v-if="activeTab === 'totalPoints'">
+        <!-- Loading -->
+        <LeaderboardSkeleton v-if="isLoading" />
+
+        <!-- Fehler -->
+        <div
+          v-else-if="error"
+          class="flex flex-col items-center gap-4 py-12 px-4 text-center"
+          role="alert"
+        >
+          <p class="text-gray-600 text-sm font-medium">{{ error }}</p>
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 focus:ring-2 focus:ring-primary transition-colors motion-safe:transition-colors"
+            @click="fetchLeaderboard"
+          >
+            Erneut versuchen
+          </button>
+        </div>
+
+        <!-- Leere Liste -->
+        <div
+          v-else-if="isEmpty"
+          class="flex flex-col items-center gap-3 py-12 px-4 text-center"
+        >
+          <p class="text-gray-500 text-sm font-medium">Noch keine Punkte in diesem Zeitraum.</p>
+          <p class="text-gray-500 text-xs">Hole eine Bestellung ab und sammle Punkte!</p>
+        </div>
+
+        <!-- Punkte-Rangliste -->
+        <ol v-else class="space-y-2" aria-label="Punkte-Rangliste">
+          <PointsLeaderboardEntry
+            v-for="entry in (isPointsList(currentList) ? currentList : [])"
+            :key="entry.id"
+            :entry="entry"
+            :is-own="entry.id === authStore.user?.id"
+          />
+        </ol>
+      </template>
+
+      <!-- Ranglisten-Bereich: Meistgekauft + Gesündeste -->
       <LeaderboardList
-        :entries="currentList"
+        v-else
+        :entries="(currentList as LeaderboardEntry[])"
         :is-loading="isLoading"
         :error="error"
         :is-empty="isEmpty"
         :current-user-id="authStore.user?.id"
-        :value-type="activeTab"
+        :value-type="activeTab === 'mostPurchased' ? 'mostPurchased' : 'healthiest'"
         @retry="fetchLeaderboard"
       />
 
-      <!-- Refresh-Button (REQ-7) -->
+      <!-- Refresh-Button -->
       <div class="mt-6">
         <button
           class="w-full flex items-center justify-center gap-2 py-3 min-h-[44px] rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:text-primary hover:border-primary focus:ring-2 focus:ring-primary transition-colors motion-safe:transition-colors disabled:opacity-50"
