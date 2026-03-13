@@ -25,6 +25,8 @@ export default defineEventHandler(async (event) => {
         isGlutenFree: products.isGlutenFree,
         isActive: products.isActive,
         stock: products.stock,
+        // FEAT-22: Nachbestellschwellwert
+        stockThreshold: products.stockThreshold,
         createdAt: products.createdAt,
       })
       .from(products)
