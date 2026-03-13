@@ -211,7 +211,7 @@ function getOwnEntryValueText(): string {
         v-if="activeTab === 'totalPoints'"
         class="text-xs text-gray-500 text-center mb-3 bg-blue-50 rounded-lg px-3 py-2"
       >
-        Punkte: Abholung +10 &nbsp;|&nbsp; Vegan +3 &nbsp;|&nbsp; Protein +2 &nbsp;|&nbsp; Angebot +2 &nbsp;|&nbsp; Schnell &lt;30 min +5
+        Punkte: Abholung +10 &nbsp;|&nbsp; Vegan +3 &nbsp;|&nbsp; Protein +2 &nbsp;|&nbsp; Angebot +2 &nbsp;|&nbsp; Schnell (unter 30 min) +5
       </div>
 
       <!-- Zeitraum-Filter -->

@@ -8,6 +8,7 @@
  * - Eigener Rang wird korrekt aus der Liste identifiziert (Vergleich User-ID)
  * - Leerer Zustand wird korrekt erkannt (leere Liste)
  * - Fehler-Zustand wird korrekt erkannt (API-Fehler)
+ * - totalPoints-Tab gibt PointsLeaderboardEntry[] zurück (FEAT-23)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -24,10 +25,17 @@ const mockEntries = [
   { rank: 3, id: 99, name: 'Max Muster', location: 'Berlin', isActive: false, totalPurchases: 8, healthPoints: 10 },
 ]
 
+const mockPointsEntries = [
+  { rank: 1, id: 7, name: 'Tom Schnellkäufer', location: 'Berlin', isActive: true, totalPoints: 150 },
+  { rank: 2, id: 42, name: 'Nina Neuanfang', location: 'Nürnberg', isActive: true, totalPoints: 120 },
+  { rank: 3, id: 99, name: 'Max Muster', location: 'Berlin', isActive: false, totalPoints: 85 },
+]
+
 const mockResponse = {
   period: 'week' as const,
   mostPurchased: mockEntries,
   healthiest: [...mockEntries].reverse().map((e, i) => ({ ...e, rank: i + 1 })),
+  totalPoints: mockPointsEntries,
 }
 
 describe('useLeaderboard', () => {
@@ -161,6 +169,54 @@ describe('useLeaderboard', () => {
       // healthiest-Liste ist reversed: rank 1 = id 99
       expect(currentList.value[0].id).toBe(99)
     })
+
+    it('wechselt Tab zu "totalPoints" ohne neuen API-Call', async () => {
+      mockFetch.mockResolvedValueOnce(mockResponse)
+      const { fetchLeaderboard, setTab, activeTab } = useLeaderboard(ref(42))
+
+      await fetchLeaderboard()
+      mockFetch.mockClear()
+
+      setTab('totalPoints')
+      await nextTick()
+      expect(activeTab.value).toBe('totalPoints')
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('zeigt korrekte PointsLeaderboardEntry-Liste für "totalPoints"-Tab', async () => {
+      mockFetch.mockResolvedValueOnce(mockResponse)
+      const { fetchLeaderboard, setTab, currentList } = useLeaderboard(ref(42))
+
+      await fetchLeaderboard()
+      setTab('totalPoints')
+      await nextTick()
+      expect(currentList.value).toHaveLength(3)
+      // totalPoints-Liste: rank 1 = id 7
+      expect(currentList.value[0].id).toBe(7)
+      expect((currentList.value[0] as { totalPoints: number }).totalPoints).toBe(150)
+    })
+
+    it('gibt PointsLeaderboardEntry als ownEntry zurück wenn totalPoints-Tab aktiv', async () => {
+      mockFetch.mockResolvedValueOnce(mockResponse)
+      // User 42 ist in mockPointsEntries auf Rang 2
+      const { fetchLeaderboard, setTab, ownEntry } = useLeaderboard(ref(42))
+
+      await fetchLeaderboard()
+      setTab('totalPoints')
+      await nextTick()
+      expect(ownEntry.value?.id).toBe(42)
+      expect((ownEntry.value as { totalPoints: number } | undefined)?.totalPoints).toBe(120)
+    })
+
+    it('gibt undefined als ownEntry zurück wenn User nicht in totalPoints-Liste', async () => {
+      mockFetch.mockResolvedValueOnce(mockResponse)
+      const { fetchLeaderboard, setTab, ownEntry } = useLeaderboard(ref(999))
+
+      await fetchLeaderboard()
+      setTab('totalPoints')
+      await nextTick()
+      expect(ownEntry.value).toBeUndefined()
+    })
   })
 
   describe('ownEntry', () => {
@@ -192,7 +248,7 @@ describe('useLeaderboard', () => {
 
   describe('isEmpty', () => {
     it('ist true wenn Liste leer und kein Fehler', async () => {
-      mockFetch.mockResolvedValueOnce({ period: 'week', mostPurchased: [], healthiest: [] })
+      mockFetch.mockResolvedValueOnce({ period: 'week', mostPurchased: [], healthiest: [], totalPoints: [] })
       const { fetchLeaderboard, isEmpty } = useLeaderboard(ref(42))
 
       await fetchLeaderboard()
@@ -208,7 +264,7 @@ describe('useLeaderboard', () => {
     })
 
     it('ist false während isLoading true ist', async () => {
-      mockFetch.mockResolvedValueOnce({ period: 'week', mostPurchased: [], healthiest: [] })
+      mockFetch.mockResolvedValueOnce({ period: 'week', mostPurchased: [], healthiest: [], totalPoints: [] })
       const { fetchLeaderboard, isEmpty, isLoading } = useLeaderboard(ref(42))
 
       const promise = fetchLeaderboard()
