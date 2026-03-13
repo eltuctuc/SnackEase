@@ -11,6 +11,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     '/profile',
     '/cart',
     '/product',
+    '/profile/credit',
+    '/profile/payment',
   ]
   const adminPaths = ['/admin']
 
@@ -48,6 +50,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // FEAT-20 AC-19: Admins haben keinen Zugriff auf /profile (zu /admin weiterleiten)
   if (to.path === '/profile' && authStore.user.role === 'admin') {
+    return navigateTo('/admin')
+  }
+
+  // FEAT-24 EC-4: Admins haben keinen Zugriff auf /profile/credit und /profile/payment
+  if ((to.path === '/profile/credit' || to.path === '/profile/payment') && authStore.user.role === 'admin') {
     return navigateTo('/admin')
   }
 })
