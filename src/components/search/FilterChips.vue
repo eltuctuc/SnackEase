@@ -74,8 +74,8 @@ const CATEGORIES: { id: string; label: string }[] = [
   { id: 'proteinriegel', label: 'Protein' },
   { id: 'shakes', label: 'Shakes' },
   { id: 'schokoriegel', label: 'Schoki' },
-  { id: 'nuesse', label: 'Nuesse' },
-  { id: 'getraenke', label: 'Getraenke' },
+  { id: 'nuesse', label: 'Nüsse' },
+  { id: 'getraenke', label: 'Getränke' },
 ]
 
 /**
@@ -159,7 +159,7 @@ const handlePriceBucketRemove = () => {
 
     <!-- Gruppe 2: Verfügbarkeit -->
     <FilterChip
-      label="Nur vorraetigen"
+      label="Nur vorrätige"
       :active="onlyInStock"
       @toggle="emit('update:onlyInStock', !onlyInStock)"
       @remove="emit('update:onlyInStock', false)"

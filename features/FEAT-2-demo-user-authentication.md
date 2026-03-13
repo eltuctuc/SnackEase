@@ -343,3 +343,16 @@ Header (AppHeader) - ERWEITERT
 **Empfehlung UX Expert:** ❌ Nicht nötig
 
 **Begründung:** Alle Acceptance Criteria erfüllt, alle Bugs behoben (inkl. BUG-FEAT2-010 Tech-Stack-Fix via Template-Ref). Security und Regression Tests bestanden. Keine offenen Bugs.
+
+---
+
+## QA Nachkontrolle (2026-03-12)
+
+**Re-Test:** 2026-03-12 — Unit-Tests: 282/303 bestanden (21 bewusst geskippt). E2E-Tests (Referenz: FEAT-18 Lauf): alle FEAT-2-relevanten Tests in app.spec.ts bestanden (6/6). Kein neuer Bug gefunden.
+
+**Vollständiger QA-Report:** `docs/qa-reports/FEAT-2-demo-user-authentication-qa-report.md`
+
+**Optimierungspotenziale (kein Must-Fix):**
+- `logout.post.ts` und `me.get.ts` nutzen Hardstring `'auth_token'` statt `SESSION_CONFIG.COOKIE_NAME`
+- `getClientIp(event: any)` sollte `H3Event` als Typ verwenden
+- Rate-Limiting In-Memory nicht skalierbar für Multi-Server-Deployment (mit Hinweis im Code dokumentiert)

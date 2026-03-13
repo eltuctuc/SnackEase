@@ -1,6 +1,6 @@
 # FEAT-12: Bestandsverwaltung
 
-## Status: 🔴 In QA — Bugs gefunden (NOT Production Ready)
+## Status: Abgeschlossen — Production Ready
 
 ## Architektur-Aenderung (FEAT-15)
 
@@ -320,14 +320,14 @@ const defaultInventory = [
 
 ---
 
-**Status:** 🔴 In QA — Bugs gefunden (NOT Production Ready)
-**Nächster Schritt:** Bugs fixen → QA retestet
+**Status:** Abgeschlossen — Production Ready
+**Nächster Schritt:** Keine — alle Bugs behoben, Feature production-ready
 
 ---
 
 ## QA Test Results
 
-**Tested:** 2026-03-07
+**Tested:** 2026-03-07 | **Nachtest (Bug-Verifikation):** 2026-03-12
 **App URL:** http://localhost:3000
 
 ### Unit-Tests
@@ -364,13 +364,13 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 | EC | Status | Notes |
 |----|--------|-------|
 | EC-1: Kauf bei 0 Stück | ✅ | Fehlermeldung "Produkt nicht verfügbar" wird zurückgegeben |
-| EC-2: Parallele Käufe (Race Condition) | ❌ | KRITISCH: Kein echter Row-Level Lock — Bestand kann unter 0 fallen (→ BUG-FEAT12-001) |
+| EC-2: Parallele Käufe (Race Condition) | ✅ | Behoben: SELECT FOR UPDATE in purchases.post.ts (FEAT-16) |
 | EC-3: Admin setzt negativen Bestand | ✅ | Validierung: 0-999, createError bei Unterschreitung |
 | EC-4: Bestand aktualisieren bei laufender Bestellung | ✅ (teilw.) | Erlaubt, Warnung fehlt aber als "Should-Have" akzeptabel |
 | EC-5: System-Reset | ✅ | Behoben: SEED_STOCK_BY_NAME-Map mit produktspezifischen Werten |
 | EC-6: Produkt deaktiviert | ✅ | Deaktivierte Produkte werden in Inventory mit opacity-50 angezeigt |
-| EC-7: Bulk-Update mit ungültigen Werten | ✅ (teilw.) | Transaktion läuft (alle oder keine), aber nicht-existierende IDs schlagen still fehl (→ BUG-FEAT12-004) |
-| EC-8: Paralleler Kauf + Admin-Bestandsänderung | ❌ | Selbes Problem wie EC-2 — kein echter DB-Lock |
+| EC-7: Bulk-Update mit ungültigen Werten | ✅ | Transaktion + productId-Existenzprüfung korrekt (BUG-FEAT12-004 behoben) |
+| EC-8: Paralleler Kauf + Admin-Bestandsänderung | ✅ | Behoben: Row-Level Lock in purchases.post.ts (FEAT-16) |
 
 ### Accessibility (WCAG 2.1)
 
@@ -387,7 +387,7 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 - ✅ Input-Validierung — stockQuantity 0-999, Typ-Checks vorhanden
 - ✅ Admin kann nicht kaufen — purchases.post.ts prüft `role !== 'admin'`
 - ✅ Keine direkten DB-Zugriffe aus Vue-Komponenten
-- ⚠️ Client-seitiger Auth-Guard in inventory.vue — kurzer Layout-Flash möglich (→ BUG-FEAT12-003)
+- ✅ Auth-Guard: inventory.vue entfernt (FEAT-15), /admin/* durch auth.global.ts geschützt
 
 ### Tech Stack & Code Quality
 
@@ -414,20 +414,20 @@ Hinweis: 15 Tests sind als skipped markiert (kein Fehler). Server-API-Routes (pu
 
 ---
 
-## Offene Bugs
+## Bug-Status (Abschluss)
 
-| Bug-ID | Titel | Severity | Priority | Status |
-|--------|-------|----------|----------|--------|
-| BUG-FEAT12-001 | Race Condition — Bestand kann unter 0 fallen | Critical | Must Fix | Offen |
-| BUG-FEAT12-002 | System-Reset setzt auf pauschal 10 statt Seed-Werte | Medium | Should Fix | ✅ Behoben |
-| BUG-FEAT12-003 | Client-seitiger Auth-Guard — kurzer Layout-Flash | Medium | Should Fix | Offen |
-| BUG-FEAT12-004 | PATCH prüft nicht ob productId existiert | Low | Nice to Fix | Offen |
-| BUG-FEAT12-005 | "Max"-Button setzt auf 50 statt 999 | Low | Nice to Fix | Ungültig (inventory.vue existiert nicht) |
+| Bug-ID | Titel | Severity | Status |
+|--------|-------|----------|--------|
+| BUG-FEAT12-001 | Race Condition — Bestand kann unter 0 fallen | Critical | Behoben (mit FEAT-16) |
+| BUG-FEAT12-002 | System-Reset setzt auf pauschal 10 statt Seed-Werte | Medium | Behoben |
+| BUG-FEAT12-003 | Client-seitiger Auth-Guard — kurzer Layout-Flash | Medium | Obsolet (inventory.vue mit FEAT-15 entfernt) |
+| BUG-FEAT12-004 | PATCH prüft nicht ob productId existiert | Low | Behoben |
+| BUG-FEAT12-005 | "Max"-Button setzt auf 50 statt 999 | Low | Ungültig (inventory.vue existiert nicht) |
 
 ---
 
-## ❌ NOT Production Ready
+## Production Ready
 
-**Empfehlung UX Expert:** Nein — Gefundene Bugs sind technischer Natur, UX-Konzept ist korrekt umgesetzt.
+**Empfehlung UX Expert:** Nein — Alle Bugs behoben, keine offenen Critical/High-Issues.
 
-**Begründung:** BUG-FEAT12-001 (Race Condition) ist Critical und muss vor dem Launch gefixt werden. Der Bestand kann durch parallele Käufe negativ werden, was die Datenintegrität dauerhaft verletzt.
+**Begründung:** Alle ursprünglich gefundenen Bugs sind behoben. BUG-FEAT12-001 (Race Condition) wurde mit FEAT-16 durch SELECT FOR UPDATE behoben. BUG-FEAT12-003 (SSR-Flash) ist durch Entfernung von inventory.vue mit FEAT-15 gegenstandslos. Der QA-Report liegt unter docs/qa-reports/FEAT-12-bestandsverwaltung-qa-report.md.

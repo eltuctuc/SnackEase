@@ -739,3 +739,9 @@ Wireframe-Abgleich: Das Trichter-Icon rechts in der Filter-Leiste koennte den So
 
 - Keine E2E-Tests implementiert (Playwright) — die Spec nennt sie als Anforderung, sie benoetigen eine laufende App-Instanz mit Test-Daten; sollten in einem separaten QA-Schritt ergaenzt werden
 - EmptyState.vue unterstuetzt nur die Icons 'heart' | 'thumb-up' | 'star' | 'info' | 'x' — fuer den Suche-Empty-State wird 'info' verwendet (kein 'search'-Icon verfuegbar ohne Aenderung der shared Komponente)
+
+---
+
+## Offene Bugs
+
+Keine offenen Bugs.

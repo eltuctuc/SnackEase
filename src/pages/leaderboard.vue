@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, ref as vRef } from 'vue'
 import { useLeaderboard } from '~/composables/useLeaderboard'
-import type { ActiveTab, LeaderboardEntry, PointsLeaderboardEntry } from '~/composables/useLeaderboard'
+import type { ActiveTab, LeaderboardEntry, PointsLeaderboardEntry as PointsLeaderboardEntryType } from '~/composables/useLeaderboard'
 import LeaderboardList from '~/components/leaderboard/LeaderboardList.vue'
 import PointsLeaderboardEntry from '~/components/leaderboard/PointsLeaderboardEntry.vue'
 import LeaderboardSkeleton from '~/components/leaderboard/LeaderboardSkeleton.vue'
@@ -49,15 +49,15 @@ onMounted(async () => {
 // TYPE GUARDS
 // ========================================
 
-function isPointsEntry(entry: LeaderboardEntry | PointsLeaderboardEntry): entry is PointsLeaderboardEntry {
+function isPointsEntry(entry: LeaderboardEntry | PointsLeaderboardEntryType): entry is PointsLeaderboardEntryType {
   return 'totalPoints' in entry
 }
 
-function isPointsList(list: LeaderboardEntry[] | PointsLeaderboardEntry[]): list is PointsLeaderboardEntry[] {
+function isPointsList(list: LeaderboardEntry[] | PointsLeaderboardEntryType[]): list is PointsLeaderboardEntryType[] {
   return activeTab.value === 'totalPoints'
 }
 
-function isLeaderboardEntry(entry: LeaderboardEntry | PointsLeaderboardEntry): entry is LeaderboardEntry {
+function isLeaderboardEntry(entry: LeaderboardEntry | PointsLeaderboardEntryType): entry is LeaderboardEntry {
   return 'totalPurchases' in entry
 }
 
