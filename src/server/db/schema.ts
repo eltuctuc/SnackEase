@@ -64,6 +64,8 @@ export const products = pgTable('products', {
   isGlutenFree: boolean('is_gluten_free').default(false),
   isActive: boolean('is_active').default(true),
   stock: integer('stock').default(10),
+  // FEAT-22: Konfigurierbarer Nachbestellschwellwert (default 3 — ersetzt hardkodierten Wert)
+  stockThreshold: integer('stock_threshold').notNull().default(3),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

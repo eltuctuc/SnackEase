@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
     isGlutenFree,
     isActive,
     stock,
+    stockThreshold,
   } = body;
 
   try {
@@ -61,6 +62,14 @@ export default defineEventHandler(async (event) => {
     if (isGlutenFree !== undefined) updateData.isGlutenFree = isGlutenFree;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (stock !== undefined) updateData.stock = stock;
+    if (stockThreshold !== undefined) {
+      // FEAT-22: Schwellwert-Validierung
+      const threshold = parseInt(String(stockThreshold), 10)
+      if (isNaN(threshold) || threshold < 1) {
+        throw createError({ statusCode: 400, message: 'Schwellwert muss mindestens 1 sein' })
+      }
+      updateData.stockThreshold = threshold
+    }
 
     await db.transaction(async (tx) => {
       if (Object.keys(updateData).length > 0) {

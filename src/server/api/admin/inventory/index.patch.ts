@@ -2,6 +2,7 @@
  * PATCH /api/admin/inventory
  *
  * FEAT-12: Bestandsverwaltung — Bestand mehrerer Produkte gleichzeitig aktualisieren
+ * FEAT-22: stockThreshold pro Produkt konfigurierbar — ersetzt hardkodierten Wert 3
  *
  * @access Admin only
  *
@@ -10,7 +11,7 @@
  * {
  *   "updates": [
  *     { "productId": 1, "stockQuantity": 15 },
- *     { "productId": 3, "stockQuantity": 0 }
+ *     { "productId": 3, "stockQuantity": 0, "stockThreshold": 5 }
  *   ]
  * }
  * ```
@@ -31,7 +32,8 @@ import { eq, inArray } from 'drizzle-orm'
 
 interface StockUpdate {
   productId: number
-  stockQuantity: number
+  stockQuantity?: number
+  stockThreshold?: number
 }
 
 export default defineEventHandler(async (event) => {
@@ -46,18 +48,31 @@ export default defineEventHandler(async (event) => {
   }
 
   for (const u of updates) {
-    if (typeof u.productId !== 'number' || typeof u.stockQuantity !== 'number') {
-      throw createError({ statusCode: 400, message: 'Jedes Update benötigt productId und stockQuantity als Zahlen' })
+    if (typeof u.productId !== 'number') {
+      throw createError({ statusCode: 400, message: 'Jedes Update benötigt eine productId als Zahl' })
     }
-    if (u.stockQuantity < 0 || u.stockQuantity > 999) {
-      throw createError({ statusCode: 400, message: 'Bestandswert muss zwischen 0 und 999 liegen' })
+    if (u.stockQuantity !== undefined) {
+      if (typeof u.stockQuantity !== 'number') {
+        throw createError({ statusCode: 400, message: 'stockQuantity muss eine Zahl sein' })
+      }
+      if (u.stockQuantity < 0 || u.stockQuantity > 999) {
+        throw createError({ statusCode: 400, message: 'Bestandswert muss zwischen 0 und 999 liegen' })
+      }
+    }
+    if (u.stockThreshold !== undefined) {
+      if (typeof u.stockThreshold !== 'number' || !Number.isInteger(u.stockThreshold)) {
+        throw createError({ statusCode: 400, message: 'Schwellwert muss eine ganze Zahl sein' })
+      }
+      if (u.stockThreshold < 1) {
+        throw createError({ statusCode: 400, message: 'Schwellwert muss mindestens 1 sein' })
+      }
     }
   }
 
   // Prüfen ob alle productIds existieren (BUG-FEAT12-004)
   const productIds = updates.map(u => u.productId)
   const existingProducts = await db
-    .select({ id: products.id })
+    .select({ id: products.id, stock: products.stock, stockThreshold: products.stockThreshold })
     .from(products)
     .where(inArray(products.id, productIds))
 
@@ -67,24 +82,50 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: `Produkte nicht gefunden: ${missingIds.join(', ')}` })
   }
 
+  // Produkt-Map für Bestand + Schwellwert-Lookup
+  const productMap = new Map(existingProducts.map(p => [p.id, p]))
+
   // Alle Updates in einer Transaktion (EC-7: alle oder keine)
   await db.transaction(async (tx) => {
     for (const u of updates) {
-      await tx
-        .update(products)
-        .set({ stock: u.stockQuantity })
-        .where(eq(products.id, u.productId))
+      const updateData: Record<string, unknown> = {}
+      if (u.stockQuantity !== undefined) updateData.stock = u.stockQuantity
+      if (u.stockThreshold !== undefined) updateData.stockThreshold = u.stockThreshold
+
+      if (Object.keys(updateData).length > 0) {
+        await tx
+          .update(products)
+          .set(updateData)
+          .where(eq(products.id, u.productId))
+      }
     }
   })
 
-  // FEAT-13: Benachrichtigungen für aufgefüllte Produkte automatisch entfernen
+  // FEAT-13 + FEAT-22: Benachrichtigungen nach Schwellwert-Änderung oder Bestand-Änderung prüfen
   // Läuft nach der Transaktion — kein Rollback des Bestands bei Fehler
   try {
     for (const u of updates) {
-      if (u.stockQuantity > 3) {
+      const existingProduct = productMap.get(u.productId)
+      if (!existingProduct) continue
+
+      // Aktuellen Bestand und Schwellwert ermitteln (nach Update)
+      const currentStock = u.stockQuantity !== undefined ? u.stockQuantity : (existingProduct.stock ?? 0)
+      const currentThreshold = u.stockThreshold !== undefined ? u.stockThreshold : (existingProduct.stockThreshold ?? 3)
+
+      if (currentStock > currentThreshold) {
+        // Bestand über Schwellwert → bestehende Warnung löschen (EC-3 + FEAT-22 REQ-10)
         await db
           .delete(lowStockNotifications)
           .where(eq(lowStockNotifications.productId, u.productId))
+      } else if (currentStock <= currentThreshold) {
+        // Bestand unter/gleich Schwellwert → Warnung erzeugen falls noch nicht vorhanden (EC-2)
+        await db
+          .insert(lowStockNotifications)
+          .values({
+            productId: u.productId,
+            stockQuantity: currentStock,
+          })
+          .onConflictDoNothing()
       }
     }
   } catch (notificationError: unknown) {

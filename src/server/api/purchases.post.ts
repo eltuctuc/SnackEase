@@ -247,15 +247,17 @@ export default defineEventHandler(async (event) => {
 
     try {
       for (const orderItem of orderItems) {
+        // FEAT-22: stockThreshold pro Produkt laden — ersetzt hardkodierten Wert 3
         const stockRows = await db
-          .select({ stock: products.stock })
+          .select({ stock: products.stock, stockThreshold: products.stockThreshold })
           .from(products)
           .where(eq(products.id, orderItem.productId))
           .limit(1)
 
         const updatedStock = stockRows[0]?.stock ?? 0
+        const threshold = stockRows[0]?.stockThreshold ?? 3
 
-        if (updatedStock <= 3) {
+        if (updatedStock <= threshold) {
           await db.insert(lowStockNotifications)
             .values({
               productId: orderItem.productId,

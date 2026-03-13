@@ -26,6 +26,8 @@ interface AdminProduct {
   isGlutenFree: boolean | null
   isActive: boolean | null
   stock: number | null
+  // FEAT-22: Nachbestellschwellwert
+  stockThreshold: number | null
   categories: CategoryRef[]
   createdAt: string
   activeOffer?: {
@@ -68,6 +70,8 @@ const productForm = ref({
   isVegan: false,
   isGlutenFree: false,
   stock: 10,
+  // FEAT-22: Nachbestellschwellwert (default 3)
+  stockThreshold: 3,
   calories: null as number | null,
   protein: null as number | null,
   sugar: null as number | null,
@@ -154,6 +158,7 @@ const resetForm = () => {
     isVegan: false,
     isGlutenFree: false,
     stock: 10,
+    stockThreshold: 3,
     calories: null,
     protein: null,
     sugar: null,
@@ -184,6 +189,8 @@ const openEditModal = (product: AdminProduct) => {
     isVegan: product.isVegan ?? false,
     isGlutenFree: product.isGlutenFree ?? false,
     stock: product.stock ?? 10,
+    // FEAT-22: gespeicherten Schwellwert laden
+    stockThreshold: product.stockThreshold ?? 3,
     calories: product.calories,
     protein: product.protein,
     sugar: product.sugar,
@@ -282,6 +289,14 @@ const handleSaveProduct = async () => {
   formError.value = null
 
   try {
+    // FEAT-22: Schwellwert-Validierung im Frontend
+    const thresholdVal = Math.floor(productForm.value.stockThreshold)
+    if (isNaN(thresholdVal) || thresholdVal < 1) {
+      formError.value = 'Schwellwert muss mindestens 1 sein'
+      isSaving.value = false
+      return
+    }
+
     const payload = {
       name: productForm.value.name.trim(),
       description: productForm.value.description || null,
@@ -290,6 +305,8 @@ const handleSaveProduct = async () => {
       isVegan: productForm.value.isVegan,
       isGlutenFree: productForm.value.isGlutenFree,
       stock: productForm.value.stock,
+      // FEAT-22: Nachbestellschwellwert mitsenden
+      stockThreshold: thresholdVal,
       calories: productForm.value.calories,
       protein: productForm.value.protein,
       sugar: productForm.value.sugar,
@@ -729,7 +746,7 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
               <div>
                 <label for="prod-stock" class="block text-sm font-medium mb-2">Lagerbestand</label>
                 <input
@@ -739,6 +756,19 @@ onMounted(async () => {
                   min="0"
                   class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 />
+              </div>
+              <!-- FEAT-22: Nachbestellschwellwert -->
+              <div>
+                <label for="prod-stock-threshold" class="block text-sm font-medium mb-2">Nachbestellschwellwert</label>
+                <input
+                  id="prod-stock-threshold"
+                  v-model.number="productForm.stockThreshold"
+                  type="number"
+                  min="1"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  placeholder="3"
+                />
+                <p class="text-xs text-muted-foreground mt-1">Warnung ab &lt;= diesem Wert</p>
               </div>
               <div>
                 <label for="prod-allergens" class="block text-sm font-medium mb-2">Allergene (kommagetrennt)</label>
