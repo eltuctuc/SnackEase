@@ -53,7 +53,7 @@ function isPointsEntry(entry: LeaderboardEntry | PointsLeaderboardEntryType): en
   return 'totalPoints' in entry
 }
 
-function isPointsList(list: LeaderboardEntry[] | PointsLeaderboardEntryType[]): list is PointsLeaderboardEntryType[] {
+function isPointsList(_list: LeaderboardEntry[] | PointsLeaderboardEntryType[]): _list is PointsLeaderboardEntryType[] {
   return activeTab.value === 'totalPoints'
 }
 
