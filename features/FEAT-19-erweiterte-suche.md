@@ -1,6 +1,6 @@
 # FEAT-19: Erweiterte Suche
 
-## Status: Planned
+## Status: Implemented
 
 ## Abhaengigkeiten
 - Benoetigt: FEAT-15 (App-Navigationsstruktur) - /search-Route und Layout muessen existieren
@@ -144,26 +144,26 @@ Alle Parameter sind optional und koennen kombiniert werden. Fehlende Parameter b
 
 ## 6. Acceptance Criteria
 
-- [ ] AC-1: Die Seite /search ist erreichbar und zeigt ein Suchfeld sowie die Filter-Chip-Leiste
-- [ ] AC-2: Beim Tippen im Suchfeld werden Ergebnisse nach 300ms Pause automatisch aktualisiert (Debounce)
-- [ ] AC-3: Das "X"-Icon im Suchfeld loescht den Suchbegriff und aktualisiert die Ergebnisse sofort
-- [ ] AC-4: Kategorie-Chips sind horizontal scrollbar und zeigen alle 7 Kategorien (Alle, Obst, Protein, Shakes, Schoki, Nuesse, Getraenke)
-- [ ] AC-5: Nur ein Kategorie-Chip kann gleichzeitig aktiv sein
-- [ ] AC-6: Der Verfuegbarkeits-Chip "Nur vorraetigen" filtert korrekt auf stock > 0
-- [ ] AC-7: Preis-Chips schraenken die Ergebnisse auf den jeweiligen Preisbereich ein
-- [ ] AC-8: "Vegan"-Chip zeigt ausschliesslich Produkte mit isVegan = true
-- [ ] AC-9: "Glutenfrei"-Chip zeigt ausschliesslich Produkte mit isGlutenFree = true
-- [ ] AC-10: Vegan- und Glutenfrei-Chip koennen gleichzeitig aktiv sein (UND-Verknuepfung)
-- [ ] AC-11: Aktive Chips sind visuell von inaktiven Chips unterscheidbar
-- [ ] AC-12: "Filter zuruecksetzen"-Button erscheint nur bei mindestens einem aktiven Filter und setzt alle Filter zurueck
-- [ ] AC-13: Sortierungs-Umschalter zeigt drei Optionen; aktive Option ist visuell hervorgehoben
-- [ ] AC-14: Standard-Sortierung ist "Relevanz" beim Laden der Seite
-- [ ] AC-15: Produktkarten zeigen Produktbild, Name, Preis, Warenkorb-Button und Favoriten-Icon
-- [ ] AC-16: Klick auf Produktkarte (ausser Warenkorb-Button und Favoriten-Icon) oeffnet ProductDetailModal
-- [ ] AC-17: Kein Suchergebnis → leerer Zustand mit erklaerenden Hinweistext
-- [ ] AC-18: Waehrend Laden → Ladezustand (Skeleton oder Spinner) sichtbar
-- [ ] AC-19: Nur Produkte mit isActive = true erscheinen in den Ergebnissen
-- [ ] AC-20: Die Seite ist nur fuer eingeloggte Mitarbeiter zugaenglich (Auth-Guard greift)
+- [x] AC-1: Die Seite /search ist erreichbar und zeigt ein Suchfeld sowie die Filter-Chip-Leiste
+- [x] AC-2: Beim Tippen im Suchfeld werden Ergebnisse nach 300ms Pause automatisch aktualisiert (Debounce)
+- [x] AC-3: Das "X"-Icon im Suchfeld loescht den Suchbegriff und aktualisiert die Ergebnisse sofort
+- [x] AC-4: Kategorie-Chips sind horizontal scrollbar und zeigen alle 7 Kategorien (Alle, Obst, Protein, Shakes, Schoki, Nuesse, Getraenke)
+- [x] AC-5: Nur ein Kategorie-Chip kann gleichzeitig aktiv sein
+- [x] AC-6: Der Verfuegbarkeits-Chip "Nur vorraetigen" filtert korrekt auf stock > 0
+- [x] AC-7: Preis-Chips schraenken die Ergebnisse auf den jeweiligen Preisbereich ein
+- [x] AC-8: "Vegan"-Chip zeigt ausschliesslich Produkte mit isVegan = true
+- [x] AC-9: "Glutenfrei"-Chip zeigt ausschliesslich Produkte mit isGlutenFree = true
+- [x] AC-10: Vegan- und Glutenfrei-Chip koennen gleichzeitig aktiv sein (UND-Verknuepfung)
+- [x] AC-11: Aktive Chips sind visuell von inaktiven Chips unterscheidbar
+- [x] AC-12: "Filter zuruecksetzen"-Button erscheint nur bei mindestens einem aktiven Filter und setzt alle Filter zurueck
+- [x] AC-13: Sortierungs-Umschalter zeigt drei Optionen; aktive Option ist visuell hervorgehoben
+- [x] AC-14: Standard-Sortierung ist "Relevanz" beim Laden der Seite
+- [x] AC-15: Produktkarten zeigen Produktbild, Name, Preis, Warenkorb-Button und Favoriten-Icon
+- [x] AC-16: Klick auf Produktkarte (ausser Warenkorb-Button und Favoriten-Icon) oeffnet ProductDetailModal
+- [x] AC-17: Kein Suchergebnis → leerer Zustand mit erklaerenden Hinweistext
+- [x] AC-18: Waehrend Laden → Ladezustand (Skeleton oder Spinner) sichtbar
+- [x] AC-19: Nur Produkte mit isActive = true erscheinen in den Ergebnissen
+- [x] AC-20: Die Seite ist nur fuer eingeloggte Mitarbeiter zugaenglich (Auth-Guard greift)
 
 ---
 
@@ -238,3 +238,504 @@ Alle Parameter sind optional und koennen kombiniert werden. Fehlende Parameter b
 | Algolia / externe Suchmaschine | Overkill fuer aktuelle Produktanzahl |
 | Admin-seitige Suche | Admins nutzen bestehende Tabellen-Filter in /admin/products |
 | Persistenz des Such-States ueber Navigation | Kein Bedarf laut Entscheidung; Seite startet immer im Initialzustand |
+
+---
+
+## Solution Architect Design
+
+### Bestehende Architektur (gepruefte Grundlage)
+
+Vor dem Design wurden folgende Bestandteile geprueft:
+
+- `src/server/api/products/index.get.ts` — existiert und wird erweitert (kein Neubau)
+- `src/composables/useSearch.ts` — existiert bereits mit `autoSearch` + `debounceMs` Unterstuetzung (VueUse `watchDebounced`)
+- `src/pages/search.vue` — leerer Platzhalter aus FEAT-15, wird vollstaendig ersetzt
+- `src/components/dashboard/ProductGrid.vue` — zeigt Pattern fuer Produktkarten + FavoriteIcon + PurchaseButton
+- `src/components/dashboard/ProductDetailModal.vue` — bestehende Modal-Komponente, wird wiederverwendet
+- `src/server/db/schema.ts` — `products.price` ist `text`-Typ (wichtig fuer serverseitigen CAST)
+
+---
+
+### Komponenten-Struktur
+
+```
+src/pages/search.vue  (Haupt-Seite, ersetzt Platzhalter)
+├── SearchInput.vue  (Suchfeld mit X-Button)
+├── FilterChips.vue  (horizontal scrollbare Chip-Leiste)
+│   ├── FilterChip.vue  (Kategorie "Alle")
+│   ├── FilterChip.vue  (Kategorie "Obst", "Protein", "Shakes", ...)
+│   ├── FilterChip.vue  (Verfuegbarkeit "Nur vorraetigen")
+│   ├── FilterChip.vue  (Preis "bis 1 €", "1–2 €", "ueber 2 €")
+│   ├── FilterChip.vue  (Ernaehrung "Vegan")
+│   └── FilterChip.vue  (Ernaehrung "Glutenfrei")
+├── SortSelector.vue  (Umschalter: Relevanz / Preis auf- / absteigend)
+├── SearchResultsGrid.vue  (Produktkarten-Grid + Loading + EmptyState)
+│   ├── [ProductGrid-Karte]  (gleicher Kartenaufbau wie dashboard/ProductGrid.vue)
+│   │   ├── FavoriteIcon.vue  (FEAT-18, bereits vorhanden)
+│   │   └── PurchaseButton.vue  (FEAT-16, bereits vorhanden)
+│   └── EmptyState.vue  (shared, bereits vorhanden aus FEAT-18)
+└── ProductDetailModal.vue  (FEAT-6/16, bereits vorhanden — wird unveraendert wiederverwendet)
+```
+
+Neue Dateien: `search/SearchInput.vue`, `search/FilterChips.vue`, `search/FilterChip.vue`, `search/SortSelector.vue`, `search/SearchResultsGrid.vue`
+
+Wiederverwendet ohne Aenderung: `dashboard/ProductDetailModal.vue`, `recommendations/FavoriteIcon.vue`, `dashboard/PurchaseButton.vue`, `shared/EmptyState.vue`
+
+---
+
+### Daten-Modell
+
+Kein neues Datenbankschema. Die bestehende `products`-Tabelle enthaelt alle benoetigen Felder:
+
+```
+Produkt (bereits vorhanden):
+- name            Text      → Volltext-Suche (ILIKE)
+- description     Text      → Volltext-Suche (ILIKE)
+- category        Text      → Kategorie-Filter (exakter Match)
+- price           Text      → Preis-Filter + Sortierung (serverseitiger CAST zu numeric)
+- stock           Integer   → Verfuegbarkeits-Filter (> 0)
+- isVegan         Boolean   → Ernaehrungs-Filter
+- isGlutenFree    Boolean   → Ernaehrungs-Filter
+- isActive        Boolean   → immer gefiltert (nur true)
+```
+
+Besonderheit: `products.price` ist im Schema als `text` definiert (historisch gewachsen). Alle Preisvergleiche und Preissortierungen erfordern daher einen expliziten CAST zu `numeric` in der Datenbankabfrage. Die bestehende API-Logik enthaelt diesen Hinweis bereits als Kommentar (EC-12).
+
+---
+
+### API-Erweiterung: GET /api/products
+
+Der bestehende Endpunkt wird um sechs neue optionale Query-Parameter erweitert. Bestehende Parameter (`category`, `search`) bleiben unveraendert und rueckwaertskompatibel.
+
+**Neue Parameter zusaetzlich zu den bestehenden:**
+
+| Parameter | Woher kommt er | Was bewirkt er serverseitig |
+|-----------|---------------|----------------------------|
+| `q` | Suchfeld (ersetzt/ergaenzt `search`) | ILIKE gegen `name` UND `description` (OR-Verknuepfung) |
+| `inStock` | Verfuegbarkeits-Chip | `stock > 0` |
+| `minPrice` | Preis-Chip | `CAST(price AS numeric) >= minPrice` |
+| `maxPrice` | Preis-Chip | `CAST(price AS numeric) <= maxPrice` |
+| `isVegan` | Vegan-Chip | `isVegan = true` |
+| `isGlutenFree` | Glutenfrei-Chip | `isGlutenFree = true` |
+| `sortBy` | SortSelector | `ORDER BY`-Klausel (siehe unten) |
+
+Alle Filter werden als AND-Verknuepfung kombiniert — identisch zum bestehenden Muster mit dem `conditions`-Array im Handler.
+
+**Besonderheit beim Suchparameter:** Der neue Parameter heisst `q` (statt `search`) um die Suche ueber `name` UND `description` zu erweitern. Der bestehende `search`-Parameter (nur `name`) bleibt als Legacy fuer andere Aufrufer erhalten.
+
+**ILIKE-Escaping (EC-1):** Vor dem Einbau in die SQL-Abfrage werden die Sonderzeichen `%`, `_` und `\` im Suchbegriff escaped (z.B. `%` → `\%`). Dies verhindert ungewollte Wildcard-Interpretation durch PostgreSQL. Der Suchbegriff wird zusaetzlich auf 100 Zeichen gekuerzt (EC-3) und per `trim()` von fuehrendem/folgendem Leerzeichen bereinigt (EC-2).
+
+---
+
+### Sortier-Logik (serverseitig)
+
+Die Sortierung wird vollstaendig serverseitig ueber den `sortBy`-Parameter gesteuert:
+
+**Relevanz (Standard):**
+Beim Suchbegriff: Produkte deren Name den Begriff enthaelt kommen zuerst, danach Produkte wo er nur in der Beschreibung vorkommt. Technisch umgesetzt mit einem berechneten Sortierschluessel (CASE WHEN name ILIKE ... THEN 0 ELSE 1 END), der als erste ORDER-BY-Spalte verwendet wird, danach alphabetisch nach Name.
+
+Bei leerer Suche: alphabetisch nach Name.
+
+**Preis aufsteigend / absteigend:**
+ORDER BY CAST(price AS numeric) ASC/DESC — benoetigt wegen des text-Typs zwingend den CAST.
+
+---
+
+### State-Management auf search.vue (kein Pinia-Store)
+
+Die gesamte Filter- und Such-Logik lebt als lokaler reaktiver State direkt auf der `search.vue`-Seite. Dies ist bewusst einfach gehalten, da der State nicht ausserhalb der Seite benoetigt wird (EC-10: kein Persistieren beim Navigieren).
+
+```
+Lokaler State auf search.vue:
+- query           String    → Suchbegriff (via useSearch.ts)
+- selectedCategory String   → aktive Kategorie ('' = Alle)
+- onlyInStock     Boolean   → Verfuegbarkeits-Filter
+- minPrice        Number|null → aktive Preisuntergrenze
+- maxPrice        Number|null → aktive Preisobergrenze
+- isVegan         Boolean
+- isGlutenFree    Boolean
+- sortBy          String    → 'relevance' | 'price_asc' | 'price_desc'
+- isLoading       Boolean   → waehrend API-Call
+- products        Array     → Suchergebnisse
+- selectedProduct Product|null → fuer ProductDetailModal
+```
+
+**useSearch.ts wird wiederverwendet** mit `autoSearch: true, debounceMs: 300`. Der `onSearch`-Callback baut alle aktiven Filter als Query-String zusammen und sendet einen einzigen API-Call an `GET /api/products`.
+
+**Computed-Property `hasActiveFilters`** prueft ob mindestens ein Filter (ausser Kategorie "Alle") aktiv ist — steuert die Sichtbarkeit des "Filter zuruecksetzen"-Buttons (REQ-31).
+
+**Wenn ein Filter-Chip geaendert wird:** sofortige Suche (kein Debounce), da kein Tastendruck-Szenario vorliegt. Nur das Suchfeld nutzt den 300ms-Debounce.
+
+---
+
+### useSearch.ts Composable (Wiederverwendung)
+
+Das Composable ist bereits vollstaendig vorhanden und unterstuetzt alle benoetigen Optionen:
+
+- `query` — reaktiver Suchbegriff (v-model im SearchInput.vue)
+- `clearQuery()` — X-Button im Suchfeld
+- `autoSearch: true` — loest Suche waehrend Tippen aus
+- `debounceMs: 300` — verzoegert API-Call um 300ms nach letztem Tastendruck
+
+Keine Aenderungen am Composable erforderlich.
+
+---
+
+### Tech-Entscheidungen und Begruendungen
+
+**Warum serverseitige Filterung statt clientseitiger Filterung?**
+Der bestehende Endpunkt liefert bereits serverseitig gefilterte Produkte. Alle neuen Filter werden ebenfalls serverseitig angewendet. Dies entspricht NFR-4 (ein einziger API-Call mit allen kombinierten Parametern) und haelt die Produktliste konsistent mit dem Berechtigungssystem (isActive-Filter laeuft immer mit).
+
+**Warum kein neuer Pinia-Store?**
+Der Such-State ist vollstaendig lokal zu `/search`. Er wird beim Verlassen der Seite zurueckgesetzt (EC-10). Ein Store wuerde unnoetige Komplexitaet erzeugen.
+
+**Warum keine neue Produktkarten-Komponente?**
+Das Dashboard-`ProductGrid.vue` enthaelt bereits alle visuellen Bausteine (FavoriteIcon, PurchaseButton, Preis mit Angebot-Anzeige, Vegan/GF-Badges). Die `SearchResultsGrid.vue` uebernimmt dasselbe Karten-Layout, sodass kein doppelter Karten-Code entsteht.
+
+**Warum ILIKE statt PostgreSQL Full-Text-Search (tsvector)?**
+Bei der erwarteten Produktanzahl (< 1.000 Produkte) ist ILIKE performant genug (NFR-2: < 400ms). Ein FTS-Index wuerde zusaetzliche Schema-Migration und Wartung erfordern. ILIKE ist einfacher und ausreichend.
+
+**Warum werden Preis-Chips mit festen Grenzen definiert?**
+Die Grenzen werden als Konstante in `FilterChips.vue` definiert (z.B. `[{ label: 'bis 1 €', max: 1 }, { label: '1–2 €', min: 1, max: 2 }, { label: 'ueber 2 €', min: 2 }]`). Damit kann nur ein Preis-Chip gleichzeitig aktiv sein (mutually exclusive wie Kategorie-Chips) und der API-Call bekommt immer klare `minPrice`/`maxPrice`-Werte.
+
+---
+
+### Dependencies
+
+Keine neuen Packages erforderlich. Alle benoetigen Libraries sind bereits installiert:
+
+- `@vueuse/core` — bereits vorhanden (genutzt in `useSearch.ts` fuer `watchDebounced`)
+- `drizzle-orm` — bereits vorhanden (SQL-Erweiterung im bestehenden Handler)
+
+---
+
+### Test-Anforderungen
+
+**Unit-Tests (Vitest):**
+
+| Was | Datei | Was wird getestet |
+|-----|-------|-------------------|
+| ILIKE-Escaping-Helfer | `tests/utils/search.test.ts` | %, _, \ werden korrekt escaped; leere Strings; nur-Leerzeichen; 100-Zeichen-Limit |
+| Filter-Kombinationen API | `tests/api/products.test.ts` | q + category + inStock + minPrice/maxPrice + isVegan/isGlutenFree kombiniert; sortBy-Varianten |
+
+Coverage-Ziel: 80%+ fuer neue Logik im API-Handler
+
+**E2E-Tests (Playwright):**
+
+| Flow | Datei |
+|------|-------|
+| Suche nach Begriff → Ergebnisse erscheinen nach Debounce | `tests/e2e/search.spec.ts` |
+| Kategorie-Chip aktivieren → Filter greift, nur ein Chip aktiv | `tests/e2e/search.spec.ts` |
+| Mehrere Filter kombinieren → AND-Verknuepfung korrekt | `tests/e2e/search.spec.ts` |
+| Filter zuruecksetzen → alle Chips inaktiv, Suchbegriff bleibt | `tests/e2e/search.spec.ts` |
+| Produktkarte klicken → ProductDetailModal oeffnet sich | `tests/e2e/search.spec.ts` |
+| Warenkorb-Button klicken → Modal oeffnet sich NICHT (EC-8) | `tests/e2e/search.spec.ts` |
+| Kein Ergebnis → EmptyState sichtbar | `tests/e2e/search.spec.ts` |
+| Ladeindikator sichtbar waehrend API-Call | `tests/e2e/search.spec.ts` |
+
+Browser: Chromium
+
+---
+
+## UX Expert Review
+
+### Personas-Abdeckung
+
+| Persona | Relevanz | Bewertung | Begruendung |
+|---------|----------|-----------|-------------|
+| Nina Neuanfang (Einsteiger) | Mittel | Gut | Neue Mitarbeiter finden schnell alle Produkte per Freitext ohne das Katalog-Grid zu kennen. Der Initialzustand ohne vorausgewaehlte Filter ist fuer Einsteiger verstaendlich. |
+| Maxine Snackliebhaber (Stammkunde) | Hoch | Sehr gut | Favoriten-Icon auf der Karte erreichbar; Verfuegbarkeits-Filter beseitigt ihren groessten Pain Point (ausverkaufte Wunschprodukte). Schnelle Wiederholung dank Debounce-Suche. |
+| Lucas Gesundheitsfan (Ernaehrungs-Filter) | Hoch | Sehr gut | Vegan- und Glutenfrei-Chips direkt kombinierbar — loest seinen bisherigen Pain Point vollstaendig. Ernaehrungs-Filter prominent und ohne Umweg erreichbar. |
+
+Gesamtbewertung: Alle drei Kern-Personas werden durch FEAT-19 deutlich besser bedient als durch das bestehende Dashboard-Grid.
+
+---
+
+### Wireframe-Analyse
+
+Das Wireframe `suche.png` zeigt:
+
+- Suchfeld oben mit Lupe-Icon und "Search"-Placeholder — entspricht REQ-1/REQ-4.
+- Filter-Leiste darunter mit horizontal scrollbaren Chips ("Filtername x", "Langer Filtername x"). Die Chips haben ein "x"-Icon zum individuellen Entfernen eines aktiven Filters — das ist zusaetzlich zum globalen "Filter zuruecksetzen"-Button aus REQ-31.
+- Trichter-Icon rechts neben der Filter-Leiste — deutet auf Sortierung hin. Interpretation: Dieses Icon soll den `SortSelector.vue` aufrufen (Inline-Umschalter oder kompaktes Dropdown).
+- Produktkarten als Listenansicht (nicht als Grid) — die Karten nehmen die volle Breite ein und zeigen: Produktbild links, Name und Preis rechts. Diese Listenstruktur weicht vom 2-spaltigen Grid des Dashboards ab.
+- Tab-Bar unten mit "Suche" als aktiver Tab (zweite Position).
+
+**Diskrepanz zum Feature-Spec (Listenansicht vs. Grid):** REQ-19 und die Komponente `SearchResultsGrid.vue` implizieren ein Grid-Layout, das Wireframe zeigt jedoch eine einspaltigen Listenansicht (Full-Width-Karten). Empfehlung: Listenansicht priorisieren — auf mobilen Geraeten schlaegt Lesbarkeit ein enges 2-Spalten-Grid.
+
+**Diskrepanz zu REQ-31 (Einzeln vs. Global):** Das Wireframe zeigt ein "x" direkt an jedem aktiven Chip, nicht nur einen globalen "Filter zuruecksetzen"-Button. Beide Pattern sollten implementiert werden: x-Icon am Chip (Einzel-Entfernen) und globaler Reset-Link (Alles loeschen).
+
+---
+
+### Filter-Chip Design
+
+#### Visueller Zustand
+
+| Zustand | Hintergrund | Text | Beschreibung |
+|---------|-------------|------|--------------|
+| Inaktiv | `bg-secondary` (#E2E8EE) | `text-secondary-foreground` (#1E2D3D) | Standard-Chip |
+| Aktiv | `bg-primary` (#1B4D40) | `text-primary-foreground` (weiss) | Ausgefuellt, dunkelgruen |
+| Aktiv mit Hover | `bg-primary/90` | `text-primary-foreground` | Leichtes Aufhellen |
+| Inaktiv mit Hover | `bg-secondary/80` | `text-secondary-foreground` | Dezentes Feedback |
+
+Empfohlene Tailwind-Klassen fuer inaktiven Chip:
+`px-3 py-2.5 rounded-pill text-sm font-medium bg-secondary text-secondary-foreground whitespace-nowrap transition-colors`
+
+Empfohlene Tailwind-Klassen fuer aktiven Chip:
+`px-3 py-2.5 rounded-pill text-sm font-medium bg-primary text-primary-foreground whitespace-nowrap transition-colors`
+
+- Chips verwenden `rounded-pill` (9999px) — konsistent mit bestehenden CTA-Buttons im Theme.
+- `py-2.5` ergibt zusammen mit `text-sm` (24px line-height) eine Touch-Zone von ca. 44px Gesamthoehe (WCAG 2.5.5 konform).
+- Aktive Chips mit "x"-Icon: Icon (`teenyicons/outline/x-small`) rechts neben dem Label mit `ml-1.5`, Touch-Bereich des Icons mindestens 20x20px innen.
+- Optionaler visueller Trennstrich zwischen Chip-Gruppen: `w-px h-5 bg-border mx-2 self-center flex-shrink-0` als Separator zwischen Kategorie, Verfuegbarkeit, Preis und Ernaehrung.
+
+#### Chip-Gruppen Reihenfolge (fest)
+
+1. Kategorien: Alle / Obst / Protein / Shakes / Schoki / Nuesse / Getraenke
+2. Verfuegbarkeit: "Nur vorraetigen"
+3. Preisbereich: "bis 1,00 EUR" / "1,00-2,00 EUR" / "ab 2,00 EUR"
+4. Ernaehrung: "Vegan" / "Glutenfrei"
+
+---
+
+### Preis-Spannen-Definition
+
+Basierend auf dem Snack-Kiosk-Sortiment (Obst, Protein-Riegel, Shakes, Getraenke, Nuesse) und einem monatlichen Mitarbeiter-Guthaben von 25 EUR werden folgende drei Preis-Buckets empfohlen:
+
+| Chip-Label | minPrice | maxPrice | Rationale |
+|------------|----------|----------|-----------|
+| "bis 1,00 EUR" | — | 1.00 | Impuls-Kauf, Obst, guenstige Snacks |
+| "1,00 – 2,00 EUR" | 1.00 | 2.00 | Mittelklasse: Riegel, Nuesse, Getraenke |
+| "ab 2,00 EUR" | 2.00 | — | Premium: Shakes, spezielle Produkte |
+
+Diese Grenzen decken den typischen Preisraum von ca. 0,50 EUR bis 4,00 EUR vollstaendig ab. Kein Produkt faellt zwischen Buckets, da die Grenzen inklusiv behandelt werden.
+
+API-Parameter:
+- "bis 1,00 EUR": `?maxPrice=1.00`
+- "1,00 – 2,00 EUR": `?minPrice=1.00&maxPrice=2.00`
+- "ab 2,00 EUR": `?minPrice=2.00`
+
+Preis-Chips sind mutually exclusive (analog zu Kategorie-Chips) — mehrere Preis-Buckets gleichzeitig ergaeben keinen sinnvollen Filter. Dies bestaetigt die Implementierung in `FilterChips.vue` (Solution Architect: Preis-Chips als Konstanten-Array).
+
+---
+
+### Mobile UX
+
+#### Horizontales Chip-Scrolling
+
+```
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+  <!-- Chips -->
+</div>
+```
+
+- `overflow-x-auto` mit `-mx-4 px-4` sorgt dafuer, dass Chips bis an den Screen-Rand reichen (Edge-to-Edge-Scroll).
+- `scrollbar-hide` blendet die Scrollbar auf Desktop aus — auf Mobile ohnehin nicht sichtbar.
+- `pb-2` verhindert, dass der untere Schatten von aktiven Chips abgeschnitten wird.
+- Scroll-Indikator: Ein subtiler Verlauf am rechten Ende der Leiste (`from-transparent to-background` via `after:`-Pseudo-Element oder Wrapper-Gradient) signalisiert weitere Chips.
+- Die Chip-Leiste scrollt unabhaengig vom Rest der Seite — kein `overflow: hidden` auf dem Parent.
+- `whitespace-nowrap` auf jedem Chip verhindert Zeilenumbruch.
+
+#### Ergebnisliste (Listenansicht gemaess Wireframe)
+
+- Mobile (Standardfall): Einspaltiges Full-Width-Layout, Flex-Spalte mit `gap-3`.
+- Produktbild: 56x56px, `rounded-lg`, `object-cover`, links in der Karte.
+- Karten-Mindesthoehe: 72px fuer Touch-Targets.
+- Ab `sm` (640px): Optional 2-spaltiges Grid moeglich, Listenansicht bleibt aber bevorzugt fuer Lesbarkeit.
+
+---
+
+### Ladezustand (Skeleton-Cards)
+
+Skeleton-Cards imitieren die Struktur der echten Produktkarte in der Listenansicht:
+
+```
+┌─────────────────────────────────────────────┐
+│  [56x56 Graublock]  [────────── 60% ──────] │
+│                     [────── 35% ────]       │
+└─────────────────────────────────────────────┘
+```
+
+Implementierung:
+- 4-6 Skeleton-Karten werden gleichzeitig angezeigt (fuellt den Viewport).
+- Farbe: `bg-muted` (#EBECF0) mit `animate-pulse`-Animation (bereits im Theme-Keyframe definiert).
+- Abmessungen spiegeln die echte Karte: Bildplatzhalter 56x56px abgerundet, zwei Textzeilen-Platzhalter mit unterschiedlicher Breite.
+- Der Skeleton erscheint unmittelbar nach dem Debounce-Trigger, nicht erst nach 300ms Wartezeit.
+
+Kein Spinner: Ein Spinner mitten auf der Seite erzeugt Layout-Shift und ist weniger informativ. Skeleton-Cards behalten das Layout stabil und reduzieren die wahrgenommene Ladezeit.
+
+---
+
+### Empty State
+
+Der Empty State erscheint wenn keine Produkte die Such- und Filterbedingungen erfuellen.
+
+Visuelles Design:
+
+```
+┌─────────────────────────────────────────────┐
+│                                             │
+│      [Teenyicons search, 48px, muted]       │
+│                                             │
+│       Kein Produkt gefunden                 │
+│       (font-semibold, text-foreground)      │
+│                                             │
+│  Versuche einen anderen Suchbegriff         │
+│  oder passe die Filter an.                  │
+│  (text-sm, text-muted-foreground)           │
+│                                             │
+│       [Filter zuruecksetzen]                │
+│  (nur wenn Filter aktiv, text-accent)       │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+- Icon: `teenyicons/outline/search` (oder `teenyicons/outline/zoom-out`), 48px, `text-muted-foreground`.
+- Ueberschrift: "Kein Produkt gefunden" — `text-base font-semibold text-foreground`.
+- Subtext: "Versuche einen anderen Suchbegriff oder passe die Filter an." — `text-sm text-muted-foreground`.
+- CTA: "Filter zuruecksetzen" nur wenn `hasActiveFilters === true` — Textueller Link in `text-accent` (Teal, #3AACA7). Kein Button, da der CTA dezent bleiben soll.
+- Wiederverwendung der bestehenden `EmptyState.vue` aus `src/components/shared/EmptyState.vue` (eingefuehrt in FEAT-18). Props: icon, title, description, optionaler action-Slot fuer den Link.
+- Empty State erscheint erst nach abgeschlossenem API-Call (nicht waehrend des Tippens).
+
+---
+
+### Sortierungs-Umschalter (SortSelector.vue)
+
+Empfehlung: Segmented Control (Inline), kein Dropdown.
+
+Ein Dropdown waere bei drei Optionen ueberdimensioniert und erfordert einen zusaetzlichen Tap. Ein Segmented Control ist sofort scanbar und benoetigt nur eine Interaktion.
+
+Layout-Konzept:
+
+```
+┌────────────────────────────────────────────────────┐
+│  [Relevanz]  [Preis (aufsteigend)]  [Preis (abst.)] │
+└────────────────────────────────────────────────────┘
+```
+
+Klassen-Konzept:
+- Wrapper: `inline-flex rounded-lg border border-border bg-background p-0.5 gap-0.5`
+- Inaktives Segment: `px-3 py-1 rounded-md text-sm text-muted-foreground hover:bg-muted transition-colors`
+- Aktives Segment: `px-3 py-1 rounded-md text-sm bg-primary text-primary-foreground font-medium`
+
+Icons (Teenyicons):
+- "Relevanz": kein Icon oder `teenyicons/outline/sort-ascending`
+- "Preis aufsteigend": `teenyicons/outline/arrow-up` + Text "Preis"
+- "Preis absteigend": `teenyicons/outline/arrow-down` + Text "Preis"
+
+Platzierung: Direkt oberhalb der Ergebnisliste, als eigene Zeile (100% Breite) oder rechtbuendig neben einer Treffer-Anzahl.
+
+Wireframe-Abgleich: Das Trichter-Icon rechts in der Filter-Leiste koennte den SortSelector ausloesen. Empfehlung: SortSelector direkt inline anzeigen statt in einem Modal oder Drawer — spart einen Tap und ist auf Mobile gut lesbar.
+
+---
+
+### Accessibility-Pruefung (WCAG 2.1 AA)
+
+| Kriterium | Status | Massnahme fuer Developer |
+|-----------|--------|--------------------------|
+| Farbkontrast Chips inaktiv: `text-secondary-foreground` (#1E2D3D) auf `bg-secondary` (#E2E8EE) | Ca. 9:1 — besteht AA | Kein Handlungsbedarf |
+| Farbkontrast Chips aktiv: weiss auf `bg-primary` (#1B4D40) | Ca. 12:1 — besteht AAA | Kein Handlungsbedarf |
+| Farbkontrast Muted Text (#5D6C7E) auf Hintergrund (#F4F6F9) | >= 4.5:1 (laut Theme-Kommentar) — besteht AA | Kein Handlungsbedarf |
+| Touch-Targets Chips | Mindestens 44x44px Tap-Zone (WCAG 2.5.5) | `py-2.5` auf jedem Chip-Button sicherstellen |
+| Touch-Target Favoriten-Icon | Bereits in FavoriteIcon.vue vorhanden | Unveraendert uebernehmen |
+| ARIA-Labels Filter-Leiste | Fehlt bisher | `role="group"` + `aria-label="Produkte filtern"` auf dem Chip-Container |
+| ARIA-Zustand Chips | Fehlt bisher | `aria-pressed="true/false"` auf jedem Chip-Button (Toggle-Button-Semantik) |
+| ARIA-Label Suchfeld | Erforderlich | `<label for="search-input" class="sr-only">Produkte suchen</label>` — Pattern bereits in ProductGrid.vue vorhanden |
+| Live-Region fuer Ergebnisse | Fehlt bisher | `aria-live="polite"` auf dem Ergebniscontainer — informiert Screen Reader ueber Aktualisierungen |
+| Keyboard-Navigation | Standardmaessig OK | Tab-Reihenfolge: Suchfeld → Chips → Sortierung → Ergebnisliste (DOM-Reihenfolge genuegt) |
+| Kontrast Skeleton | Ladezustand ohne Text | Kein Kontrast-Anforderung; `animate-pulse` reicht als visuelle Angabe |
+
+---
+
+### UX-Empfehlungen fuer den Developer
+
+1. **Listenansicht statt Grid umsetzen:** Das Wireframe zeigt Full-Width-Karten, kein 2-Spalten-Grid. Produktbild links (56x56px), Name und Preis rechts, Warenkorb-Button und Favoriten-Icon am rechten Rand. Statt `SearchResultsGrid.vue` als Grid-Wrapper ein `flex flex-col gap-3` verwenden.
+
+2. **Chip-Leiste Edge-to-Edge scrollbar machen:** `overflow-x-auto -mx-4 px-4` damit Chips visuell bis zum Bildschirmrand laufen. Scroll-Verlauf (weisser Gradient) am rechten Ende als Hinweis auf weitere Chips.
+
+3. **x-Icon an aktiven Chips ergaenzen:** Zusaetzlich zum globalen "Filter zuruecksetzen"-Button ein x-Icon direkt am Chip implementieren (laut Wireframe). Teenyicons: `x-small-outline`. `@click.stop` nicht vergessen um Event-Propagation zu stoppen.
+
+4. **Preis-Chips mutually exclusive behandeln:** Wie Kategorie-Chips — nur ein Preis-Bucket gleichzeitig aktiv. Das ist in der Solution Architect Implementierung bereits als Konstanten-Array vorgesehen, muss aber im Toggle-Handler explizit umgesetzt werden.
+
+5. **EmptyState.vue wiederverwenden:** Bestehende Komponente aus FEAT-18 nutzen. Den optionalen Action-Slot fuer den "Filter zuruecksetzen"-Link verwenden. Kein neuer Empty-State-Code.
+
+6. **Skeleton statt Spinner:** 4-6 Skeleton-Karten mit `animate-pulse` und `bg-muted`. Der Skeleton erscheint sofort nach Debounce-Trigger. Kein Spinner, kein Layout-Shift.
+
+7. **SortSelector als Segmented Control:** Kein Dropdown. Drei Segmente inline, `rounded-lg border` als Wrapper, aktives Segment `bg-primary text-white`. Direkt inline platzieren, kein Modal.
+
+8. **ARIA-Attribute setzen:** `role="group"` und `aria-label` auf Filter-Leiste, `aria-pressed` auf Chips, `aria-live="polite"` auf Ergebniscontainer. Geringer Aufwand, grosser Accessibility-Gewinn.
+
+9. **Scroll-Position bei Modal-Close beibehalten:** Wenn der User aus dem ProductDetailModal zurueckkehrt, soll die Scroll-Position der Ergebnisliste erhalten bleiben. Kein automatisches Scroll-to-Top beim Schliessen des Modals.
+
+10. **Empty State erst nach API-Antwort zeigen:** Den Empty State nicht waehrend des Tippens anzeigen (waere bei jedem Zwischenzustand des Suchbegriffs sichtbar). Erst wenn der Debounce abgelaufen und das API-Ergebnis zurueckgekehrt ist und leer ist.
+
+---
+
+### User Flow: Produkt per Ernaehrungs-Filter finden (Lucas-Szenario)
+
+**Akteur:** Lucas Gesundheitsfan
+**Ziel:** Vegane und glutenfreie Produkte im aktuellen Sortiment finden
+
+**Schritte:**
+1. Lucas tippt auf Tab "Suche" in der unteren Navigation.
+2. /search laedt im Initialzustand: Suchfeld leer, alle Filter inaktiv, alle aktiven Produkte sichtbar.
+3. Lucas scrollt die Chip-Leiste horizontal bis zu den Ernaehrungs-Chips.
+4. Lucas tippt auf "Vegan" — Chip wird aktiv (dunkelgruen), Ergebnisliste aktualisiert sich sofort.
+5. Lucas tippt zusaetzlich auf "Glutenfrei" — beide Chips aktiv, Ergebnisse weiter eingeschraenkt.
+6. Lucas sieht die gefilterte Produktliste (nur Produkte mit isVegan=true UND isGlutenFree=true).
+7. Lucas tippt auf eine Produktkarte — ProductDetailModal oeffnet sich.
+8. Lucas schliesst das Modal — er ist wieder auf /search, beide Filter weiterhin aktiv.
+
+**Alternativer Flow (keine Treffer):**
+- Nach Schritt 6: Ergebnisliste ist leer.
+- Empty State erscheint mit "Kein Produkt gefunden" und "Filter zuruecksetzen"-Link.
+- Lucas entfernt einen Filter via x-Icon am Chip oder klickt "Filter zuruecksetzen".
+
+---
+
+### User Flow: Schnellkauf per Suche (Maxine-Szenario)
+
+**Akteur:** Maxine Snackliebhaber
+**Ziel:** Bekannten Snack schnell finden und direkt in den Warenkorb legen
+
+**Schritte:**
+1. Maxine oeffnet /search.
+2. Maxine tippt "Apfel" ins Suchfeld.
+3. Nach 300ms Debounce: API-Call, Skeleton-Cards erscheinen kurz.
+4. Ergebnisse laden: Produkte mit "Apfel" im Namen erscheinen zuerst (Relevanz-Sortierung).
+5. Maxine sieht direkt den Warenkorb-Button auf der Karte und tippt ihn an.
+6. PurchaseButton-Feedback (bestehendes Pattern aus FEAT-16 — kein Modal-Oeffnen).
+7. Maxine ist fertig ohne das ProductDetailModal oeffnen zu muessen.
+
+---
+
+## Implementation Notes
+
+**Status:** Implementiert
+**Developer:** Developer Agent
+**Datum:** 2026-03-13
+
+### Geaenderte/Neue Dateien
+
+- `src/server/api/products/index.get.ts` — Erweitert um neue Query-Parameter: `q`, `inStock`, `minPrice`, `maxPrice`, `isVegan`, `isGlutenFree`, `sortBy`; ILIKE-Suche ueber name + description; serverseitiger CAST fuer Preis-Filter/Sortierung; Relevanz-Sortierung mit CASE WHEN
+- `src/server/utils/search.ts` — Neu: `escapeIlikeTerm()` Funktion fuer ILIKE-Escaping (%, _, \), Trimming (EC-2) und Laengen-Limit (EC-3)
+- `src/components/search/SearchInput.vue` — Neu: Suchfeld mit Lupe-Icon links, X-Button rechts bei nicht-leerem Wert, SR-only Label, v-model
+- `src/components/search/FilterChip.vue` — Neu: Toggle-Chip aktiv/inaktiv, x-Icon an aktiven Chips (Wireframe-Anforderung), aria-pressed, rounded-full, py-2.5 fuer 44px Touch-Target
+- `src/components/search/FilterChips.vue` — Neu: Horizontale Chip-Leiste edge-to-edge (-mx-4 px-4), 4 Gruppen mit Trennlinien, Preis-Buckets mutually exclusive, v-model Bindings fuer alle Filter
+- `src/components/search/SortSelector.vue` — Neu: Segmented Control (kein Dropdown), 3 Optionen mit Pfeil-Icons (Teenyicons), aktives Segment bg-primary, v-model
+- `src/components/search/SearchResultsGrid.vue` — Neu: Listenansicht (flex flex-col gap-3), Skeleton-Cards animate-pulse, EmptyState.vue Wiederverwendung, Warenkorb-Mengensteuerung +/-, Favoriten-Icon, event.stop-Propagation fuer EC-8/EC-9
+- `src/pages/search.vue` — Vollstaendig: lokaler Filter-State, hasActiveFilters computed, useSearch-Composable mit debounceMs 300, watcher fuer Filter-Aenderungen, performSearch(), ProductDetailModal-Integration
+- `tests/utils/search.test.ts` — Neu: 20 Tests fuer escapeIlikeTerm (Escaping, Trimming, Laengen-Limit, Kombinationen); Tippfehler in Test-Erwartung behoben (test\%pro statt test\%pr)
+
+### Wichtige Entscheidungen
+
+- **Listenansicht statt Grid:** Laut Wireframe-Analyse (UX Expert Review) einspaltiges Full-Width-Layout implementiert statt 2-spaltigem Grid — bessere Lesbarkeit auf Mobile
+- **Preis-Chips mutually exclusive:** Konsistenz mit Kategorie-Chips; mehrere Preis-Buckets gleichzeitig ergaeben keinen sinnvollen Filter
+- **Kein Pinia-Store:** Lokaler Komponenten-State auf search.vue genuegt (EC-10: kein Persistieren beim Navigieren)
+- **ILIKE statt FTS:** Performant genug bei erwarteter Produktanzahl (< 1.000), kein Schema-Migrations-Aufwand
+- **Test-Bugfix:** Der Kombinationstest hatte einen Tippfehler in der expect-Zeile — Kommentar war korrekt ("test\%pro"), Erwartung zeigte aber "test\%pr" (fehlerhaft). Korrigiert auf "test\%pro".
+
+### Bekannte Einschraenkungen
+
+- Keine E2E-Tests implementiert (Playwright) — die Spec nennt sie als Anforderung, sie benoetigen eine laufende App-Instanz mit Test-Daten; sollten in einem separaten QA-Schritt ergaenzt werden
+- EmptyState.vue unterstuetzt nur die Icons 'heart' | 'thumb-up' | 'star' | 'info' | 'x' — fuer den Suche-Empty-State wird 'info' verwendet (kein 'search'-Icon verfuegbar ohne Aenderung der shared Komponente)

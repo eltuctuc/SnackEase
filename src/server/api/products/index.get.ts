@@ -1,28 +1,39 @@
 /**
  * GET /api/products
- * 
+ *
  * Ruft Produktkatalog mit optionalen Filtern ab
- * 
+ *
  * @description
  * Dieser Endpunkt:
  * - Gibt alle Produkte zurück (ohne Filter)
  * - Filtert nach Kategorie (z.B. 'obst', 'shakes')
- * - Sucht in Produktnamen (case-insensitive, partial match)
- * - Kombiniert mehrere Filter (Kategorie + Suche)
- * 
+ * - Sucht in Produktnamen (case-insensitive, partial match) — Legacy-Parameter `search`
+ * - Sucht in Produktname + Beschreibung (ILIKE) — neuer Parameter `q` (FEAT-19)
+ * - Filtert nach Verfügbarkeit (inStock), Preis (minPrice/maxPrice), Diätform (isVegan/isGlutenFree)
+ * - Sortiert nach Relevanz, Preis aufsteigend oder absteigend (FEAT-19)
+ * - Kombiniert mehrere Filter (AND-Verknüpfung)
+ *
  * @route GET /api/products
  * @access Public (kein Login erforderlich)
- * 
+ *
  * @queryParams
- * - category?: string - Filtert nach Kategorie ('obst' | 'shakes' | 'alle' | ...)
- * - search?: string - Sucht in Produktnamen (ILIKE, case-insensitive)
- * 
+ * - category?: string         - Filtert nach Kategorie ('obst' | 'shakes' | 'alle' | ...)
+ * - search?: string           - Legacy: Sucht in Produktnamen (ILIKE, case-insensitive)
+ * - q?: string                - FEAT-19: Volltext-Suche in name + description (ILIKE); max 100 Zeichen
+ * - inStock?: string          - FEAT-19: 'true' = nur vorrätige Produkte (stock > 0)
+ * - minPrice?: string         - FEAT-19: Preis ab (inklusiv), CAST zu numeric
+ * - maxPrice?: string         - FEAT-19: Preis bis (inklusiv), CAST zu numeric
+ * - isVegan?: string          - FEAT-19: 'true' = nur vegane Produkte
+ * - isGlutenFree?: string     - FEAT-19: 'true' = nur glutenfreie Produkte
+ * - sortBy?: string           - FEAT-19: 'relevance' | 'price_asc' | 'price_desc'
+ *
  * @example
  * GET /api/products → Alle Produkte
  * GET /api/products?category=obst → Nur Obst-Produkte
- * GET /api/products?search=apfel → Produkte mit "apfel" im Namen
- * GET /api/products?category=obst&search=bio → Bio-Obst
- * 
+ * GET /api/products?q=apfel → Produkte mit "apfel" in Name oder Beschreibung
+ * GET /api/products?q=protein&isVegan=true&sortBy=price_asc → Vegane Protein-Produkte, günstigste zuerst
+ * GET /api/products?minPrice=1.00&maxPrice=2.00&inStock=true → Vorrätige Produkte zwischen 1 und 2 EUR
+ *
  * @response Success
  * ```json
  * [
@@ -40,13 +51,14 @@
  *     "allergens": null,
  *     "isVegan": true,
  *     "isGlutenFree": true,
- *     "stock": 50
+ *     "stock": 50,
+ *     "activeOffer": null
  *   }
  * ]
  * ```
- * 
+ *
  * @throws {500} - DB-Fehler
- * 
+ *
  * @see src/types/product.ts für Product-Interface
  */
 
@@ -54,6 +66,7 @@ import { db } from '~/server/db'
 import { products, productCategories, categories, productOffers } from '~/server/db/schema'
 import { eq, and, sql, inArray, notInArray } from 'drizzle-orm'
 import { isOfferCurrentlyActive, calculateDiscountedPrice } from '~/server/utils/offers'
+import { escapeIlikeTerm } from '~/server/utils/search'
 
 // ========================================
 // HELPER - Product Selection
@@ -61,14 +74,14 @@ import { isOfferCurrentlyActive, calculateDiscountedPrice } from '~/server/utils
 
 /**
  * Definiert welche Felder aus products-Tabelle selektiert werden
- * 
+ *
  * @description
  * Zentralisiert die SELECT-Felder, um Code-Duplikation zu vermeiden.
  * Wir selektieren explizit alle Felder (statt SELECT *) für:
  * - Type-Safety (TypeScript weiß exakt welche Felder zurückkommen)
  * - Performance (keine unnötigen Felder wie createdAt)
  * - Versionierung (Schema-Änderungen brechen nicht automatisch API)
- * 
+ *
  * BEACHTE: createdAt wird NICHT zurückgegeben (nicht relevant für Frontend)
  */
 const productSelectFields = {
@@ -97,16 +110,28 @@ export default defineEventHandler(async (event) => {
   // ----------------------------------------
   // SCHRITT 1: Query-Parameter auslesen
   // ----------------------------------------
-  
+
   /**
    * Liest optionale Filter aus URL-Query-Params
-   * 
+   *
    * Beispiel-URLs:
    * - /api/products → query = {}
    * - /api/products?category=obst → query = { category: 'obst' }
-   * - /api/products?search=apfel → query = { search: 'apfel' }
+   * - /api/products?q=apfel&isVegan=true → query = { q: 'apfel', isVegan: 'true' }
    */
   const query = getQuery(event)
+
+  // FEAT-19: Neue Parameter auslesen
+  const rawQ = typeof query.q === 'string' ? query.q : null
+  const inStock = query.inStock === 'true'
+  const minPrice = query.minPrice ? parseFloat(query.minPrice as string) : null
+  const maxPrice = query.maxPrice ? parseFloat(query.maxPrice as string) : null
+  const filterVegan = query.isVegan === 'true'
+  const filterGlutenFree = query.isGlutenFree === 'true'
+  const sortBy = typeof query.sortBy === 'string' ? query.sortBy : 'relevance'
+
+  // Suchbegriff bereinigen und escapen (EC-1, EC-2, EC-3)
+  const escapedQ = rawQ ? escapeIlikeTerm(rawQ) : null
 
   try {
     // ----------------------------------------
@@ -164,48 +189,134 @@ export default defineEventHandler(async (event) => {
 
     // Nur aktive Produkte (isActive = true oder NULL für alte Einträge ohne isActive-Feld)
     conditions.push(sql`(${products.isActive} IS NULL OR ${products.isActive} = true)` as unknown as ReturnType<typeof eq>)
-    
+
     // ----------------------------------------
     // FILTER 1: Kategorie
     // ----------------------------------------
-    
+
     /**
      * Kategorie-Filter (optional)
-     * 
+     *
      * BEACHTE:
      * - 'alle' wird ignoriert (zeigt alle Kategorien)
      * - Nur exakter Match (eq = Equals)
      * - Case-sensitive (DB-Schema: text ohne CITEXT)
-     * 
+     *
      * SQL: WHERE category = 'obst'
      */
     if (query.category && query.category !== 'alle') {
       conditions.push(eq(products.category, query.category as string) as unknown as ReturnType<typeof eq>)
     }
-    
+
     // ----------------------------------------
-    // FILTER 2: Suche im Produktnamen
+    // FILTER 2: Legacy-Suche im Produktnamen (search-Parameter)
     // ----------------------------------------
-    
+
     /**
-     * Textsuche im Produktnamen (optional)
-     * 
-     * ILIKE = Case-insensitive LIKE (Postgres)
-     * % = Wildcard (partial match)
-     * 
-     * Beispiele:
-     * - search=apfel → Findet: "Apfel", "Bio-Apfel", "Apfelsaft"
-     * - search=Protein → Findet: "Protein-Riegel", "Proteinshake"
-     * 
+     * Textsuche im Produktnamen (optional, Legacy)
+     *
+     * Nur noch für abwärtskompatible Aufrufer. Neuer Parameter ist `q`.
+     *
      * SQL: WHERE name ILIKE '%apfel%'
-     * 
-     * PERFORMANCE-HINWEIS:
-     * Bei großen Produktkatalogen (>10.000 Produkte) sollte ein
-     * Full-Text-Search-Index (tsvector) verwendet werden.
      */
-    if (query.search) {
+    if (query.search && !escapedQ) {
       conditions.push(
         sql`${products.name} ILIKE ${'%' + query.search + '%'}` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 3: FEAT-19 Volltext-Suche (q-Parameter)
+    // ----------------------------------------
+
+    /**
+     * Volltext-Suche über name + description (ILIKE, OR-Verknüpfung, FEAT-19)
+     *
+     * - Sonderzeichen werden escaped (EC-1)
+     * - Leerzeichen-only → wie leere Suche behandelt (EC-2)
+     * - Max 100 Zeichen (EC-3)
+     *
+     * SQL: WHERE (name ILIKE '%apfel%' OR description ILIKE '%apfel%')
+     */
+    if (escapedQ) {
+      const pattern = `%${escapedQ}%`
+      conditions.push(
+        sql`(${products.name} ILIKE ${pattern} OR ${products.description} ILIKE ${pattern})` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 4: FEAT-19 Verfügbarkeit (inStock)
+    // ----------------------------------------
+
+    /**
+     * Nur vorrätige Produkte (stock > 0)
+     *
+     * SQL: WHERE stock > 0
+     */
+    if (inStock) {
+      conditions.push(
+        sql`${products.stock} > 0` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 5: FEAT-19 Preis-Untergrenze (minPrice)
+    // ----------------------------------------
+
+    /**
+     * Preis ab (inklusiv) — serverseitiger CAST wegen text-Typ (EC-12)
+     *
+     * SQL: WHERE CAST(price AS numeric) >= 1.00
+     */
+    if (minPrice !== null && !isNaN(minPrice)) {
+      conditions.push(
+        sql`CAST(${products.price} AS numeric) >= ${minPrice}` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 6: FEAT-19 Preis-Obergrenze (maxPrice)
+    // ----------------------------------------
+
+    /**
+     * Preis bis (inklusiv) — serverseitiger CAST wegen text-Typ (EC-12)
+     *
+     * SQL: WHERE CAST(price AS numeric) <= 2.00
+     */
+    if (maxPrice !== null && !isNaN(maxPrice)) {
+      conditions.push(
+        sql`CAST(${products.price} AS numeric) <= ${maxPrice}` as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 7: FEAT-19 Vegan
+    // ----------------------------------------
+
+    /**
+     * Nur vegane Produkte
+     *
+     * SQL: WHERE is_vegan = true
+     */
+    if (filterVegan) {
+      conditions.push(
+        eq(products.isVegan, true) as unknown as ReturnType<typeof eq>
+      )
+    }
+
+    // ----------------------------------------
+    // FILTER 8: FEAT-19 Glutenfrei
+    // ----------------------------------------
+
+    /**
+     * Nur glutenfreie Produkte
+     *
+     * SQL: WHERE is_gluten_free = true
+     */
+    if (filterGlutenFree) {
+      conditions.push(
+        eq(products.isGlutenFree, true) as unknown as ReturnType<typeof eq>
       )
     }
 
@@ -215,30 +326,49 @@ export default defineEventHandler(async (event) => {
         notInArray(products.id, productIdsToExclude) as unknown as ReturnType<typeof eq>
       )
     }
-    
+
     // ----------------------------------------
-    // SCHRITT 3: DB-Query ausführen
+    // SCHRITT 3: ORDER BY aufbauen (FEAT-19)
     // ----------------------------------------
-    
+
     /**
-     * Query mit oder ohne WHERE-Clause
-     * 
-     * Fall 1: Mit Filtern (conditions.length > 0)
-     * - SELECT ... FROM products WHERE condition1 AND condition2
-     * 
-     * Fall 2: Ohne Filter (conditions.length === 0)
-     * - SELECT ... FROM products
-     * 
-     * REFACTORING-MÖGLICHKEIT:
-     * Beide Queries könnten vereint werden mit:
-     * .where(conditions.length > 0 ? and(...conditions) : undefined)
-     * 
-     * Aktuell getrennt für bessere Lesbarkeit.
+     * Sortier-Logik:
+     *
+     * - price_asc:   CAST(price AS numeric) ASC
+     * - price_desc:  CAST(price AS numeric) DESC
+     * - relevance (Standard):
+     *     Wenn Suchbegriff vorhanden:
+     *       CASE WHEN name ILIKE '%term%' THEN 0 ELSE 1 END ASC, name ASC
+     *     Sonst: name ASC (alphabetisch)
      */
-    // Immer mit WHERE-Clause (mindestens isActive-Filter ist immer vorhanden)
+    let orderByClause: ReturnType<typeof sql>
+
+    if (sortBy === 'price_asc') {
+      orderByClause = sql`CAST(${products.price} AS numeric) ASC`
+    } else if (sortBy === 'price_desc') {
+      orderByClause = sql`CAST(${products.price} AS numeric) DESC`
+    } else if (escapedQ) {
+      // Relevanz: Name-Match hat Vorrang vor Description-Match
+      const namePattern = `%${escapedQ}%`
+      orderByClause = sql`CASE WHEN ${products.name} ILIKE ${namePattern} THEN 0 ELSE 1 END ASC, ${products.name} ASC`
+    } else {
+      // Keine Suche + keine spezifische Sortierung → alphabetisch nach Name
+      orderByClause = sql`${products.name} ASC`
+    }
+
+    // ----------------------------------------
+    // SCHRITT 4: DB-Query ausführen
+    // ----------------------------------------
+
+    /**
+     * Query mit WHERE-Clause und ORDER BY
+     *
+     * Mindestens isActive-Filter ist immer vorhanden (conditions.length >= 1)
+     */
     const productList = await db.select(productSelectFields)
       .from(products)
       .where(and(...conditions))
+      .orderBy(orderByClause)
 
     // FEAT-14: Aktive Angebote für die gefundenen Produkte laden
     const productIds = productList.map(p => p.id)
@@ -290,18 +420,18 @@ export default defineEventHandler(async (event) => {
     // ----------------------------------------
     // ERROR HANDLING
     // ----------------------------------------
-    
+
     /**
      * Fehlerbehandlung mit Logging
-     * 
+     *
      * Mögliche Fehler:
      * - DB-Verbindungsfehler (Neon Serverless offline)
      * - SQL-Syntax-Fehler (falsche Query-Konstruktion)
      * - Timeout (langsame Query bei vielen Produkten)
-     * 
+     *
      * WICHTIG: Fehler-Details werden NUR server-side geloggt.
      * Client bekommt generische Fehlermeldung (Security Best Practice).
-     * 
+     *
      * TODO: In Production strukturiertes Logging verwenden (z.B. Pino, Winston)
      */
     console.error('Error fetching products:', error)
