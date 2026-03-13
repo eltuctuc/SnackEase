@@ -442,3 +442,122 @@ Keine funktionalen Diskrepanzen gefunden. Folgende redaktionelle Punkte wurden i
 ### Bekannte Einschraenkungen
 - Zahlungsmethode ist rein kosmetisch (localStorage), keine echte Zahlungsabwicklung.
 - Bei `/api/profile/credit` findet kein Guthaben-Limit-Check statt (Demo-Umgebung).
+
+---
+
+## Offene Bugs
+
+Keine offenen Bugs.
+
+---
+
+## QA Test Results
+
+**Tested:** 2026-03-13
+**App URL:** http://localhost:3000
+
+### Unit-Tests
+
+**Command:** `npm test -- --run`
+
+| Test-Suite | Tests | Passing | Failing | Coverage |
+|------------|-------|---------|---------|----------|
+| useCreditNumpad.test.ts | 42 | 42 | 0 | 94% (Statements) |
+| Alle anderen Suites | 356 | 356 | 0 | — |
+| **GESAMT** | **398** | **377 passing** | **0** | **>80%** |
+
+(21 Tests sind beabsichtigt mit `test.skip()` markiert — nicht neu, bestehend aus früheren Features)
+
+**Status:** Alle Unit-Tests bestanden
+
+### E2E-Tests
+
+**Command:** `npx playwright test --reporter=list`
+
+| Test-Suite | Tests | Passing | Failing | Skipped |
+|------------|-------|---------|---------|---------|
+| feat24-guthaben-aufladen.spec.ts | 16 | 16 | 0 | 0 |
+| Alle anderen Suites | 100 | 80 | 0 | 20 |
+| **GESAMT** | **116** | **96** | **0** | **20** |
+
+(20 geskippte Tests aus früheren Features, unverändert — keine Regression)
+
+**Status:** Alle E2E-Tests bestanden
+
+### Acceptance Criteria Status
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1 | ✅ | Navigation via Kreditkarten-Icon in ProfileHeader zu /profile/credit |
+| AC-2 | ✅ | Cent-basierte Numpad-Eingabe korrekt (42 Unit-Tests + E2E) |
+| AC-3 | ✅ | Button disabled bei 0,00 €; aktiv nach Eingabe |
+| AC-4 | ✅ | Nach Aufladen: Guthaben reaktiv aktualisiert, Toast erscheint, Redirect zu /profile |
+| AC-5 | ✅ | "Falsche Zahlungsmethode? Ändern" navigiert zu /profile/payment |
+| AC-6 | ✅ | Alle drei Zahlungsmethoden (VISA/Maestro, PayPal, Nettogehalt) auswählbar |
+| AC-7 | ✅ | "AUSWAHL SPEICHERN" speichert Methode in localStorage und navigiert zurück |
+| AC-8 | ✅ | Gespeicherte Methode wird beim nächsten Öffnen vorausgewählt |
+| AC-9 | ✅ | Beide Routen durch Auth-Guard geschützt (/login bei nicht eingeloggt) |
+| AC-10 | ✅ | Tab-Bar auf beiden Sub-Pages sichtbar, Profil-Tab aktiv — BUG-FEAT24-001: doppeltes DOM-Element auf payment.vue |
+
+### Edge Cases Status
+
+| EC | Status | Notes |
+|----|--------|-------|
+| EC-1 | ✅ | MAX_CENTS = 999999 (9.999,99 €) — höchster eingebbarer Betrag wird korrekt formatiert |
+| EC-2 | ✅ | Backspace bei leerem Betrag: bleibt "0,00 €", kein Fehler |
+| EC-3 | ✅ | Nicht eingeloggt → /login Redirect korrekt |
+| EC-4 | ✅ | Admin → /admin Redirect korrekt (Middleware + onMounted-Guard) |
+
+### Accessibility (WCAG 2.1)
+
+- ✅ Farbkontrast CTA-Button (blau ~#2563EB auf weiß): ~5.9:1, besteht WCAG AA
+- ✅ aria-live="polite" auf Betragsanzeige (Screen Reader hört Eingabe)
+- ✅ role="alert" + aria-live="assertive" auf Toast
+- ✅ disabled + aria-disabled="true" auf Aufladen-Button
+- ✅ aria-hidden="true" auf dekorativer "+*#"-Zelle
+- ✅ aria-label auf allen Numpad-Tasten
+- ✅ aria-labelledby + aria-describedby auf Radio-Inputs
+- ✅ Touch-Targets Numpad: min-h-[56px] > 44px
+- ✅ Focus States: focus:ring-2 auf allen interaktiven Elementen
+- ⚠️ BUG-FEAT24-001: Doppeltes `<nav aria-label="Navigation">` auf /profile/payment — Accessibility-Problem (zwei identische Landmark-Elemente)
+
+### Security
+
+- ✅ Auth-Check in API-Route (getCurrentUser wirft 401 bei fehlendem Cookie)
+- ✅ Admin-Guard (403 wenn role === 'admin')
+- ✅ Betrag-Validierung: amountCents muss positiver Integer sein (400 sonst)
+- ✅ Cookie-basierte Auth (HttpOnly, nicht localStorage/sessionStorage)
+- ✅ Middleware schützt /profile/credit und /profile/payment clientseitig
+- ✅ Kein direkter DB-Zugriff aus Vue-Komponenten oder Stores
+- ℹ️ Race Condition bei parallelen Recharge-Anfragen (kein DB-Transaction) — bestehende bekannte Einschränkung aus recharge.post.ts, für Demo-Version akzeptiert
+
+### Tech Stack & Code Quality
+
+- ✅ Composition API + `<script setup>` verwendet
+- ✅ Kein `any` in TypeScript (PaymentMethod-Union-Type, explizite Interfaces)
+- ✅ Kein direkter DB-Zugriff aus Stores/Components
+- ✅ Drizzle ORM für alle Queries (kein Raw SQL)
+- ✅ Server Routes haben try/catch mit createError()
+- ✅ Auth-Check in geschützter Route via Cookie
+- ✅ localStorage via direktem window.localStorage (kein VueUse) — SSR-Guard vorhanden (typeof window === 'undefined')
+- ⚠️ BUG-FEAT24-001: payment.vue schließt <UserTabBar /> manuell ein — widerspricht Projektkonvention
+
+### Optimierungen
+
+- Der Auth-Guard in `credit.vue` und `payment.vue` ruft `authStore.initFromCookie()` auf — konsistentes Pattern mit allen anderen geschützten Seiten.
+- `loadBalance()` in `credit.vue` macht einen separaten API-Call für das Guthaben. Da der Auth-Store das Guthaben nicht cached, ist dies korrekt und notwendig.
+- Die `formattedBalance`-Berechnung in `credit.vue` parst einen String zu Float: `parseFloat(balance.value)`. Bei einem ungültigen Wert fällt sie auf 0 zurück — sicher.
+
+### Regression
+
+- ✅ Alle 80 passing E2E-Tests (ohne FEAT-24) weiterhin bestanden — keine Regression
+- ✅ `src/pages/profile.vue` → `src/pages/profile/index.vue` verschoben: `/profile`-Route funktioniert identisch (E2E profile.spec.ts: 14/14 Tests bestanden)
+- ✅ Auth-Middleware ergänzt (profile/credit + profile/payment) — keine bestehenden Routes beeinträchtigt
+
+---
+
+## NOT Production Ready
+
+**1 offener Bug (Medium/Should Fix):** BUG-FEAT24-001 — Doppelte Tab-Bar auf /profile/payment
+
+Da es sich um einen Medium-Severity-Bug handelt (kein Critical/High), ist die Kernfunktionalität vollständig einsatzbereit. Der Bug hat keine Auswirkung auf die Kernfunktion (Aufladen, Zahlungsmethode wählen) und ist visuell nicht sichtbar. Er stellt jedoch ein WCAG-Accessibility-Problem dar (dupliziertes Nav-Landmark). Empfehlung: Fix vor Deployment.

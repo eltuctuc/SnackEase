@@ -112,8 +112,5 @@ onMounted(async () => {
       </button>
     </div>
 
-    <!-- Tab-Bar (Profil-Tab aktiv) -->
-    <UserTabBar />
-
   </div>
 </template>
